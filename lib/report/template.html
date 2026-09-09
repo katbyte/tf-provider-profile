@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tfpp · __TFPP_PROVIDER__</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10); --up: #006300; --down: #b32020;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948;
+  --other: #b5b3ab; --wash: rgba(42,120,214,0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10); --up: #0ca30c; --down: #e66767;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    --other: #4a4a47; --wash: rgba(57,135,229,0.10);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: inherit; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding: 16px 22px 10px; border-bottom: 1px solid var(--border); }
+header h1 { font-size: 18px; margin: 0; font-weight: 650; }
+header h1 span { color: var(--muted); font-weight: 400; }
+header h1 select { font: inherit; font-weight: 650; background: transparent; color: var(--ink); border: 0; border-bottom: 1px dashed var(--axis); padding: 0 2px; cursor: pointer; }
+header h1 select:disabled { border-bottom: 0; color: var(--ink); opacity: 1; -webkit-text-fill-color: var(--ink); }
+header .sub { color: var(--ink-2); font-size: 13px; }
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: calc(100vh - 56px); }
+aside { border-right: 1px solid var(--border); padding: 12px 14px 40px; overflow-y: auto; max-height: calc(100vh - 56px); position: sticky; top: 0; }
+aside input[type=search] { width: 100%; padding: 6px 8px; border: 1px solid var(--axis); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; margin-bottom: 8px; }
+aside details { margin: 0; }
+aside details details { margin-left: 12px; }
+aside summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 4px 4px; border-radius: 5px; font-size: 12px; font-weight: 600; color: var(--ink-2); user-select: none; }
+aside summary::-webkit-details-marker { display: none; }
+aside summary::before { content: '▸'; color: var(--muted); font-size: 10px; width: 10px; display: inline-block; }
+aside details[open] > summary::before { content: '▾'; }
+aside summary:hover { background: var(--wash); }
+aside summary .n { margin-left: auto; color: var(--muted); font-weight: 400; font-size: 11px; }
+aside > details > summary { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 6px; }
+aside label { display: flex; align-items: center; gap: 8px; padding: 3px 4px 3px 20px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+aside label:hover { background: var(--wash); }
+aside label .unit { margin-left: auto; color: var(--muted); font-size: 11px; }
+aside label .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; background: transparent; border: 1px solid var(--axis); }
+aside label.on .sw { background: var(--c); border-color: var(--c); }
+aside label .sw.part { background: linear-gradient(135deg, var(--ink-2) 50%, transparent 50%); border-color: var(--ink-2); }
+aside label .sw.all { background: var(--ink-2); border-color: var(--ink-2); }
+aside label.preset { padding-left: 12px; }
+aside label.preset .desc { color: var(--muted); font-size: 11px; margin-left: auto; text-align: right; }
+aside label .lr { display: inline-flex; margin-left: 6px; border: 1px solid var(--axis); border-radius: 4px; overflow: hidden; }
+aside label .lr button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 10px; padding: 0 5px; cursor: pointer; line-height: 16px; }
+aside label .lr button.on { background: var(--ink-2); color: var(--surface); }
+aside .none { color: var(--muted); font-size: 12px; padding: 4px 20px; }
+aside .actions { display: flex; gap: 8px; margin-bottom: 4px; }
+aside .actions button { font-size: 12px; }
+main { padding: 12px 22px 60px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--ink-2); }
+.seg { display: inline-flex; border: 1px solid var(--axis); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); color: var(--ink-2); padding: 4px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.seg button.on { background: var(--ink); color: var(--surface); }
+.seg.multi button { display: inline-flex; align-items: center; gap: 5px; }
+.seg.multi button i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; border: 1px dashed currentColor; }
+.seg.multi button.on i { background: var(--mc); border-color: var(--mc); }
+select { border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 6px; font: inherit; font-size: 12px; }
+button.plain { border: 1px solid var(--axis); background: var(--surface); color: var(--ink-2); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+.panels { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 12px; }
+.panels[data-cols="1"] { grid-template-columns: 1fr; }
+.panels[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.panels[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.panels[data-cols="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.panels[data-cols="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.panels[data-cols="6"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.panels[data-cols] .panel.wide { grid-column: 1 / -1; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px 6px; min-width: 0; }
+.panel.wide { grid-column: 1 / -1; }
+.panel[draggable] { cursor: grab; }
+.panel.over { outline: 2px dashed var(--s1); outline-offset: -2px; }
+.panel.before { box-shadow: -5px 0 0 var(--s1); }
+.panel.after { box-shadow: 5px 0 0 var(--s1); }
+.panel.dragging { opacity: .5; }
+.panel h2 .handle { color: var(--muted); font-weight: 400; cursor: grab; }
+.panel h2 .pbtn { border: 1px solid var(--axis); background: var(--surface); color: var(--ink-2); border-radius: 4px; padding: 0 6px; font: inherit; font-size: 11px; line-height: 18px; cursor: pointer; }
+.panel h2 .pbtn.on { background: var(--ink-2); color: var(--surface); }
+.legend .rm { color: var(--muted); cursor: pointer; margin-left: 2px; font-size: 11px; }
+.legend .rm:hover { color: var(--down); }
+.panel h2 { font-size: 13px; font-weight: 600; margin: 0 0 2px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.panel h2 .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.panel h2 .val { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+.panel h2 .delta { font-weight: 500; font-size: 12px; }
+.panel .desc { color: var(--muted); font-size: 11px; margin: 0 0 4px; }
+.panel h2 { margin-bottom: 4px; }
+.up { color: var(--up); } .down { color: var(--down); }
+svg { display: block; max-width: 100%; overflow: visible; }
+svg text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--axis); stroke-width: 1; }
+svg .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+svg .dot { stroke: var(--surface); stroke-width: 2; }
+svg .cross { stroke: var(--ink-2); stroke-width: 1; opacity: 0; }
+svg .hit { fill: transparent; }
+svg .mark { stroke-width: 1; stroke-dasharray: 2 3; opacity: .55; }
+svg .marklbl { opacity: .8; font-size: 10px; }
+svg .tick { stroke-width: 2; opacity: .7; }
+svg .bar { stroke: var(--surface); stroke-width: 1; }
+svg .endlbl { fill: var(--ink-2); font-size: 11px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-2); margin: 4px 0 2px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+.legend i.box { height: 10px; width: 10px; }
+.legend .unit { color: var(--muted); }
+#tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 4px 16px rgba(0,0,0,.14); border-radius: 8px; padding: 8px 10px; font-size: 12px; z-index: 10; display: none; max-width: 420px; }
+#tip .v { font-weight: 600; margin-bottom: 4px; }
+#tip .v span { color: var(--muted); font-weight: 400; }
+#tip table { border-collapse: collapse; }
+#tip td { padding: 1px 6px 1px 0; white-space: nowrap; }
+#tip td.n { text-align: right; font-variant-numeric: tabular-nums; }
+#tip td.d { color: var(--muted); font-variant-numeric: tabular-nums; }
+#tip tr.sep td { border-top: 1px solid var(--grid); padding-top: 4px; }
+#tip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+#ctx { position: fixed; z-index: 20; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 420px; max-width: calc(100vw - 24px); font-size: 12px; }
+#ctx .v { font-weight: 600; margin-bottom: 6px; }
+#ctx .v span { color: var(--muted); font-weight: 400; }
+#ctx .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+#ctx .row button { border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+#ctx .row button:hover { background: var(--wash); }
+#ctx textarea { width: 100%; height: 150px; resize: vertical; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--page); color: var(--ink-2); border: 1px solid var(--grid); border-radius: 6px; padding: 6px; }
+h2.sec { font-size: 15px; margin: 28px 0 8px; font-weight: 650; }
+h2.sec small { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 8px; }
+table.data { border-collapse: collapse; font-size: 12px; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+table.data th, table.data td { padding: 5px 9px; text-align: right; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.data th { color: var(--ink-2); font-weight: 600; background: var(--page); position: sticky; top: 0; }
+table.data th:first-child, table.data td:first-child, table.data th:nth-child(2), table.data td:nth-child(2) { text-align: left; }
+table.data tr:last-child td { border-bottom: 0; }
+.scroll { overflow-x: auto; }
+.empty { color: var(--muted); padding: 40px; text-align: center; border: 1px dashed var(--axis); border-radius: 8px; }
+.note { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+.stagefail { color: var(--down); font-size: 12px; }
+details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } aside { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); } .panels { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>tfpp <span>·</span> <select id="prov" title="provider"></select></h1>
+  <div class="sub" id="subtitle"></div>
+</header>
+<div class="layout">
+  <aside>
+    <input type="search" id="search" placeholder="filter metrics…" autocomplete="off">
+    <div class="actions"><button class="plain" id="clear">clear</button><button class="plain" id="defaults">defaults</button></div>
+    <div id="groups"></div>
+  </aside>
+  <main>
+    <div class="controls">
+      <span>view</span>
+      <span class="seg" data-key="view"><button data-v="panels">panels</button><button data-v="unit">one chart per unit</button><button data-v="twoaxes">two axes</button><button data-v="pct">% change</button><button data-v="delta">per-release change</button></span>
+      <span>grid</span>
+      <select id="cols"><option value="0">auto</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
+      <span>x</span>
+      <span class="seg" data-key="x"><button data-v="date">date</button><button data-v="release">release</button></span>
+      <span>range</span>
+      <select id="rangeA"></select><span>→</span><select id="rangeB"></select>
+      <span>y</span>
+      <span class="seg" data-key="zero"><button data-v="0">fit</button><button data-v="1">from zero</button></span>
+      <span>dots</span>
+      <span class="seg" data-key="dots"><button data-v="auto">auto</button><button data-v="1">on</button><button data-v="0">off</button></span>
+      <span class="seg" data-key="table"><button data-v="0">charts</button><button data-v="1">table</button></span>
+    </div>
+    <div class="controls"><span>markers</span><span class="seg multi" id="markers"></span>
+      <span>tooltip</span><span class="seg" data-key="tip"><button data-v="current">current</button><button data-v="all">all</button></span></div>
+    <div id="charts"></div>
+    <div id="tableview"></div>
+    <details style="margin-top:28px"><summary>Compare two releases · every metric side by side</summary>
+      <div class="controls" style="margin-top:8px"><span>from</span> <select id="cmpA"></select> <span>to</span> <select id="cmpB"></select></div>
+      <div class="scroll" id="compare"></div>
+    </details>
+    <details style="margin-top:12px"><summary>Release and stage status</summary><div class="scroll" id="status"></div></details>
+  </main>
+</div>
+<div id="tip"></div>
+<div id="ctx" hidden><div class="v"></div><div class="row"></div><textarea readonly></textarea></div>
+<script id="data" type="application/json">/*__TFPP_DATA__*/</script>
+<script>
+(() => {
+const RAW = JSON.parse(document.getElementById('data').textContent).providers;
+const SLOTS = ['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
+const css = v => `var(${v})`;
+const $ = s => document.querySelector(s);
+
+// ---------- merged dataset: every provider's releases on one timeline; metric keys are "<provider>:<key>" ----------
+const PROVIDERS = RAW.map(p => p.provider);
+const provOf = k => k.slice(0, k.indexOf(':'));
+const bare = k => k.slice(k.indexOf(':') + 1);
+const isComp = k => bare(k).startsWith('comp.');
+const COMP_KINDS = [
+  ['modules', 'Text by module', 'top 7 modules by peak attributed text size, rest folded into other'],
+  ['services', 'Text by provider service', 'internal/services/<service> packages only'],
+  ['sections', 'Sections', 'object-file sections; pclntab is the runtime function table, rodata holds type data and strings'],
+  ['movers', 'Biggest movers', 'modules by change in attributed text size across the selected range'],
+];
+const RELEASES = RAW.flatMap(p => p.releases.map(r => ({ ...r, provider: p.provider, id: p.provider + '@' + r.version })))
+  .sort((a, b) => a.ts - b.ts || a.provider.localeCompare(b.provider));
+const ROW = {};
+RELEASES.forEach((r, i) => { ROW[r.id] = i; });
+const remap = (p, vals) => { const out = new Array(RELEASES.length).fill(null); p.releases.forEach((r, i) => { out[ROW[p.provider + '@' + r.version]] = vals[i] ?? null; }); return out; };
+const METRICS = RAW.flatMap(p => p.metrics.map(m => ({ ...m, key: `${p.provider}:${m.key}`, provider: p.provider, group: `${p.provider}/${m.group}`, values: remap(p, m.values) })));
+const GROUPS = RAW.flatMap(p => [...p.groups, { id: 'compchart', label: 'Composition charts' }].map(g => ({ id: `${p.provider}/${g.id}`, label: g.label, provider: p.provider })));
+const COMPS = RAW.flatMap(p => p.platforms.flatMap(pl => COMP_KINDS.map(([kind, label, desc]) => ({ key: `${p.provider}:comp.${pl}.${kind}`, label: `${label} (${pl})`, unit: 'comp', group: `${p.provider}/compchart`, desc, values: [], up_is: 'neutral', provider: p.provider, plat: pl, kind }))));
+const CATALOGUE = [...METRICS, ...COMPS];
+const COMPOSITION = {};
+for (const p of RAW) for (const [pl, c] of Object.entries(p.composition)) COMPOSITION[`${p.provider}:${pl}`] = Object.fromEntries(Object.entries(c).map(([k, v]) => [k, { names: v.names, rows: remap(p, v.rows).map(r => r || v.names.map(() => null)) }]));
+const PLATFORMS = Object.fromEntries(RAW.map(p => [p.provider, p.platforms]));
+const platFor = p => (PLATFORMS[p] || []).includes('linux_amd64') ? 'linux_amd64' : ((PLATFORMS[p] || [])[0] || '');
+const META = Object.fromEntries(RAW.map(p => [p.provider, { repo: p.repo, generated: p.generated, tool: p.tool }]));
+const visible = () => state.p === 'all' ? PROVIDERS : [state.p];
+const multi = () => state.p === 'all' && PROVIDERS.length > 1;
+const lbl = m => multi() ? `${m.label} · ${m.provider}` : m.label;
+// expand bare preset keys ("binary.{plat}.zip_bytes") for every visible provider
+const expand = keys => visible().flatMap(prov => keys.map(k => `${prov}:${k.replace('{plat}', platFor(prov))}`)).filter(k => M[k]);
+
+// R/N/M/COMP/VIS are the release window currently shown; applyRange() re-derives them from the merged dataset
+let R, N, M, COMP, VIS;
+function applyRange() {
+  const vis = visible();
+  VIS = RELEASES.map((r, i) => [r, i]).filter(([r]) => vis.includes(r.provider));
+  const at = v => VIS.findIndex(([r]) => r.id === v || (vis.length === 1 && r.version === v));
+  let i0 = at(state.from), i1 = at(state.to);
+  if (i0 < 0) i0 = 0;
+  if (i1 < 0) i1 = VIS.length - 1;
+  if (i0 > i1) [i0, i1] = [i1, i0];
+  const win = VIS.slice(i0, i1 + 1), idx = win.map(([, i]) => i);
+  R = win.map(([r]) => r); N = R.length;
+  M = {};
+  for (const m of CATALOGUE) if (vis.includes(m.provider)) M[m.key] = m.unit === 'comp' ? m : { ...m, values: idx.map(i => m.values[i]) };
+  COMP = {};
+  for (const [k, c] of Object.entries(COMPOSITION)) if (vis.includes(provOf(k))) COMP[k] = Object.fromEntries(Object.entries(c).map(([kind, v]) => [kind, { names: v.names, rows: idx.map(i => v.rows[i]) }]));
+}
+
+// ---------- state (persisted in the url hash) ----------
+// panels are groups of metric keys; a group with several keys is one combined chart
+const DEFAULT_GROUPS = () => visible().flatMap(prov => {
+  const k = x => `${prov}:${x.replace('{plat}', platFor(prov))}`;
+  return [
+    { keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'], stack: true },
+    { keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines'], stack: true },
+    { keys: ['binary.{plat}.zip_bytes', 'binary.{plat}.binary_bytes'] },
+    { keys: ['schema.provider_max_rss_bytes', 'startup.max_rss_bytes'] },
+    { keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_data_sources', 'source.untyped_data_sources'], stack: true },
+  ].map(g => ({ keys: g.keys.map(k).filter(x => M[x]), stack: !!g.stack, wide: false })).filter(g => g.keys.length);
+});
+const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '0', dots: 'auto', mk: ['majors'], tip: 'all', p: PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '') };
+applyRange();
+function syncSel() { state.groups = state.groups.filter(g => g.keys.length); state.sel = state.groups.flatMap(g => g.keys); assignColors(); }
+// groups restricted to what the current provider selection can show; gi keeps the index into state.groups
+const visibleGroups = () => state.groups.map((g, gi) => ({ ...g, gi, keys: g.keys.filter(k => M[k]) })).filter(g => g.keys.length);
+const vsel = () => state.sel.filter(k => M[k]);
+function parseGroups(str) {
+  return str.split('|').filter(Boolean).map(part => {
+    const m = part.match(/^([sw]+):(.*)$/);
+    const flags = m ? m[1] : '', body = m ? m[2] : part;
+    return { keys: body.split(',').filter(k => CATALOGUE.some(c => c.key === k)), stack: flags.includes('s'), wide: flags.includes('w') };
+  }).filter(g => g.keys.length);
+}
+function readHash() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get('p') && (h.get('p') === 'all' || PROVIDERS.includes(h.get('p')))) state.p = h.get('p');
+  for (const k of ['view','x','zero','table','from','to','cols','dots','tip']) if (h.get(k)) state[k] = h.get(k);
+  if (h.has('mk')) state.mk = h.get('mk').split(',').filter(Boolean);
+  applyRange();
+  state.groups = h.has('m') ? parseGroups(h.get('m')) : DEFAULT_GROUPS();
+  if (state.view === 'overlay') state.view = 'pct';
+  state.right = (h.get('r') || '').split(',').filter(k => CATALOGUE.some(c => c.key === k));
+  syncSel();
+}
+function writeHash() {
+  const h = new URLSearchParams();
+  h.set('p', state.p);
+  h.set('m', state.groups.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : ''); return (f ? f + ':' : '') + g.keys.join(','); }).join('|'));
+  h.set('r', state.right.join(','));
+  for (const k of ['view','x','zero','table']) h.set(k, state[k]);
+  if (state.cols !== '0') h.set('cols', state.cols);
+  if (state.dots !== 'auto') h.set('dots', state.dots);
+  if (state.tip !== 'all') h.set('tip', state.tip);
+  h.set('mk', state.mk.join(','));
+  if (state.from) h.set('from', state.from);
+  if (state.to) h.set('to', state.to);
+  history.replaceState(null, '', '#' + h.toString());
+}
+// add metrics: combined = one new panel holding all of them, otherwise one panel each
+function addKeys(keys, combined, stack = false) {
+  const fresh = keys.filter(k => M[k] && !state.sel.includes(k));
+  if (!fresh.length) return;
+  const comps = fresh.filter(isComp), plain = fresh.filter(k => !isComp(k));
+  if (combined && plain.length) state.groups.push({ keys: plain, stack: !!stack });
+  else for (const k of plain) state.groups.push({ keys: [k], stack: false });
+  for (const k of comps) state.groups.push({ keys: [k], stack: false });
+  syncSel();
+}
+function removeKeys(keys) { for (const g of state.groups) g.keys = g.keys.filter(k => !keys.includes(k)); syncSel(); }
+function mergeGroups(from, to) {
+  if (from === to || !state.groups[from] || !state.groups[to]) return;
+  if ([...state.groups[from].keys, ...state.groups[to].keys].some(isComp)) return; // composition panels stand alone
+  const tgt = state.groups[to], src = state.groups[from];
+  const allowed = new Set(unitsOf(tgt));
+  const overflow = [];
+  for (const k of src.keys) {
+    const u = M[k] ? M[k].unit : null;
+    if (u && !allowed.has(u) && allowed.size >= 2) { overflow.push(k); continue; } // a chart holds two units at most
+    if (u) allowed.add(u);
+    tgt.keys.push(k);
+  }
+  src.keys = [];
+  if (unitsOf(tgt).length > 1) tgt.stack = false;
+  if (overflow.length) state.groups.splice(to + 1, 0, { keys: overflow, stack: false });
+  syncSel();
+}
+// move group `from` so it sits before (or after) group `to`
+function moveGroup(from, to, after) {
+  if (from === to) return;
+  const [g] = state.groups.splice(from, 1);
+  let idx = to > from ? to - 1 : to;
+  if (after) idx++;
+  state.groups.splice(idx, 0, g);
+  syncSel();
+}
+function splitGroup(i) { const g = state.groups[i]; if (!g) return; state.groups.splice(i, 1, ...g.keys.map(k => ({ keys: [k], stack: false }))); syncSel(); }
+const unitsOf = g => [...new Set(g.keys.filter(k => M[k]).map(k => M[k].unit))];
+// color follows the metric for as long as it stays selected; a new selection takes the lowest free slot
+function assignColors() {
+  const used = new Set();
+  for (const k of state.sel) if (state.colors[k] !== undefined) used.add(state.colors[k]);
+  for (const k of Object.keys(state.colors)) if (!state.sel.includes(k)) delete state.colors[k];
+  for (const k of state.sel) if (state.colors[k] === undefined) {
+    let i = 0; while (used.has(i)) i++;
+    state.colors[k] = i; used.add(i);
+  }
+}
+const colorOf = k => css(SLOTS[state.colors[k] % SLOTS.length]);
+
+// ---------- formatting ----------
+function fmt(v, unit, short) {
+  if (v === null || v === undefined || Number.isNaN(v)) return '–';
+  const f = (x, d) => x.toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: 0 });
+  switch (unit) {
+    case 'bytes': {
+      const a = Math.abs(v);
+      if (a >= 1e9) return f(v / 1073741824, 2) + ' GB';
+      if (a >= 1e6) return f(v / 1048576, short ? 0 : 1) + ' MB';
+      if (a >= 1e3) return f(v / 1024, 0) + ' KB';
+      return f(v, 0) + ' B';
+    }
+    case 'ms': return Math.abs(v) >= 1000 ? f(v / 1000, 2) + ' s' : f(v, 0) + ' ms';
+    case 's': return Math.abs(v) >= 120 ? f(v / 60, 1) + ' min' : f(v, 1) + ' s';
+    case 'pct': return f(v, 1) + '%';
+    case 'pctchange': return (v > 0 ? '+' : '') + f(v, 1) + '%';
+    case 'ratio': return f(v, 2) + '×';
+    case 'days': return f(v, 1) + ' d';
+    case 'index': return f(v, 1);
+    default: {
+      const a = Math.abs(v);
+      if (short && a >= 1e6) return f(v / 1e6, 2) + 'M';
+      if (short && a >= 1e4) return f(v / 1e3, 0) + 'k';
+      return f(v, 0);
+    }
+  }
+}
+// delta colour = direction × whether up is good for this metric; neutral metrics stay in secondary ink
+const UNIT_LABEL = { bytes: 'size', ms: 'milliseconds', s: 'seconds', count: 'count', lines: 'lines', files: 'files', resources: 'resources', attributes: 'attributes', depth: 'depth', modules: 'modules', funcs: 'functions', packages: 'packages', commits: 'commits', authors: 'authors', entries: 'changelog entries', pct: 'percent', ratio: 'ratio', days: 'days', index: 'index' };
+function fmtDelta(a, b, unit, upIs) {
+  if (a == null || b == null) return { text: '', cls: '' };
+  const d = b - a;
+  const sign = d > 0 ? '+' : d < 0 ? '−' : '';
+  let cls = '';
+  if (d !== 0 && upIs && upIs !== 'neutral') cls = ((d > 0) === (upIs === 'good')) ? 'up' : 'down';
+  const pct = a ? ` (${sign}${Math.abs((d / a) * 100).toFixed(1)}%)` : ''; // no percentage from a zero start
+  return { text: `${sign}${fmt(Math.abs(d), unit)}${pct}`, cls };
+}
+const dateLbl = ts => new Date(ts * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const monthLbl = ts => new Date(ts * 1000).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+
+// ---------- scales ----------
+function xScale(w, pad) {
+  if (state.x === 'date' && N > 1) {
+    const t0 = R[0].ts, t1 = R[N - 1].ts, span = Math.max(t1 - t0, 1);
+    return { at: i => pad.l + (R[i].ts - t0) / span * (w - pad.l - pad.r), ticks: monthTicks(t0, t1).map(t => ({ x: pad.l + (t - t0) / span * (w - pad.l - pad.r), label: monthLbl(t) })) };
+  }
+  const step = N > 1 ? (w - pad.l - pad.r) / (N - 1) : 0;
+  const every = Math.max(1, Math.ceil(N / Math.max(4, Math.floor((w - pad.l - pad.r) / 64))));
+  const ticks = [];
+  for (let i = 0; i < N; i += every) ticks.push({ x: pad.l + i * step, label: R[i].version.replace(/^v/, '') });
+  return { at: i => pad.l + i * step, ticks };
+}
+// ---------- markers: toggleable vertical layers, computed once over every release ----------
+const goMinor = v => (v || '').replace(/^go/, '').split('.').slice(0, 2).join('.');
+const MARKER_LAYERS = [
+  { id: 'majors', label: 'majors', color: '--s8', test: r => { const m = r.version.match(/^v?(\d+)\.0\.0$/); return m && { label: 'v' + m[1] }; } },
+  { id: 'go', label: 'go version', color: '--s7', test: (r, p) => p && r.go_version && p.go_version && goMinor(r.go_version) !== goMinor(p.go_version) && { label: 'go' + goMinor(r.go_version), title: p.go_version + ' → ' + r.go_version } },
+  { id: 'patch', label: 'patch releases', color: '--muted', tick: true, test: r => /\.\d+\.[1-9]\d*$/.test(r.version) && { label: '', title: 'patch release ' + r.version } },
+  { id: 'mods', label: 'modules ±', color: '--s3', test: r => { const a = r.deps_added || [], d = r.deps_removed || []; return (a.length || d.length) ? { label: (a.length ? '+' + a.length : '') + (d.length ? '−' + d.length : ''), title: [...a.map(x => '+ ' + x), ...d.map(x => '− ' + x)].join('\n') } : null; } },
+  // minor bumps only: patch releases of the sdk/framework land every few weeks and would drown the chart
+  { id: 'sdk', label: 'plugin sdk/framework', color: '--s4', test: (r, p) => { if (!p) return null; const minor = v => (v || '').replace(/^v/, '').split('.').slice(0, 2).join('.'); const c = []; if (r.plugin_sdk && p.plugin_sdk && minor(r.plugin_sdk) !== minor(p.plugin_sdk)) c.push('sdk ' + minor(r.plugin_sdk)); if (r.framework && p.framework && minor(r.framework) !== minor(p.framework)) c.push('fw ' + minor(r.framework)); return c.length ? { label: c.join(' '), title: `plugin-sdk ${p.plugin_sdk} → ${r.plugin_sdk}\nframework ${p.framework} → ${r.framework}` } : null; } },
+  { id: 'gap', label: 'cadence gaps', color: '--s5', test: (r, p) => { if (!p) return null; const d = (r.ts - p.ts) / 86400; return d > 14 && { label: Math.round(d) + 'd', title: `${Math.round(d)} days since ${p.version}` }; } },
+  { id: 'host', label: 'machine', color: '--muted', test: (r, p) => p && r.host && p.host && r.host !== p.host && { label: 'host', title: `timing stages ran on ${r.host}\nprevious: ${p.host}` } },
+  { id: 'tf', label: 'terraform (schema stage)', color: '--s2', test: (r, p) => p && r.terraform && p.terraform && r.terraform !== p.terraform && { label: 'tf ' + r.terraform, title: `schema stage ran with terraform ${p.terraform} → ${r.terraform}` } },
+];
+const MARKS = {}; // release id -> [{layer, label, title}]
+{
+  const last = {};
+  for (const r of RELEASES) {
+    const p = last[r.provider] || null;
+    for (const L of MARKER_LAYERS) {
+      const m = L.test(r, p);
+      if (m) (MARKS[r.id] ||= []).push({ layer: L, ...m });
+    }
+    last[r.provider] = r;
+  }
+}
+function markers(xs, pad, h) {
+  if (!MARKER_LAYERS.some(L => state.mk.includes(L.id))) return '';
+  let g = '';
+  // labels go left to right into the first row with room, so neighbouring markers stagger instead of overlapping
+  const rowEnd = [];
+  R.forEach((r, i) => {
+    for (const m of (MARKS[r.id] || [])) {
+      if (!state.mk.includes(m.layer.id)) continue;
+      const x = xs.at(i), c = `var(${m.layer.color})`, t = m.title ? `<title>${esc(m.title)}</title>` : '';
+      if (m.layer.tick) { g += `<line class="tick" stroke="${c}" x1="${x}" x2="${x}" y1="${h - pad.b - 7}" y2="${h - pad.b}">${t}</line>`; continue; }
+      g += `<line class="mark" stroke="${c}" x1="${x}" x2="${x}" y1="${pad.t}" y2="${h - pad.b}">${t}</line>`;
+      if (!m.label) continue;
+      const lx = x + 3, width = m.label.length * 5.6 + 8;
+      let row = rowEnd.findIndex(end => lx > end);
+      if (row < 0) row = rowEnd.length;
+      rowEnd[row] = lx + width;
+      g += `<text class="marklbl" fill="${c}" x="${lx}" y="${pad.t + 9 + row * 11}">${esc(m.label)}${t}</text>`;
+    }
+  });
+  return g;
+}
+const majorMarks = markers;
+function monthTicks(t0, t1) {
+  const out = [];
+  const d = new Date(t0 * 1000); d.setUTCDate(1); d.setUTCHours(0, 0, 0, 0); d.setUTCMonth(d.getUTCMonth() + 1);
+  const months = (t1 - t0) / (30 * 86400);
+  const step = months > 18 ? 3 : months > 9 ? 2 : 1;
+  while (d.getTime() / 1000 <= t1) { out.push(d.getTime() / 1000); d.setUTCMonth(d.getUTCMonth() + step); }
+  return out;
+}
+function niceTicks(lo, hi, n) {
+  if (hi === lo) { hi = lo + (Math.abs(lo) || 1); }
+  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+  const out = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-6; v += step) out.push(+v.toFixed(12));
+  return out;
+}
+function yDomain(vals, zero) {
+  const xs = vals.filter(v => v != null);
+  if (!xs.length) return [0, 1];
+  let lo = Math.min(...xs), hi = Math.max(...xs);
+  if (zero) lo = Math.min(0, lo);
+  const pad = (hi - lo) * 0.08 || Math.abs(hi) * 0.08 || 1;
+  if (!zero) lo -= pad;
+  hi += pad;
+  if (zero && lo === 0) lo = 0;
+  return [lo, hi];
+}
+
+// ---------- line chart (single or multi series) ----------
+const charts = []; // { svg, xs, series:[{values,color}], ys, hoverEls }
+function lineChart(el, series, opts) {
+  if (opts.stacked) {
+    // draw cumulative tops; the tooltip still reports the raw per-metric values
+    let prev = new Array(N).fill(0);
+    series = series.map(s => {
+      const base = prev, top = s.values.map((v, i) => v == null ? null : base[i] + v);
+      prev = top.map((t, i) => t == null ? base[i] : t);
+      return { ...s, values: top, base };
+    });
+  }
+  const hasRight = series.some(s => s.right);
+  const w = Math.max(320, Math.round(el.getBoundingClientRect().width) || 600), h = opts.h || 190, pad = { l: 52, r: hasRight ? 58 : opts.endLabels ? 110 : 14, t: 10, b: 24 };
+  const xs = xScale(w, pad);
+  const zero = state.zero === '1' || !!opts.stacked;
+  const [lo, hi] = opts.domain || yDomain(series.filter(s => !s.right).flatMap(s => s.values), zero);
+  const ys = v => pad.t + (1 - (v - lo) / (hi - lo)) * (h - pad.t - pad.b);
+  const [rlo, rhi] = yDomain(series.filter(s => s.right).flatMap(s => s.values), zero);
+  const ysR = v => pad.t + (1 - (v - rlo) / (rhi - rlo)) * (h - pad.t - pad.b);
+  const scaleOf = si => series[si].right ? ysR : ys;
+  let g = '';
+  for (const t of niceTicks(lo, hi, 4).filter(t => t >= lo && t <= hi)) g += `<line class="grid" x1="${pad.l}" x2="${w - pad.r}" y1="${ys(t)}" y2="${ys(t)}"/><text x="${pad.l - 6}" y="${ys(t) + 4}" text-anchor="end">${fmt(t, opts.unit, true)}</text>`;
+  if (hasRight) for (const t of niceTicks(rlo, rhi, 4).filter(t => t >= rlo && t <= rhi)) g += `<text x="${w - pad.r + 6}" y="${ysR(t) + 4}">${fmt(t, opts.rightUnit, true)}</text>`;
+  g += `<line class="axis" x1="${pad.l}" x2="${w - pad.r}" y1="${h - pad.b}" y2="${h - pad.b}"/>`;
+  if (hasRight) g += `<line class="axis" x1="${w - pad.r}" x2="${w - pad.r}" y1="${pad.t}" y2="${h - pad.b}"/>`;
+  g += majorMarks(xs, pad, h);
+  for (const t of xs.ticks) g += `<text x="${t.x}" y="${h - 6}" text-anchor="middle">${t.label}</text>`;
+  const ends = [];
+  series.forEach((s, si) => {
+    const sy = scaleOf(si);
+    const pts = [];
+    s.values.forEach((v, i) => { if (v != null) pts.push([xs.at(i), sy(v), i]); });
+    if (!pts.length) return;
+    // auto: dot each point only when the series has gaps (fewer points than releases), so sparse data reads as such
+    const dotsAlways = state.dots === '1' || (state.dots === 'auto' && pts.length < 40 && pts.length < N);
+    if (opts.stacked) {
+      const basePts = pts.map(p => [p[0], sy(s.base[p[2]])]);
+      g += `<path fill="${s.color}" opacity=".8" stroke="var(--surface)" stroke-width="1.5" d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} ${basePts.slice().reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} Z"/>`;
+    }
+    g += `<path class="line" stroke="${s.color}" d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')}"/>`;
+    if (opts.wash) g += `<path fill="${s.color}" opacity=".08" d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${pts[pts.length - 1][0].toFixed(1)} ${h - pad.b} L${pts[0][0].toFixed(1)} ${h - pad.b} Z"/>`;
+    if (dotsAlways) for (const p of pts) g += `<circle class="dot" cx="${p[0]}" cy="${p[1]}" r="4" fill="${s.color}"/>`;
+    const last = pts[pts.length - 1];
+    ends.push({ y: last[1], x: last[0], label: s.label, color: s.color, v: s.values[last[2]] });
+    g += `<circle class="dot hov" data-s="${si}" cx="${last[0]}" cy="${last[1]}" r="4" fill="${s.color}" opacity="0"/>`;
+  });
+  if (opts.endLabels && !hasRight && ends.length <= 4) {
+    ends.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
+    const short = t => t.length > 20 ? t.slice(0, 19) + '…' : t;
+    for (const e of ends) g += `<line class="grid" x1="${e.x + 5}" x2="${w - pad.r + 4}" y1="${e.y}" y2="${e.y}"/><text class="endlbl" x="${w - pad.r + 7}" y="${e.y + 4}">${short(e.label)}</text>`;
+  }
+  g += `<line class="cross" x1="0" x2="0" y1="${pad.t}" y2="${h - pad.b}"/>`;
+  g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg>`;
+  const svg = el.firstChild;
+  const c = { svg, xs, scaleOf, series, w, pad, unit: opts.unit, keys: opts.keys || [], cross: svg.querySelector('.cross'), dots: [...svg.querySelectorAll('.dot.hov')] };
+  charts.push(c); attachCtx(c);
+  svg.addEventListener('mousemove', ev => {
+    const r = svg.getBoundingClientRect();
+    const x = (ev.clientX - r.left) / r.width * w;
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < N; i++) { const d = Math.abs(xs.at(i) - x); if (d < bd) { bd = d; best = i; } }
+    setHover(best, ev, c);
+  });
+  svg.addEventListener('mouseleave', () => setHover(-1));
+  return c;
+}
+// per-release change as bars from a zero baseline; colour follows direction × whether up is good
+function barChart(el, values, unit, upIs, color, opts = {}) {
+  const w = Math.max(320, Math.round(el.getBoundingClientRect().width) || 600), h = 190, pad = { l: 52, r: 14, t: 10, b: 24 };
+  const xs = xScale(w, pad);
+  const d = values.map((v, i) => (i > 0 && v != null && values[i - 1] != null) ? v - values[i - 1] : null);
+  const xsv = d.filter(v => v != null);
+  const mx = Math.max(...xsv.map(Math.abs), 1e-9);
+  const lo = Math.min(0, ...xsv) - mx * 0.05, hi = Math.max(0, ...xsv) + mx * 0.05;
+  const ys = v => pad.t + (1 - (v - lo) / (hi - lo)) * (h - pad.t - pad.b);
+  let g = '';
+  for (const t of niceTicks(lo, hi, 4).filter(t => t >= lo && t <= hi)) g += `<line class="grid" x1="${pad.l}" x2="${w - pad.r}" y1="${ys(t)}" y2="${ys(t)}"/><text x="${pad.l - 6}" y="${ys(t) + 4}" text-anchor="end">${(t > 1e-9 ? '+' : '') + fmt(Math.abs(t) < 1e-9 ? 0 : t, unit, true)}</text>`;
+  for (const t of xs.ticks) g += `<text x="${t.x}" y="${h - 6}" text-anchor="middle">${t.label}</text>`;
+  g += majorMarks(xs, pad, h);
+  const bw = Math.min(24, Math.max(2, (w - pad.l - pad.r) / Math.max(N, 1) - 2));
+  d.forEach((v, i) => {
+    if (v == null) return;
+    const x = xs.at(i) - bw / 2, y0 = ys(0), y1 = ys(v), top = Math.min(y0, y1), hh = Math.max(1, Math.abs(y1 - y0));
+    const fill = upIs === 'neutral' || !upIs ? color : ((v > 0) === (upIs === 'good') ? 'var(--up)' : 'var(--down)');
+    const r = Math.min(4, bw / 2, hh);
+    // rounded at the data end, square at the baseline
+    const path = v >= 0
+      ? `M${x} ${y0} V${top + r} a${r} ${r} 0 0 1 ${r} -${r} h${bw - 2 * r} a${r} ${r} 0 0 1 ${r} ${r} V${y0} Z`
+      : `M${x} ${y0} V${top + hh - r} a${r} ${r} 0 0 0 ${r} ${r} h${bw - 2 * r} a${r} ${r} 0 0 0 ${r} -${r} V${y0} Z`;
+    g += `<path class="bar" d="${path}" fill="${fill}"/>`;
+  });
+  g += `<line class="axis" x1="${pad.l}" x2="${w - pad.r}" y1="${ys(0)}" y2="${ys(0)}"/>`;
+  g += `<line class="cross" x1="0" x2="0" y1="${pad.t}" y2="${h - pad.b}"/>`;
+  g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg>`;
+  const svg = el.firstChild;
+  const c = { svg, xs, w, scaleOf: () => ys, series: [{ values: d }], keys: opts.keys || [], cross: svg.querySelector('.cross'), dots: [] };
+  charts.push(c); attachCtx(c);
+  svg.addEventListener('mousemove', ev => {
+    const r = svg.getBoundingClientRect();
+    const x = (ev.clientX - r.left) / r.width * w;
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < N; i++) { const dd = Math.abs(xs.at(i) - x); if (dd < bd) { bd = dd; best = i; } }
+    setHover(best, ev, c);
+  });
+  svg.addEventListener('mouseleave', () => setHover(-1));
+}
+// ---------- ask an AI about a point: right-click builds a prompt with the numbers, markers and diff links ----------
+const AI_TARGETS = [
+  { id: 'claude', label: 'Claude', url: q => 'https://claude.ai/new?q=' + encodeURIComponent(q) },
+  { id: 'chatgpt', label: 'ChatGPT', url: q => 'https://chatgpt.com/?q=' + encodeURIComponent(q) },
+  { id: 'perplexity', label: 'Perplexity', url: q => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(q) },
+];
+function buildPrompt(i, keys) {
+  const r = R[i];
+  const prev = [...RELEASES].reverse().find(x => x.provider === r.provider && x.ts < r.ts) || null;
+  const pi = prev ? ROW[prev.id] : -1;
+  const ms = (keys.length ? keys : vsel()).map(k => M[k]).filter(m => m && m.unit !== 'comp');
+  const repo = META[r.provider].repo;
+  const lines = [];
+  lines.push(`Provider: ${repo} release ${r.version} (${r.date})${prev ? `, compared with the previous release ${prev.version} (${prev.date})` : ''}.`);
+  lines.push('');
+  lines.push('Measured by tfpp (https://github.com/katbyte/tf-provider-profile):');
+  for (const m of ms) {
+    const full = METRICS.find(x => x.key === m.key), cur = full.values[ROW[r.id]], before = pi >= 0 ? full.values[pi] : null;
+    if (cur == null) continue;
+    const d = before != null ? fmtDelta(before, cur, m.unit).text : '';
+    lines.push(`- ${m.label}: ${before != null ? fmt(before, m.unit) + ' → ' : ''}${fmt(cur, m.unit)}${d ? ` (${d})` : ''}`);
+  }
+  const marks = (MARKS[r.id] || []).map(m => m.title || m.label).filter(Boolean);
+  if (marks.length) { lines.push(''); lines.push('Also in this release: ' + marks.join('; ')); }
+  if (r.go_version) lines.push(`Built with ${r.go_version}${prev && prev.go_version && prev.go_version !== r.go_version ? ` (previous release: ${prev.go_version})` : ''}.`);
+  lines.push('');
+  lines.push('Links:');
+  if (prev) lines.push(`- diff: https://github.com/${repo}/compare/${prev.version}...${r.version}`);
+  lines.push(`- changelog: https://github.com/${repo}/blob/${r.version}/CHANGELOG.md`);
+  lines.push(`- release: https://github.com/${repo}/releases/tag/${r.version}`);
+  lines.push('');
+  lines.push('What in this release most likely explains the change in these numbers? Look at the diff and changelog, name the specific commits, pull requests, dependency or toolchain changes responsible, and say how confident you are.');
+  return lines.join('\n');
+}
+function showCtx(i, ev, active) {
+  const ctx = $('#ctx'), r = R[i];
+  const prompt = buildPrompt(i, active?.keys || []);
+  ctx.querySelector('.v').innerHTML = `Ask about ${multi() ? r.provider + ' ' : ''}${esc(r.version)} <span>${r.date}</span>`;
+  ctx.querySelector('.row').innerHTML = AI_TARGETS.map(t => `<button data-ai="${t.id}">${t.label}</button>`).join('') + `<button data-ai="copy">copy prompt</button><button data-ai="close">close</button>`;
+  ctx.querySelector('textarea').value = prompt;
+  ctx.hidden = false;
+  const w = ctx.offsetWidth, h = ctx.offsetHeight;
+  ctx.style.left = Math.min(ev.clientX, innerWidth - w - 8) + 'px';
+  ctx.style.top = Math.min(ev.clientY, innerHeight - h - 8) + 'px';
+}
+$('#ctx').addEventListener('click', ev => {
+  const b = ev.target.closest('button[data-ai]'); if (!b) return;
+  const ctx = $('#ctx'), prompt = ctx.querySelector('textarea').value;
+  if (b.dataset.ai === 'close') { ctx.hidden = true; return; }
+  if (b.dataset.ai === 'copy') { navigator.clipboard?.writeText(prompt); b.textContent = 'copied'; return; }
+  const t = AI_TARGETS.find(x => x.id === b.dataset.ai);
+  window.open(t.url(prompt), '_blank', 'noopener');
+  ctx.hidden = true;
+});
+document.addEventListener('click', ev => { if (!ev.target.closest('#ctx')) $('#ctx').hidden = true; });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') $('#ctx').hidden = true; });
+function nearestIndex(c, ev) {
+  const r = c.svg.getBoundingClientRect();
+  const x = (ev.clientX - r.left) / r.width * c.w;
+  let best = 0, bd = Infinity;
+  for (let i = 0; i < N; i++) { const d = Math.abs(c.xs.at(i) - x); if (d < bd) { bd = d; best = i; } }
+  return best;
+}
+function attachCtx(c) {
+  c.svg.addEventListener('contextmenu', ev => { ev.preventDefault(); setHover(-1); showCtx(nearestIndex(c, ev), ev, c); });
+}
+function setHover(i, ev, active) {
+  const tip = $('#tip');
+  for (const c of charts) {
+    if (i < 0) { c.cross.style.opacity = 0; c.dots.forEach(d => d.setAttribute('opacity', 0)); continue; }
+    const x = c.xs.at(i);
+    c.cross.setAttribute('x1', x); c.cross.setAttribute('x2', x); c.cross.style.opacity = 1;
+    c.dots.forEach((d, si) => { const v = c.series[si].values[i]; if (v == null) { d.setAttribute('opacity', 0); return; } d.setAttribute('cx', x); d.setAttribute('cy', c.scaleOf(si)(v)); d.setAttribute('opacity', 1); });
+  }
+  if (i < 0) { tip.style.display = 'none'; return; }
+  const rows = tipRows(i, active?.keys || []);
+  tip.innerHTML = `<div class="v">${multi() ? R[i].provider + ' ' : ''}${R[i].version} <span>${R[i].date}${R[i].go_version ? ' · ' + R[i].go_version : ''}</span></div><table>${rows}</table>`;
+  tip.style.display = 'block';
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = ev.clientX + 16, top = ev.clientY + 16;
+  if (left + tw > innerWidth - 8) left = ev.clientX - tw - 16;
+  if (top + th > innerHeight - 8) top = innerHeight - th - 8;
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+let tipRows = () => '';
+// rows for the tooltip: the hovered chart's metrics first, a divider, then everything else selected
+function metricTipRows(i, ms, activeKeys) {
+  const first = ms.filter(m => activeKeys.includes(m.key));
+  const rest = state.tip === 'current' && first.length ? [] : ms.filter(m => !activeKeys.includes(m.key));
+  const row = (m, sep) => {
+    const v = m.values[i], prev = i > 0 ? m.values[i - 1] : null;
+    const d = fmtDelta(prev, v, m.unit, m.up_is);
+    return `<tr class="${sep ? 'sep' : ''}"><td><i style="background:${colorOf(m.key)}"></i>${m.label}</td><td class="n">${fmt(v, m.unit)}</td><td class="d ${d.cls}">${d.text}</td></tr>`;
+  };
+  return [...first.map(m => row(m, false)), ...rest.map((m, j) => row(m, j === 0 && first.length > 0))].join('');
+}
+
+// ---------- sidebar: enabled / presets / catalogue tree ----------
+const PRESETS = [
+  { name: 'size', desc: 'zip + binary', keys: ['binary.{plat}.zip_bytes', 'binary.{plat}.binary_bytes'] },
+  { name: 'memory', desc: 'provider rss', keys: ['startup.max_rss_bytes', 'schema.provider_max_rss_bytes'] },
+  { name: 'speed', desc: 'startup, schema, build, lint', keys: ['startup.handshake_med_ms', 'schema.wall_med_ms', 'build.clean_build_s', 'lint.duration_s'] },
+  { name: 'binary make-up', desc: 'sections', keys: ['text', 'pclntab', 'rodata', 'noptrbss', 'typelink'].map(x => `binary.{plat}.section.${x}`) },
+  { name: 'resources', desc: 'stacked by kind', stack: true, keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'] },
+  { name: 'coverage', desc: 'list + identity %', keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct'] },
+  { name: 'schema', desc: 'attrs + json', keys: ['schema.attributes', 'schema.blocks', 'schema.json_bytes'] },
+  { name: 'source', desc: 'lines + files, stacked', stack: true, keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines', 'source.go_files', 'source.go_test_files', 'source.vendor_go_files'] },
+  { name: 'typed migration', desc: 'typed vs untyped, stacked', stack: true, keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_resource_pct', 'source.typed_data_sources', 'source.untyped_data_sources'] },
+  { name: 'churn', desc: 'per release', keys: ['source.commits', 'source.files_changed', 'source.lines_added', 'source.lines_removed', 'source.changelog_total'] },
+  { name: 'build & lint', desc: 'sampled', keys: ['build.clean_build_s', 'build.warm_build_s', 'build.local_binary_bytes', 'lint.duration_s', 'lint.issues'] },
+  { name: 'go-azure-sdk migration', desc: 'by kind and sdk, stacked', panels: ['resource', 'data_source', 'list', 'action', 'ephemeral'].map(kind => ({ stack: true, keys: ['legacy', 'both', 'go_azure_sdk', 'none'].map(c => `source.sdk.${kind}.${c}`) })) },
+  { name: 'composition', desc: 'stacked charts', keys: ['modules', 'services', 'sections', 'movers'].map(k => `comp.{plat}.${k}`) },
+];
+// a preset's concrete keys depend on which providers are visible
+const presetPanels = p => (p.panels || [{ keys: p.keys, stack: p.stack }]).map(x => ({ stack: !!x.stack, keys: expand(x.keys) })).filter(x => x.keys.length);
+const presetKeys = p => presetPanels(p).flatMap(x => x.keys);
+
+// expand state survives reloads (per browser); enabled + presets start open, everything else closed
+let openNodes = new Set(['enabled', 'presets']);
+try { const saved = JSON.parse(localStorage.getItem('tfpp.open') || 'null'); if (Array.isArray(saved)) openNodes = new Set(saved); } catch (e) { /* storage unavailable */ }
+function saveOpen() { try { localStorage.setItem('tfpp.open', JSON.stringify([...openNodes])); } catch (e) { /* ignore */ } }
+
+const platOf = m => { const k = bare(m.key); return (k.startsWith('binary.') || k.startsWith('comp.')) ? k.split('.')[1] : ''; };
+const shortLabel = m => m.label.replace(/ \((linux|darwin|windows|freebsd|openbsd)_[a-z0-9]+\)$/, '');
+const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+function metricRow(m, opts = {}) {
+  const on = state.sel.includes(m.key);
+  let lr = '';
+  if (opts.full && state.view === 'twoaxes') {
+    const r = state.right.includes(m.key);
+    lr = `<span class="lr"><button data-lr="L" data-k="${m.key}" class="${r ? '' : 'on'}" title="left axis">L</button><button data-lr="R" data-k="${m.key}" class="${r ? 'on' : ''}" title="right axis">R</button></span>`;
+  }
+  return `<label class="${on ? 'on' : ''}" style="--c:${on ? colorOf(m.key) : 'transparent'}" title="${esc(m.desc || m.key)}"><input type="checkbox" data-k="${m.key}" ${on ? 'checked' : ''} hidden><span class="sw"></span>${esc(opts.full ? lbl(m) : shortLabel(m))}${lr}<span class="unit">${m.unit}</span></label>`;
+}
+function node(id, title, count, body, force) {
+  const open = force !== undefined ? force : openNodes.has(id);
+  return `<details data-id="${id}" ${open ? 'open' : ''}><summary>${esc(title)}<span class="n">${count}</span></summary>${body}</details>`;
+}
+
+function renderSidebar() {
+  const q = ($('#search').value || '').toLowerCase().trim();
+  const match = m => !q || (m.label + ' ' + m.key + ' ' + m.group).toLowerCase().includes(q);
+  let html = '';
+
+  // enabled
+  const enabled = vsel().map(k => M[k]);
+  html += node('enabled', 'enabled', enabled.length, enabled.length ? enabled.map(m => metricRow(m, { full: true })).join('') : '<div class="none">nothing selected</div>');
+
+  // presets
+  const presets = PRESETS.map(p => ({ ...p, ks: presetKeys(p) })).filter(p => p.ks.length);
+  html += node('presets', 'presets', presets.length, presets.map(p => {
+    const n = p.ks.filter(k => state.sel.includes(k)).length;
+    const st = n === 0 ? '' : n === p.ks.length ? 'all' : 'part';
+    return `<label class="preset" title="${esc(p.ks.map(k => lbl(M[k])).join('\n'))}"><input type="checkbox" data-preset="${esc(p.name)}" hidden><span class="sw ${st}"></span>${esc(p.name)}<span class="desc">${esc(p.desc)} · ${p.ks.length}</span></label>`;
+  }).join(''));
+
+  // catalogue: (provider ->) group -> platform -> metric
+  for (const prov of visible()) {
+  let phtml = '', pOn = 0, pAll = 0;
+  for (const g of GROUPS.filter(g => g.provider === prov)) {
+    const ms = CATALOGUE.filter(m => m.group === g.id && match(m));
+    if (!ms.length) continue;
+    const plats = [...new Set(ms.map(platOf))];
+    let body = '';
+    if (plats.length === 1 && plats[0] === '') {
+      body = ms.map(m => metricRow(m)).join('');
+    } else {
+      for (const pl of plats) {
+        const pm = ms.filter(m => platOf(m) === pl);
+        const id = g.id + '/' + (pl || '-');
+        body += node(id, pl || 'other', pm.length, pm.map(m => metricRow(m)).join(''), q ? true : undefined);
+      }
+    }
+    const nOn = ms.filter(m => state.sel.includes(m.key)).length;
+    pOn += nOn; pAll += ms.length;
+    phtml += node(g.id, g.label, nOn ? `${nOn}/${ms.length}` : ms.length, body, q ? true : undefined);
+  }
+  html += multi() ? node('prov/' + prov, prov, pOn ? `${pOn}/${pAll}` : pAll, phtml, q ? true : undefined) : phtml;
+  }
+  $('#groups').innerHTML = html;
+}
+$('#groups').addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.dataset.preset) {
+    const p = PRESETS.find(x => x.name === t.dataset.preset);
+    const ks = presetKeys(p);
+    if (ks.every(k => state.sel.includes(k))) removeKeys(ks);
+    else for (const x of presetPanels(p)) for (const u of [...new Set(x.keys.map(k => M[k].unit))]) addKeys(x.keys.filter(k => M[k].unit === u), true, x.stack); // one combined panel per unit
+    update();
+    return;
+  }
+  const k = t.dataset.k; if (!k) return;
+  if (t.checked) addKeys([k], false); else removeKeys([k]);
+  update();
+});
+$('#groups').addEventListener('click', ev => {
+  const b = ev.target.closest('button[data-lr]'); if (!b) return;
+  ev.preventDefault(); ev.stopPropagation();
+  const k = b.dataset.k;
+  if (b.dataset.lr === 'R') { if (!state.right.includes(k)) state.right.push(k); } else state.right = state.right.filter(x => x !== k);
+  update();
+});
+$('#groups').addEventListener('toggle', ev => {
+  const d = ev.target; if (!d.dataset || !d.dataset.id || $('#search').value) return;
+  if (d.open) openNodes.add(d.dataset.id); else openNodes.delete(d.dataset.id);
+  saveOpen();
+}, true);
+$('#search').addEventListener('input', renderSidebar);
+$('#clear').onclick = () => { state.groups = []; syncSel(); update(); };
+$('#defaults').onclick = () => { state.groups = DEFAULT_GROUPS(); state.colors = {}; syncSel(); update(); };
+
+// ---------- controls ----------
+function renderControls() {
+  for (const seg of document.querySelectorAll('.seg[data-key]')) {
+    const k = seg.dataset.key;
+    for (const b of seg.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v === String(state[k]));
+  }
+  $('#markers').innerHTML = MARKER_LAYERS.map(L => `<button data-mk="${L.id}" class="${state.mk.includes(L.id) ? 'on' : ''}" style="--mc:var(${L.color})" title="${esc(L.label)}"><i></i>${L.label}</button>`).join('');
+  const cols = $('#cols');
+  cols.value = state.cols;
+  cols.onchange = () => { state.cols = cols.value; update(); };
+  const sel = $('#prov');
+  if (!sel.options.length) {
+    sel.innerHTML = (PROVIDERS.length > 1 ? '<option value="all">all</option>' : '') + PROVIDERS.map(p => `<option value="${p}">${p}</option>`).join('');
+    sel.onchange = () => { state.p = sel.value; state.from = state.to = ''; update(); };
+    if (PROVIDERS.length < 2) sel.disabled = true;
+  }
+  sel.value = state.p;
+  const a = $('#rangeA'), b = $('#rangeB');
+  if (a.dataset.p !== state.p) {
+    const opts = VIS.map(([r]) => `<option value="${multi() ? r.id : r.version}">${multi() ? r.provider + ' ' : ''}${r.version}</option>`).join('');
+    a.innerHTML = opts; b.innerHTML = opts; a.dataset.p = state.p;
+    a.onchange = () => { state.from = a.value; update(); };
+    b.onchange = () => { state.to = b.value; update(); };
+  }
+  a.value = multi() ? R[0].id : R[0].version; b.value = multi() ? R[N - 1].id : R[N - 1].version;
+}
+document.addEventListener('click', ev => {
+  const mk = ev.target.closest('button[data-mk]');
+  if (mk) { const id = mk.dataset.mk; state.mk = state.mk.includes(id) ? state.mk.filter(x => x !== id) : [...state.mk, id]; update(); return; }
+  const b = ev.target.closest('.seg[data-key] button'); if (!b) return;
+  state[b.parentElement.dataset.key] = b.dataset.v; update();
+});
+
+// ---------- main charts ----------
+function firstLast(vals) {
+  let f = null, l = null, fi = -1, li = -1;
+  vals.forEach((v, i) => { if (v == null) return; if (f == null) { f = v; fi = i; } l = v; li = i; });
+  return { f, l, fi, li };
+}
+function renderCharts() {
+  charts.length = 0;
+  const el = $('#charts');
+  if (!vsel().length) { el.innerHTML = '<div class="empty">pick metrics on the left</div>'; tipRows = () => ''; return; }
+  const sel = vsel().map(k => M[k]).filter(m => m.unit !== 'comp');
+  tipRows = (i, active = []) => metricTipRows(i, sel, active);
+
+  const legend = ms => `<div class="legend">${ms.map(m => `<span><i style="background:${colorOf(m.key)}"></i>${m.label}${state.view === 'twoaxes' ? (state.right.includes(m.key) ? ' (right)' : ' (left)') : ''}</span>`).join('')}</div>`;
+  const cap = sel.length > 8 ? ' · only the first 8 selected metrics are drawn' : '';
+
+  if (state.view === 'pct') {
+    const shown = sel.slice(0, 8);
+    const series = shown.map(m => {
+      const { f } = firstLast(m.values);
+      return { label: m.label, color: colorOf(m.key), values: m.values.map(v => v == null || !f ? null : (v / f - 1) * 100) };
+    });
+    el.innerHTML = `<div class="panel wide"><h2>% change from first release</h2><p class="desc">each series relative to its own first value (${R[0].version}); hover for the real numbers${cap}</p><div class="c"></div>${legend(shown)}</div>`;
+    lineChart(el.querySelector('.c'), series, { unit: 'pctchange', h: 340, keys: shown.map(m => m.key) });
+    return;
+  }
+
+  if (state.view === 'unit') {
+    const units = [...new Set(sel.map(m => m.unit))];
+    el.innerHTML = units.map(u => {
+      const ms = sel.filter(m => m.unit === u).slice(0, 8);
+      return `<div class="panel wide" data-u="${u}"><h2>${UNIT_LABEL[u] || u}</h2><p class="desc">${ms.length} metric${ms.length > 1 ? 's' : ''} sharing one ${u} axis${sel.filter(m => m.unit === u).length > 8 ? ' · only the first 8 are drawn' : ''}</p><div class="c"></div>${legend(ms)}</div>`;
+    }).join('');
+    for (const p of el.querySelectorAll('.panel')) {
+      const u = p.dataset.u, ms = sel.filter(m => m.unit === u).slice(0, 8);
+      lineChart(p.querySelector('.c'), ms.map(m => ({ label: m.label, color: colorOf(m.key), values: m.values })), { unit: u, h: units.length > 1 ? 240 : 340, wash: ms.length === 1, keys: ms.map(m => m.key) });
+    }
+    return;
+  }
+
+  if (state.view === 'twoaxes') {
+    // first time in: everything not sharing the first metric's unit goes right
+    if (!state.right.length && sel.length > 1) { state.right = sel.filter(m => m.unit !== sel[0].unit).map(m => m.key); writeHash(); renderSidebar(); }
+    const shown = sel.slice(0, 8);
+    const left = shown.filter(m => !state.right.includes(m.key)), right = shown.filter(m => state.right.includes(m.key));
+    const lu = left[0]?.unit || right[0]?.unit, ru = right[0]?.unit || '';
+    const mixed = side => [...new Set(side.map(m => m.unit))].length > 1;
+    const series = shown.map(m => ({ label: m.label, color: colorOf(m.key), values: m.values, right: state.right.includes(m.key) }));
+    el.innerHTML = `<div class="panel wide"><h2>left: ${UNIT_LABEL[lu] || lu || '–'} · right: ${UNIT_LABEL[ru] || ru || '–'}</h2><p class="desc">use the L/R toggles under "enabled" to move a metric between axes${mixed(left) || mixed(right) ? ' · <b>an axis is mixing units; its ticks use the first metric\'s unit</b>' : ''}${cap}</p><div class="c"></div>${legend(shown)}</div>`;
+    lineChart(el.querySelector('.c'), series, { unit: lu, rightUnit: ru, h: 340, keys: shown.map(m => m.key) });
+    return;
+  }
+
+  if (state.view === 'delta') {
+    el.innerHTML = `<div class="panels" data-cols="${state.cols}">${sel.map(m => {
+      const d = m.values.map((v, i) => (i > 0 && v != null && m.values[i - 1] != null) ? v - m.values[i - 1] : null).filter(v => v != null);
+      const big = d.length ? d.reduce((a, b) => Math.abs(b) > Math.abs(a) ? b : a, 0) : null;
+      const bi = big == null ? -1 : m.values.findIndex((v, i) => i > 0 && v != null && m.values[i - 1] != null && v - m.values[i - 1] === big);
+      return `<div class="panel" data-k="${m.key}"><h2><span class="sw" style="background:${colorOf(m.key)}"></span>${m.label}<span class="val">${bi >= 0 && big !== 0 ? `<span class="delta">largest: ${(big > 0 ? '+' : '−') + fmt(Math.abs(big), m.unit)} in ${R[bi].version}</span>` : '<span class="delta">no change in range</span>'}</span></h2><p class="desc">change from the previous release</p><div class="c"></div></div>`;
+    }).join('')}</div>`;
+    for (const p of el.querySelectorAll('.panel')) {
+      const m = M[p.dataset.k];
+      barChart(p.querySelector('.c'), m.values, m.unit, m.up_is, colorOf(m.key), { keys: [m.key] });
+    }
+    return;
+  }
+
+  const wideBtn = (g, gi) => `<button class="pbtn ${g.wide ? 'on' : ''}" data-act="wide" data-g="${gi}" title="span the full row">wide</button>`;
+  // panels: one chart per group; drag a panel onto another to combine, split to separate
+  el.innerHTML = `<div class="panels" data-cols="${state.cols}">${visibleGroups().map(g => {
+    const gi = g.gi, ms = g.keys.map(k => M[k]), units = unitsOf(g);
+    if (isComp(g.keys[0])) {
+      const c = ms[0];
+      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag to reorder">⠿</span>${esc(c.label)}<span class="val">${wideBtn(g, gi)} <span class="rm" data-rm="${c.key}" title="remove">✕</span></span></h2><p class="desc">${esc(c.desc)}</p><div class="c"></div></div>`;
+    }
+    if (ms.length === 1) {
+      const m = ms[0], { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is);
+      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="sw" style="background:${colorOf(m.key)}"></span>${esc(m.label)}<span class="val">${fmt(l, m.unit)} <span class="delta ${d.cls}" title="change from ${R[0].version} to ${R[N - 1].version}">${d.text}</span> ${wideBtn(g, gi)}</span></h2>${m.desc ? `<p class="desc">${esc(m.desc)}</p>` : ''}<div class="c"></div></div>`;
+    }
+    const title = `${ms.length} metrics · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}`;
+    const stackBtn = units.length === 1 ? `<button class="pbtn ${g.stack ? 'on' : ''}" data-act="stack" data-g="${gi}" title="stack the metrics on top of each other">${g.stack ? 'stacked' : 'stack'}</button>` : '';
+    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span>${title}<span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button></span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is); return `<span><i style="background:${colorOf(m.key)}"></i>${esc(m.label)}${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
+  }).join('')}</div>`;
+  for (const p of el.querySelectorAll('.panel[data-g]')) {
+    const g = visibleGroups().find(x => x.gi === +p.dataset.g), units = unitsOf(g);
+    if (isComp(g.keys[0])) { renderComp(p.querySelector('.c'), M[g.keys[0]]); continue; }
+    const series = g.keys.map(k => ({ label: M[k].label, color: colorOf(k), values: M[k].values, right: M[k].unit !== units[0] }));
+    lineChart(p.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: g.stack && units.length === 1, h: series.length > 1 ? 240 : 190, keys: g.keys });
+  }
+}
+// panel buttons and legend removals
+$('#charts').addEventListener('click', ev => {
+  const rm = ev.target.closest('[data-rm]');
+  if (rm) { removeKeys([rm.dataset.rm]); update(); return; }
+  const b = ev.target.closest('button[data-act]'); if (!b) return;
+  const gi = +b.dataset.g;
+  if (b.dataset.act === 'split') splitGroup(gi);
+  else if (b.dataset.act === 'stack') state.groups[gi].stack = !state.groups[gi].stack;
+  else if (b.dataset.act === 'wide') state.groups[gi].wide = !state.groups[gi].wide;
+  update();
+});
+// drag one panel onto another to combine them
+let dragFrom = -1;
+$('#charts').addEventListener('dragstart', ev => {
+  const p = ev.target.closest('.panel[data-g]'); if (!p) return;
+  dragFrom = +p.dataset.g; p.classList.add('dragging');
+  ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', p.dataset.g);
+});
+const clearDrop = () => { for (const p of document.querySelectorAll('.panel.over, .panel.before, .panel.after')) p.classList.remove('over', 'before', 'after'); };
+// left/right quarter of a panel = drop before/after it (reorder); the middle = combine
+const dropMode = (p, ev) => { const r = p.getBoundingClientRect(), f = (ev.clientX - r.left) / r.width; return f < 0.25 ? 'before' : f > 0.75 ? 'after' : 'over'; };
+$('#charts').addEventListener('dragend', () => { dragFrom = -1; clearDrop(); for (const p of document.querySelectorAll('.panel.dragging')) p.classList.remove('dragging'); });
+$('#charts').addEventListener('dragover', ev => {
+  const p = ev.target.closest('.panel[data-g]'); if (!p || dragFrom < 0 || +p.dataset.g === dragFrom) return;
+  ev.preventDefault(); ev.dataTransfer.dropEffect = 'move';
+  const mode = dropMode(p, ev);
+  if (!p.classList.contains(mode)) { clearDrop(); p.classList.add(mode); }
+});
+$('#charts').addEventListener('dragleave', ev => { const p = ev.target.closest('.panel[data-g]'); if (p && !p.contains(ev.relatedTarget)) p.classList.remove('over', 'before', 'after'); });
+$('#charts').addEventListener('drop', ev => {
+  const p = ev.target.closest('.panel[data-g]'); if (!p || dragFrom < 0) return;
+  ev.preventDefault();
+  const mode = dropMode(p, ev), to = +p.dataset.g;
+  if (mode === 'over') mergeGroups(dragFrom, to); else moveGroup(dragFrom, to, mode === 'after');
+  dragFrom = -1; clearDrop(); update();
+});
+
+// ---------- table ----------
+function renderTable() {
+  const el = $('#tableview');
+  if (state.table !== '1' || !vsel().length) { el.innerHTML = ''; return; }
+  const sel = vsel().map(k => M[k]).filter(m => m.unit !== 'comp');
+  el.innerHTML = `<div class="scroll"><table class="data"><thead><tr><th>release</th><th>date</th>${sel.map(m => `<th>${lbl(m)}</th>`).join('')}</tr></thead><tbody>${R.map((r, i) => `<tr><td>${multi() ? r.provider + ' ' : ''}${r.version}</td><td>${r.date}</td>${sel.map(m => `<td>${fmt(m.values[i], m.unit)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+
+// ---------- composition (stacked areas) ----------
+function stackedArea(el, comp, opts) {
+  const top = opts.top || 7;
+  const names = comp.names.slice(0, top);
+  const rows = comp.rows.map(row => {
+    const vals = names.map((_, j) => row[j]);
+    let other = 0, any = false;
+    for (let j = top; j < row.length; j++) if (row[j] != null) { other += row[j]; any = true; }
+    if (row.slice(0, top).some(v => v != null)) vals.push(any || comp.names.length > top ? other : 0); else vals.push(null);
+    return vals;
+  });
+  const labels = [...names, comp.names.length > top ? 'other (' + (comp.names.length - top) + ')' : null].filter(Boolean);
+  const colors = labels.map((_, j) => j < names.length ? css(SLOTS[j % SLOTS.length]) : 'var(--other)');
+  const w = Math.max(320, Math.round(el.getBoundingClientRect().width) || 600), h = 260, pad = { l: 52, r: 14, t: 10, b: 24 };
+  const xs = xScale(w, pad);
+  const totals = rows.map(r => r.some(v => v != null) ? r.reduce((a, v) => a + (v || 0), 0) : null);
+  const hi = Math.max(...totals.filter(v => v != null), 1) * 1.05;
+  const ys = v => pad.t + (1 - v / hi) * (h - pad.t - pad.b);
+  let g = '';
+  for (const t of niceTicks(0, hi, 4)) g += `<line class="grid" x1="${pad.l}" x2="${w - pad.r}" y1="${ys(t)}" y2="${ys(t)}"/><text x="${pad.l - 6}" y="${ys(t) + 4}" text-anchor="end">${fmt(t, 'bytes', true)}</text>`;
+  for (const t of xs.ticks) g += `<text x="${t.x}" y="${h - 6}" text-anchor="middle">${t.label}</text>`;
+  const idx = rows.map((r, i) => r.some(v => v != null) ? i : -1).filter(i => i >= 0);
+  const cum = idx.map(() => 0);
+  const series = labels.map((lbl, j) => ({ label: lbl, color: colors[j], values: rows.map(r => r[j]) }));
+  labels.forEach((lbl, j) => {
+    const topPts = [], botPts = [];
+    idx.forEach((i, k) => { const b = cum[k], t = b + (rows[i][j] || 0); botPts.push([xs.at(i), ys(b)]); topPts.push([xs.at(i), ys(t)]); cum[k] = t; });
+    const d = topPts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' ' + botPts.slice().reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z';
+    g += `<path d="${d}" fill="${colors[j]}" opacity=".85" stroke="var(--surface)" stroke-width="1.5"/>`;
+  });
+  g += `<line class="axis" x1="${pad.l}" x2="${w - pad.r}" y1="${h - pad.b}" y2="${h - pad.b}"/>`;
+  g += majorMarks(xs, pad, h);
+  g += `<line class="cross" x1="0" x2="0" y1="${pad.t}" y2="${h - pad.b}"/>`;
+  g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg><div class="legend">${labels.map((l, j) => `<span><i class="box" style="background:${colors[j]}"></i>${l}</span>`).join('')}</div>`;
+  const svg = el.firstChild;
+  const c = { svg, xs, w, scaleOf: () => ys, series, cross: svg.querySelector('.cross'), dots: [], unit: 'bytes', own: true, totals, keys: [] };
+  charts.push(c); attachCtx(c);
+  svg.addEventListener('mousemove', ev => {
+    const r = svg.getBoundingClientRect();
+    const x = (ev.clientX - r.left) / r.width * w;
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < N; i++) { const d = Math.abs(xs.at(i) - x); if (d < bd) { bd = d; best = i; } }
+    const saved = tipRows;
+    tipRows = i => `<tr><td>total</td><td class="n">${fmt(totals[i], 'bytes')}</td><td class="d">${i > 0 && totals[i - 1] != null && totals[i] != null ? fmtDelta(totals[i - 1], totals[i], 'bytes').text : ''}</td></tr>` + series.map(s => `<tr><td><i style="background:${s.color}"></i>${s.label}</td><td class="n">${fmt(s.values[i], 'bytes')}</td><td class="d">${i > 0 && s.values[i - 1] != null && s.values[i] != null ? fmtDelta(s.values[i - 1], s.values[i], 'bytes').text : ''}</td></tr>`).join('');
+    setHover(best, ev, c);
+    tipRows = saved;
+  });
+  svg.addEventListener('mouseleave', () => setHover(-1));
+}
+function renderComp(el, c) {
+  const comp = COMP[`${c.provider}:${c.plat}`];
+  if (!comp) { el.innerHTML = '<div class="empty">no binary composition data</div>'; return; }
+  if (c.kind !== 'movers') { stackedArea(el, comp[c.kind], { top: c.kind === 'sections' ? 8 : 7 }); return; }
+  const mv = comp.modules.names.map((n, j) => {
+    const col = comp.modules.rows.map(r => r[j]);
+    const { f, l } = firstLast(col);
+    return { n, f, l, d: (l || 0) - (f || 0) };
+  }).filter(x => x.f != null || x.l != null).sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 20);
+  const totF = comp.modules.rows.find(r => r.some(v => v != null)), totL = [...comp.modules.rows].reverse().find(r => r.some(v => v != null));
+  const sum = r => r ? r.reduce((a, v) => a + (v || 0), 0) : null;
+  el.innerHTML = `<div class="scroll"><table class="data"><thead><tr><th>module</th><th></th><th>first (${R[0].version})</th><th>last (${R[N - 1].version})</th><th>change</th></tr></thead><tbody>
+    <tr><td><b>all attributed text</b></td><td></td><td>${fmt(sum(totF), 'bytes')}</td><td>${fmt(sum(totL), 'bytes')}</td><td class="${fmtDelta(sum(totF), sum(totL), 'bytes', 'bad').cls}">${fmtDelta(sum(totF), sum(totL), 'bytes').text}</td></tr>
+    ${mv.map(x => `<tr><td>${esc(x.n)}</td><td></td><td>${fmt(x.f, 'bytes')}</td><td>${fmt(x.l, 'bytes')}</td><td class="${x.d > 0 ? 'down' : x.d < 0 ? 'up' : ''}">${x.f == null ? 'new' : x.l == null ? 'removed' : fmtDelta(x.f, x.l, 'bytes').text}</td></tr>`).join('')}
+  </tbody></table></div><p class="note">growth is coloured red and shrinkage green, since this table is about binary size</p>`;
+}
+
+// ---------- compare two releases ----------
+function renderCompare() {
+  const a = $('#cmpA'), b = $('#cmpB');
+  if (a.dataset.p !== state.p) {
+    const opts = VIS.map(([r]) => `<option value="${r.id}">${multi() ? r.provider + ' ' : ''}${r.version} · ${r.date}</option>`).join('');
+    a.innerHTML = opts; b.innerHTML = opts; a.dataset.p = state.p;
+    a.value = VIS[0][0].id; b.value = VIS[VIS.length - 1][0].id;
+    a.onchange = b.onchange = renderCompare;
+  }
+  const ia = ROW[a.value], ib = ROW[b.value];
+  let rows = '';
+  for (const g of GROUPS.filter(g => visible().includes(g.provider))) {
+    const ms = METRICS.filter(m => m.group === g.id && m.values[ia] != null && m.values[ib] != null);
+    if (!ms.length) continue;
+    rows += `<tr><th colspan="4" style="text-align:left">${multi() ? g.provider + ' · ' : ''}${g.label}</th></tr>`;
+    for (const m of ms) {
+      const d = fmtDelta(m.values[ia], m.values[ib], m.unit, m.up_is);
+      rows += `<tr><td>${esc(m.label)}</td><td>${fmt(m.values[ia], m.unit)}</td><td>${fmt(m.values[ib], m.unit)}</td><td class="${d.cls}">${d.text}</td></tr>`;
+    }
+  }
+  $('#compare').innerHTML = `<table class="data"><thead><tr><th>metric</th><th>${RELEASES[ia].version}</th><th>${RELEASES[ib].version}</th><th>change</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---------- status ----------
+function renderStatus() {
+  const stages = ['download','binary','startup','schema','source','build','lint'];
+  const esc = t => String(t).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const cell = v => {
+    if (!v) return '<td><span style="color:var(--muted)">–</span></td>';
+    if (v === 'ok') return '<td>ok</td>';
+    return '<td><span class="stagefail" title="' + esc(v) + '">failed</span></td>';
+  };
+  let rows = '';
+  for (const [r] of VIS) rows += '<tr><td>' + (multi() ? r.provider + ' ' : '') + r.version + '</td><td>' + r.date + '</td><td>' + (r.go_version || '') + '</td><td>' + (r.terraform || '') + '</td>' + stages.map(s => cell(r.stages[s])).join('') + '</tr>';
+  $('#status').innerHTML = '<table class="data"><thead><tr><th>release</th><th>date</th><th>go</th><th>terraform</th>' + stages.map(s => '<th>' + s + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function update() {
+  applyRange();
+  writeHash();
+  renderSidebar(); renderControls(); renderCharts(); renderTable(); renderCompare(); renderStatus(); renderSubtitle();
+}
+readHash();
+function renderSubtitle() {
+  const rs = VIS.map(([r]) => r);
+  const repos = visible().map(p => META[p].repo).join(', ');
+  const gen = visible().map(p => META[p].generated.slice(0, 10)).sort().pop();
+  $('#subtitle').textContent = `${rs.length} releases · ${rs[0]?.version} (${rs[0]?.date}) → ${rs[rs.length - 1]?.version} (${rs[rs.length - 1]?.date}) · ${repos} · generated ${gen} by ${META[visible()[0]].tool}`;
+  document.title = 'tfpp · ' + state.p;
+}
+update();
+addEventListener('hashchange', () => { readHash(); update(); });
+let resizeTimer;
+addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderCharts(); }, 150); });
+})();
+</script>
+</body>
+</html>

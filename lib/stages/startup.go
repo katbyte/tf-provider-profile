@@ -1,0 +1,116 @@
+package stages
+
+import (
+	"bufio"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"os/exec"
+	"regexp"
+	"strings"
+	"time"
+
+	"github.com/katbyte/tf-provider-profile/lib/provider"
+	"github.com/katbyte/tf-provider-profile/lib/results"
+)
+
+// go-plugin handshake: the provider only starts when the parent presents the magic cookie.
+const (
+	pluginMagicCookieKey   = "TF_PLUGIN_MAGIC_COOKIE"
+	pluginMagicCookieValue = "d602bf8f470bc67ca7faa0386276bbdd4330efaf76d1a219cb4d6991ca9872b2"
+)
+
+// handshake lines look like: 1|5|unix|/tmp/plugin123|grpc|
+var handshakeRe = regexp.MustCompile(`^(\d+)\|(\d+)\|(\w+)\|([^|]+)\|(\w+)\|`)
+
+// startupStage runs the native binary as a plugin (no terraform) and times how long it takes to print the go-plugin
+// handshake line, then kills it and reads its peak RSS. This is the fixed cost of every provider launch.
+func (r *Runner) startupStage(ctx context.Context, res *results.Result) (string, error) {
+	native := provider.NativePlatform()
+	bin, err := r.binaryPath(res.Version, native)
+	if err != nil {
+		return "", fmt.Errorf("native (%s) binary not downloaded: %w", native, err)
+	}
+
+	runs := max(r.Opts.Runs, 1)
+	var times, rss []float64
+	var proto string
+	for range runs {
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+		ms, bytes, p, err := handshakeOnce(ctx, bin, r.Opts.Timeout)
+		if err != nil {
+			return "", err
+		}
+		times = append(times, ms)
+		rss = append(rss, float64(bytes))
+		proto = p
+	}
+
+	res.Startup = &results.StartupResult{
+		Platform:        native,
+		Runs:            runs,
+		HandshakeMinMs:  minOf(times),
+		HandshakeMedMs:  median(times),
+		MaxRSSBytes:     int64(median(rss)),
+		ProtocolVersion: proto,
+	}
+	return fmt.Sprintf("handshake %.0fms (min %.0fms) rss %s proto %s", res.Startup.HandshakeMedMs, res.Startup.HandshakeMinMs, humanBytes(res.Startup.MaxRSSBytes), proto), nil
+}
+
+func handshakeOnce(ctx context.Context, bin string, timeout time.Duration) (ms float64, rssBytes int64, proto string, err error) {
+	if timeout <= 0 {
+		timeout = 60 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, bin)
+	cmd.Env = []string{
+		pluginMagicCookieKey + "=" + pluginMagicCookieValue,
+		"PLUGIN_PROTOCOL_VERSIONS=5,6",
+		"PATH=/usr/bin:/bin",
+		"HOME=/tmp",
+		"TMPDIR=/tmp",
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return 0, 0, "", err
+	}
+	cmd.Stderr = io.Discard
+
+	start := time.Now()
+	if err := cmd.Start(); err != nil {
+		return 0, 0, "", fmt.Errorf("starting %s: %w", bin, err)
+	}
+
+	sc := bufio.NewScanner(stdout)
+	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	found := false
+	for sc.Scan() {
+		if m := handshakeRe.FindStringSubmatch(sc.Text()); m != nil {
+			ms = float64(time.Since(start).Microseconds()) / 1000
+			proto = m[2]
+			found = true
+			break
+		}
+	}
+	_ = cmd.Process.Kill()
+	// drain so the child can exit, then collect rusage
+	_, _ = io.Copy(io.Discard, stdout)
+	werr := cmd.Wait()
+	rssBytes = maxRSSBytes(cmd.ProcessState)
+
+	if !found {
+		if ctx.Err() != nil {
+			return 0, 0, "", fmt.Errorf("no handshake within %s", timeout)
+		}
+		if ee, ok := errors.AsType[*exec.ExitError](werr); ok && !strings.Contains(ee.String(), "killed") {
+			return 0, 0, "", fmt.Errorf("provider exited before handshake: %w", ee)
+		}
+		return 0, 0, "", errors.New("provider exited before handshake")
+	}
+	return ms, rssBytes, proto, nil
+}

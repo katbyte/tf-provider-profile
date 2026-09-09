@@ -1,0 +1,85 @@
+---
+# Profiles new provider releases every week and publishes reports/ to GitHub Pages.
+#
+# The collected data lives in data/<provider>/*.json on the default branch, so each run only profiles releases
+# that have no results yet, downloads only those releases' zips, commits the new json files back, and deploys the
+# rendered reports/ as the Pages artifact. Enable Pages with "Source: GitHub Actions" in the repository settings.
+#
+# Timing stages (startup, schema) run on shared runners, so treat their absolute numbers as noisier than a local run;
+# trends across releases measured on the same runner type are still meaningful.
+name: Pages
+on:
+  schedule:
+    - cron: '0 6 * * 5' # friday morning utc, after the usual thursday provider release
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: provider short name, or "all" for every provider under data/
+        default: all
+      since:
+        description: profile releases published on or after (YYYY-MM-DD)
+        default: '2024-07-01'
+      stages:
+        description: stages to run
+        default: download,binary,startup,schema,source
+      force:
+        description: rerun completed stages
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    env:
+      PROVIDER: ${{ inputs.provider || 'all' }}
+      SINCE: ${{ inputs.since || '2024-07-01' }}
+      STAGES: ${{ inputs.stages || 'download,binary,startup,schema,source' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: ./.go-version
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_wrapper: false
+      - run: make build
+
+      - name: Profile new releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$PROVIDER" = all ]; then providers=$(ls data); else providers=$PROVIDER; fi
+          for p in $providers; do
+            ./tfpp run -p "$p" --since "$SINCE" --stages "$STAGES" --platforms linux_amd64 --no-report \
+              ${{ inputs.force && '--force' || '' }}
+          done
+          ./tfpp report
+          touch reports/.nojekyll
+
+      - name: Commit new data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -q -m "data: profile $(date -u +%Y-%m-%d)"
+            git push -q
+          fi
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: reports
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

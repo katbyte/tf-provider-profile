@@ -1,0 +1,20 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # dependabot auto-detects the vendor/ directory and runs `go mod tidy` + `go mod vendor` on updates
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # dev tools (actionlint, golangci-lint, gofumpt) pinned in .tools/go.mod; tools move slowly,
+  # so only check quarterly
+  - package-ecosystem: "gomod"
+    directory: "/.tools"
+    schedule:
+      interval: "quarterly"

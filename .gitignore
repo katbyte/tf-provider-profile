@@ -1,0 +1,10 @@
+.claude/
+.DS_Store
+.idea/
+dist/
+tfpp
+.tools/bin/
+.tools/venv/
+.cache/
+.tfpp
+reports/
