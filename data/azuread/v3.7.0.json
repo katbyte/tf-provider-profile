@@ -462,7 +462,37 @@
     "blocks": 151,
     "deprecated_attributes": 5,
     "max_depth": 5,
-    "provider_attributes": 22
+    "provider_attributes": 22,
+    "attrs_required": 190,
+    "attrs_optional": 677,
+    "attrs_computed": 430,
+    "attrs_sensitive": 8,
+    "attrs_described": 739,
+    "resources_with_migrations": 23,
+    "resource_attrs_max": 79,
+    "resource_attrs_median": 10,
+    "largest_resources": [
+      {
+        "name": "azuread_application",
+        "count": 79
+      },
+      {
+        "name": "azuread_user",
+        "count": 54
+      },
+      {
+        "name": "azuread_conditional_access_policy",
+        "count": 52
+      },
+      {
+        "name": "azuread_group_role_management_policy",
+        "count": 51
+      },
+      {
+        "name": "azuread_access_package_assignment_policy",
+        "count": 49
+      }
+    ]
   },
   "source": {
     "commit": "72ee4ffe4628e1a21e275734c8d3354faf8fb2f3",
@@ -519,6 +549,7 @@
     "lines_added": 696,
     "lines_removed": 70,
     "days_since_prev": 54.40626157407407,
+    "tag_date": "0001-01-01T00:00:00Z",
     "changelog_entries": {
       "bug_fixes": 3,
       "ehancements": 2,

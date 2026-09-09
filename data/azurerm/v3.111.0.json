@@ -17,9 +17,8 @@
       "os": "darwin/arm64"
     },
     "lint": {
-      "ran_at": "2026-09-09T03:25:46.166698Z",
-      "duration_s": 529.420078584,
-      "error": "golangci-lint exit -1 after 529s: ",
+      "ran_at": "2026-09-09T03:44:41.822766Z",
+      "duration_s": 2501.973260875,
       "host": "katbook",
       "cpu": "Apple M1 Max",
       "os": "darwin/arm64"
@@ -1089,7 +1088,37 @@
     "blocks": 3998,
     "deprecated_attributes": 116,
     "max_depth": 7,
-    "provider_attributes": 26
+    "provider_attributes": 26,
+    "attrs_required": 8366,
+    "attrs_optional": 14982,
+    "attrs_computed": 6503,
+    "attrs_sensitive": 880,
+    "attrs_described": 1721,
+    "resources_with_migrations": 228,
+    "resource_attrs_max": 268,
+    "resource_attrs_median": 14,
+    "largest_resources": [
+      {
+        "name": "azurerm_kubernetes_cluster",
+        "count": 268
+      },
+      {
+        "name": "azurerm_windows_web_app",
+        "count": 261
+      },
+      {
+        "name": "azurerm_windows_web_app_slot",
+        "count": 258
+      },
+      {
+        "name": "azurerm_linux_web_app",
+        "count": 245
+      },
+      {
+        "name": "azurerm_linux_web_app_slot",
+        "count": 244
+      }
+    ]
   },
   "source": {
     "commit": "328acf5df00004b1a62934ddc82546236e9eb245",
@@ -1153,6 +1182,7 @@
     "lines_added": 2236,
     "lines_removed": 1183,
     "days_since_prev": 7.058599537037037,
+    "tag_date": "0001-01-01T00:00:00Z",
     "changelog_entries": {
       "bug_fixes": 5,
       "enhancements": 6,
@@ -1167,5 +1197,12 @@
     "stripped_build_s": 9.064177583,
     "local_binary_bytes": 337329698,
     "stripped_binary_bytes": 271843106
+  },
+  "lint": {
+    "tool": "golangci-lint",
+    "tool_version": "2.13.2",
+    "duration_s": 2494.874500833,
+    "exit_code": 1,
+    "issues": 117
   }
 }

@@ -32,8 +32,8 @@
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:44:39.100268Z",
-      "duration_s": 1.211649125,
+      "ran_at": "2026-09-09T04:37:47.17351Z",
+      "duration_s": 11.168450292,
       "host": "katbook",
       "cpu": "Apple M1 Max",
       "os": "darwin/arm64"
@@ -477,7 +477,37 @@
     "blocks": 152,
     "deprecated_attributes": 5,
     "max_depth": 5,
-    "provider_attributes": 22
+    "provider_attributes": 22,
+    "attrs_required": 192,
+    "attrs_optional": 677,
+    "attrs_computed": 430,
+    "attrs_sensitive": 8,
+    "attrs_described": 739,
+    "resources_with_migrations": 23,
+    "resource_attrs_max": 79,
+    "resource_attrs_median": 10,
+    "largest_resources": [
+      {
+        "name": "azuread_application",
+        "count": 79
+      },
+      {
+        "name": "azuread_conditional_access_policy",
+        "count": 54
+      },
+      {
+        "name": "azuread_user",
+        "count": 54
+      },
+      {
+        "name": "azuread_group_role_management_policy",
+        "count": 51
+      },
+      {
+        "name": "azuread_access_package_assignment_policy",
+        "count": 49
+      }
+    ]
   },
   "source": {
     "commit": "df2a07a337129119e0a267925ea8a63e841d1a19",
@@ -515,6 +545,13 @@
       }
     },
     "identity_resource_files": 0,
+    "deprecated_resource_files": 1,
+    "resource_files_total": 72,
+    "nolint_directives": 77,
+    "todos": 29,
+    "services_with_resources": 15,
+    "services_fully_typed": 1,
+    "services_fully_go_azure_sdk": 15,
     "docs_resources": 54,
     "docs_data_sources": 20,
     "docs_ephemeral": 0,
@@ -534,6 +571,8 @@
     "lines_added": 231,
     "lines_removed": 80,
     "days_since_prev": 119.02596064814816,
+    "tag_date": "2026-06-18T21:01:14Z",
+    "release_lag_hours": 0.3413888888888889,
     "changelog_entries": {
       "bug": 2,
       "enhancements": 5,

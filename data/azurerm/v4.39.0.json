@@ -1113,7 +1113,38 @@
     "blocks": 4006,
     "deprecated_attributes": 64,
     "max_depth": 6,
-    "provider_attributes": 30
+    "provider_attributes": 30,
+    "attrs_required": 8513,
+    "attrs_optional": 15151,
+    "attrs_computed": 6779,
+    "attrs_sensitive": 892,
+    "attrs_write_only": 6,
+    "attrs_described": 1896,
+    "resources_with_migrations": 217,
+    "resource_attrs_max": 262,
+    "resource_attrs_median": 14,
+    "largest_resources": [
+      {
+        "name": "azurerm_kubernetes_cluster",
+        "count": 262
+      },
+      {
+        "name": "azurerm_windows_web_app",
+        "count": 256
+      },
+      {
+        "name": "azurerm_windows_web_app_slot",
+        "count": 253
+      },
+      {
+        "name": "azurerm_linux_web_app",
+        "count": 243
+      },
+      {
+        "name": "azurerm_linux_web_app_slot",
+        "count": 242
+      }
+    ]
   },
   "source": {
     "commit": "337418ed30c0b5184625d7110b90837165f3bade",
@@ -1180,6 +1211,7 @@
     "lines_added": 7532,
     "lines_removed": 1471,
     "days_since_prev": 8.019756944444444,
+    "tag_date": "0001-01-01T00:00:00Z",
     "changelog_entries": {
       "bug_fixes": 4,
       "enhancements": 10,

@@ -10,9 +10,8 @@
       "os": "darwin/arm64"
     },
     "build": {
-      "ran_at": "2026-09-09T03:09:31.187318Z",
-      "duration_s": 0.0250635,
-      "error": "git checkout --quiet --force v3.115.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
+      "ran_at": "2026-09-09T04:26:23.829585Z",
+      "duration_s": 117.176427708,
       "host": "katbook",
       "cpu": "Apple M1 Max",
       "os": "darwin/arm64"
@@ -1114,7 +1113,37 @@
     "blocks": 4011,
     "deprecated_attributes": 133,
     "max_depth": 7,
-    "provider_attributes": 26
+    "provider_attributes": 26,
+    "attrs_required": 8402,
+    "attrs_optional": 15048,
+    "attrs_computed": 6539,
+    "attrs_sensitive": 889,
+    "attrs_described": 1721,
+    "resources_with_migrations": 228,
+    "resource_attrs_max": 273,
+    "resource_attrs_median": 14,
+    "largest_resources": [
+      {
+        "name": "azurerm_kubernetes_cluster",
+        "count": 273
+      },
+      {
+        "name": "azurerm_windows_web_app",
+        "count": 261
+      },
+      {
+        "name": "azurerm_windows_web_app_slot",
+        "count": 258
+      },
+      {
+        "name": "azurerm_linux_web_app",
+        "count": 245
+      },
+      {
+        "name": "azurerm_linux_web_app_slot",
+        "count": 244
+      }
+    ]
   },
   "source": {
     "commit": "f80e45a0384afacd89b664d59aa1afb247d1dfd7",
@@ -1178,10 +1207,19 @@
     "lines_added": 1420,
     "lines_removed": 451,
     "days_since_prev": 7.629768518518518,
+    "tag_date": "0001-01-01T00:00:00Z",
     "changelog_entries": {
       "bug_fixes": 4,
       "enhancements": 12,
       "total": 16
     }
+  },
+  "build": {
+    "go_toolchain": "go1.21.6 darwin/arm64",
+    "clean_build_s": 91.703640583,
+    "warm_build_s": 11.443856125,
+    "stripped_build_s": 8.654637833,
+    "local_binary_bytes": 340301282,
+    "stripped_binary_bytes": 274055154
   }
 }
