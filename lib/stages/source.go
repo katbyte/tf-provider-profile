@@ -19,8 +19,10 @@ import (
 var (
 	reTypedResource   = regexp.MustCompile(`(?m)^var _ sdk\.Resource(With[A-Za-z]+)? = `)
 	reTypedDataSource = regexp.MustCompile(`(?m)^var _ sdk\.DataSource(With[A-Za-z]+)? = `)
-	reUntypedResource = regexp.MustCompile(`(?m)^func resource[A-Za-z0-9]*\(\) \*(pluginsdk|schema)\.Resource \{`)
-	reUntypedDataSrc  = regexp.MustCompile(`(?m)^func dataSource[A-Za-z0-9]*\(\) \*(pluginsdk|schema)\.Resource \{`)
+	// azurerm names untyped constructors resourceFoo()/dataSourceFoo(), azuread fooResource()/fooDataSource(); the
+	// lowercase first letter keeps exported state-migration helpers (ResourceFooV0) out
+	reUntypedResource = regexp.MustCompile(`(?m)^func (resource[A-Za-z0-9]*|[a-z][A-Za-z0-9]*Resource)\(\) \*(pluginsdk|schema)\.Resource \{`)
+	reUntypedDataSrc  = regexp.MustCompile(`(?m)^func (dataSource[A-Za-z0-9]*|[a-z][A-Za-z0-9]*DataSource)\(\) \*(pluginsdk|schema)\.Resource \{`)
 	reTestFunc        = regexp.MustCompile(`(?m)^func Test[A-Za-z0-9_]*\(`)
 	reAccTestFunc     = regexp.MustCompile(`(?m)^func TestAcc[A-Za-z0-9_]*\(`)
 	reTypedList       = regexp.MustCompile(`(?m)^var _ sdk\.FrameworkListWrappedResource(With[A-Za-z]+)? = `)
@@ -135,15 +137,28 @@ func countFiles(dir string) int {
 	return n
 }
 
+// countDocs handles both doc layouts: website/docs/{r,d,...} (azurerm) and docs/{resources,data-sources,...} (azuread
+// and framework-generated providers).
 func countDocs(src string, sr *results.SourceResult) {
 	docs := filepath.Join(src, "website", "docs")
-	sr.DocsResources = countFiles(filepath.Join(docs, "r"))
-	sr.DocsDataSources = countFiles(filepath.Join(docs, "d"))
-	sr.DocsEphemeral = countFiles(filepath.Join(docs, "ephemeral-resources")) + countFiles(filepath.Join(docs, "e"))
-	sr.DocsListResources = countFiles(filepath.Join(docs, "list-resources"))
-	sr.DocsActions = countFiles(filepath.Join(docs, "actions"))
-	sr.DocsFunctions = countFiles(filepath.Join(docs, "functions"))
-	sr.DocsGuides = countFiles(filepath.Join(docs, "guides"))
+	if _, err := os.Stat(docs); err != nil {
+		docs = filepath.Join(src, "docs")
+	}
+	first := func(names ...string) int {
+		for _, n := range names {
+			if c := countFiles(filepath.Join(docs, n)); c > 0 {
+				return c
+			}
+		}
+		return 0
+	}
+	sr.DocsResources = first("r", "resources")
+	sr.DocsDataSources = first("d", "data-sources")
+	sr.DocsEphemeral = first("ephemeral-resources", "e")
+	sr.DocsListResources = first("list-resources")
+	sr.DocsActions = first("actions")
+	sr.DocsFunctions = first("functions")
+	sr.DocsGuides = first("guides")
 }
 
 // walkTree counts files and go lines, separating vendor and tests, and greps the service packages for resource

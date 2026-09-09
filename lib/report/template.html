@@ -121,13 +121,13 @@ svg .endlbl { fill: var(--ink-2); font-size: 11px; }
 #tip td.d { color: var(--muted); font-variant-numeric: tabular-nums; }
 #tip tr.sep td { border-top: 1px solid var(--grid); padding-top: 4px; }
 #tip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
-#ctx { position: fixed; z-index: 20; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 420px; max-width: calc(100vw - 24px); font-size: 12px; }
+#ctx { position: fixed; z-index: 20; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 560px; max-width: calc(100vw - 24px); font-size: 12px; }
 #ctx .v { font-weight: 600; margin-bottom: 6px; }
 #ctx .v span { color: var(--muted); font-weight: 400; }
 #ctx .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 #ctx .row button { border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
 #ctx .row button:hover { background: var(--wash); }
-#ctx textarea { width: 100%; height: 150px; resize: vertical; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--page); color: var(--ink-2); border: 1px solid var(--grid); border-radius: 6px; padding: 6px; }
+#ctx textarea { width: 100%; height: 260px; resize: vertical; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--page); color: var(--ink-2); border: 1px solid var(--grid); border-radius: 6px; padding: 6px; }
 h2.sec { font-size: 15px; margin: 28px 0 8px; font-weight: 650; }
 h2.sec small { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 8px; }
 table.data { border-collapse: collapse; font-size: 12px; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -252,7 +252,7 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
     { keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_data_sources', 'source.untyped_data_sources'], stack: true },
   ].map(g => ({ keys: g.keys.map(k).filter(x => M[x]), stack: !!g.stack, wide: false })).filter(g => g.keys.length);
 });
-const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '0', dots: 'auto', mk: ['majors'], tip: 'all', p: PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '') };
+const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['majors'], tip: 'current', p: PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '') };
 applyRange();
 function syncSel() { state.groups = state.groups.filter(g => g.keys.length); state.sel = state.groups.flatMap(g => g.keys); assignColors(); }
 // groups restricted to what the current provider selection can show; gi keeps the index into state.groups
@@ -282,9 +282,9 @@ function writeHash() {
   h.set('m', state.groups.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : ''); return (f ? f + ':' : '') + g.keys.join(','); }).join('|'));
   h.set('r', state.right.join(','));
   for (const k of ['view','x','zero','table']) h.set(k, state[k]);
-  if (state.cols !== '0') h.set('cols', state.cols);
+  if (state.cols !== '2') h.set('cols', state.cols);
   if (state.dots !== 'auto') h.set('dots', state.dots);
-  if (state.tip !== 'all') h.set('tip', state.tip);
+  if (state.tip !== 'current') h.set('tip', state.tip);
   h.set('mk', state.mk.join(','));
   if (state.from) h.set('from', state.from);
   if (state.to) h.set('to', state.to);
@@ -419,23 +419,28 @@ const MARKS = {}; // release id -> [{layer, label, title}]
     last[r.provider] = r;
   }
 }
-function markers(xs, pad, h) {
+// keys = the metrics the chart plots; only their providers' markers are drawn, tagged with the provider when mixed
+function markers(xs, pad, h, keys = []) {
   if (!MARKER_LAYERS.some(L => state.mk.includes(L.id))) return '';
+  const provs = new Set(keys.map(provOf).filter(Boolean));
+  const mixed = provs.size > 1;
   let g = '';
   // labels go left to right into the first row with room, so neighbouring markers stagger instead of overlapping
   const rowEnd = [];
   R.forEach((r, i) => {
+    if (provs.size && !provs.has(r.provider)) return;
     for (const m of (MARKS[r.id] || [])) {
       if (!state.mk.includes(m.layer.id)) continue;
       const x = xs.at(i), c = `var(${m.layer.color})`, t = m.title ? `<title>${esc(m.title)}</title>` : '';
       if (m.layer.tick) { g += `<line class="tick" stroke="${c}" x1="${x}" x2="${x}" y1="${h - pad.b - 7}" y2="${h - pad.b}">${t}</line>`; continue; }
       g += `<line class="mark" stroke="${c}" x1="${x}" x2="${x}" y1="${pad.t}" y2="${h - pad.b}">${t}</line>`;
       if (!m.label) continue;
-      const lx = x + 3, width = m.label.length * 5.6 + 8;
+      const label = mixed ? `${r.provider} ${m.label}` : m.label;
+      const lx = x + 3, width = label.length * 5.6 + 8;
       let row = rowEnd.findIndex(end => lx > end);
       if (row < 0) row = rowEnd.length;
       rowEnd[row] = lx + width;
-      g += `<text class="marklbl" fill="${c}" x="${lx}" y="${pad.t + 9 + row * 11}">${esc(m.label)}${t}</text>`;
+      g += `<text class="marklbl" fill="${c}" x="${lx}" y="${pad.t + 9 + row * 11}">${esc(label)}${t}</text>`;
     }
   });
   return g;
@@ -496,7 +501,7 @@ function lineChart(el, series, opts) {
   if (hasRight) for (const t of niceTicks(rlo, rhi, 4).filter(t => t >= rlo && t <= rhi)) g += `<text x="${w - pad.r + 6}" y="${ysR(t) + 4}">${fmt(t, opts.rightUnit, true)}</text>`;
   g += `<line class="axis" x1="${pad.l}" x2="${w - pad.r}" y1="${h - pad.b}" y2="${h - pad.b}"/>`;
   if (hasRight) g += `<line class="axis" x1="${w - pad.r}" x2="${w - pad.r}" y1="${pad.t}" y2="${h - pad.b}"/>`;
-  g += majorMarks(xs, pad, h);
+  g += majorMarks(xs, pad, h, opts.keys || []);
   for (const t of xs.ticks) g += `<text x="${t.x}" y="${h - 6}" text-anchor="middle">${t.label}</text>`;
   const ends = [];
   series.forEach((s, si) => {
@@ -551,7 +556,7 @@ function barChart(el, values, unit, upIs, color, opts = {}) {
   let g = '';
   for (const t of niceTicks(lo, hi, 4).filter(t => t >= lo && t <= hi)) g += `<line class="grid" x1="${pad.l}" x2="${w - pad.r}" y1="${ys(t)}" y2="${ys(t)}"/><text x="${pad.l - 6}" y="${ys(t) + 4}" text-anchor="end">${(t > 1e-9 ? '+' : '') + fmt(Math.abs(t) < 1e-9 ? 0 : t, unit, true)}</text>`;
   for (const t of xs.ticks) g += `<text x="${t.x}" y="${h - 6}" text-anchor="middle">${t.label}</text>`;
-  g += majorMarks(xs, pad, h);
+  g += majorMarks(xs, pad, h, opts.keys || []);
   const bw = Math.min(24, Math.max(2, (w - pad.l - pad.r) / Math.max(N, 1) - 2));
   d.forEach((v, i) => {
     if (v == null) return;
@@ -582,41 +587,106 @@ function barChart(el, values, unit, upIs, color, opts = {}) {
 }
 // ---------- ask an AI about a point: right-click builds a prompt with the numbers, markers and diff links ----------
 const AI_TARGETS = [
-  { id: 'claude', label: 'Claude', url: q => 'https://claude.ai/new?q=' + encodeURIComponent(q) },
-  { id: 'chatgpt', label: 'ChatGPT', url: q => 'https://chatgpt.com/?q=' + encodeURIComponent(q) },
-  { id: 'perplexity', label: 'Perplexity', url: q => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(q) },
+  // limit = characters of prompt a prefill url can safely carry (encoding roughly triples it); the copied prompt is never trimmed
+  { id: 'claude', label: 'Claude', limit: 14000, url: q => 'https://claude.ai/new?q=' + encodeURIComponent(q) },
+  { id: 'chatgpt', label: 'ChatGPT', limit: 6000, url: q => 'https://chatgpt.com/?q=' + encodeURIComponent(q) },
+  { id: 'perplexity', label: 'Perplexity', limit: 6000, url: q => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(q) },
 ];
-function buildPrompt(i, keys) {
-  const r = R[i];
+// the prompt is built as prioritised sections; the copy box gets everything, a url handoff drops the tail until it fits
+function buildPromptSections(i, keys) {
+  const r = R[i], mi = ROW[r.id];
   const prev = [...RELEASES].reverse().find(x => x.provider === r.provider && x.ts < r.ts) || null;
   const pi = prev ? ROW[prev.id] : -1;
-  const ms = (keys.length ? keys : vsel()).map(k => M[k]).filter(m => m && m.unit !== 'comp');
   const repo = META[r.provider].repo;
-  const lines = [];
-  lines.push(`Provider: ${repo} release ${r.version} (${r.date})${prev ? `, compared with the previous release ${prev.version} (${prev.date})` : ''}.`);
-  lines.push('');
-  lines.push('Measured by tfpp (https://github.com/katbyte/tf-provider-profile):');
-  for (const m of ms) {
-    const full = METRICS.find(x => x.key === m.key), cur = full.values[ROW[r.id]], before = pi >= 0 ? full.values[pi] : null;
-    if (cur == null) continue;
+  const full = k => METRICS.find(x => x.key === k);
+  const val = (m, idx) => idx >= 0 ? m.values[idx] : null;
+  const line = m => {
+    const cur = val(m, mi), before = val(m, pi);
+    if (cur == null) return null;
     const d = before != null ? fmtDelta(before, cur, m.unit).text : '';
-    lines.push(`- ${m.label}: ${before != null ? fmt(before, m.unit) + ' → ' : ''}${fmt(cur, m.unit)}${d ? ` (${d})` : ''}`);
+    return `- ${m.label}: ${before != null ? fmt(before, m.unit) + ' → ' : ''}${fmt(cur, m.unit)}${d ? ` (${d})` : ''}`;
+  };
+  const focus = (keys.length ? keys : vsel()).map(k => full(k)).filter(m => m && m.unit !== 'comp');
+  const sections = [];
+
+  // 1. what was asked about
+  sections.push({ pri: 0, text: `Provider: ${repo}, release ${r.version} (${r.date})${prev ? `, compared with the previous release ${prev.version} (${prev.date})` : ''}.\n\nMetrics on the chart that was right-clicked (measured by tfpp, https://github.com/katbyte/tf-provider-profile):\n${focus.map(line).filter(Boolean).join('\n')}` });
+
+  // 2. the same metrics over the neighbouring releases, so a spike reads differently from a step
+  const around = RELEASES.map((x, j) => [x, j]).filter(([x]) => x.provider === r.provider);
+  const pos = around.findIndex(([x]) => x.id === r.id);
+  const win = around.slice(Math.max(0, pos - 3), pos + 3);
+  if (win.length > 2 && focus.length) {
+    const rows = focus.map(m => `- ${m.label}: ` + win.map(([x, j]) => `${x.version}=${m.values[j] == null ? '?' : fmt(m.values[j], m.unit)}`).join(', '));
+    sections.push({ pri: 3, text: `The same metrics across the surrounding releases (oldest first, the release in question is ${r.version}):\n${rows.join('\n')}` });
   }
+
+  // 3. release facts
+  const facts = [];
+  if (r.go_version) facts.push(`built with ${r.go_version}${prev?.go_version && prev.go_version !== r.go_version ? ` (previous release: ${prev.go_version})` : ''}`);
+  if (r.plugin_sdk) facts.push(`terraform-plugin-sdk/v2 ${r.plugin_sdk}${prev?.plugin_sdk && prev.plugin_sdk !== r.plugin_sdk ? ` (was ${prev.plugin_sdk})` : ''}`);
+  if (r.framework) facts.push(`terraform-plugin-framework ${r.framework}${prev?.framework && prev.framework !== r.framework ? ` (was ${prev.framework})` : ''}`);
+  if (r.terraform) facts.push(`schema measured with terraform ${r.terraform}${prev?.terraform && prev.terraform !== r.terraform ? ` (previous release measured with ${prev.terraform}, so schema timing is not comparable)` : ''}`);
+  if (r.host) facts.push(`timing stages ran on ${r.host}${prev?.host && prev.host !== r.host ? ` (previous release: ${prev.host}, so timings are not comparable)` : ''}`);
+  if (r.deps_added?.length) facts.push(`modules newly linked: ${r.deps_added.join(', ')}`);
+  if (r.deps_removed?.length) facts.push(`modules no longer linked: ${r.deps_removed.join(', ')}`);
+  const churn = ['source.days_since_prev', 'source.commits', 'source.authors', 'source.files_changed', 'source.lines_added', 'source.lines_removed', 'source.changelog_features', 'source.changelog_enhancements', 'source.changelog_bug_fixes']
+    .map(k => full(`${r.provider}:${k}`)).filter(m => m && val(m, mi) != null).map(m => `${m.label.toLowerCase()}: ${fmt(val(m, mi), m.unit)}`);
+  if (churn.length) facts.push(`since the previous release: ${churn.join(', ')}`);
   const marks = (MARKS[r.id] || []).map(m => m.title || m.label).filter(Boolean);
-  if (marks.length) { lines.push(''); lines.push('Also in this release: ' + marks.join('; ')); }
-  if (r.go_version) lines.push(`Built with ${r.go_version}${prev && prev.go_version && prev.go_version !== r.go_version ? ` (previous release: ${prev.go_version})` : ''}.`);
-  lines.push('');
-  lines.push('Links:');
-  if (prev) lines.push(`- diff: https://github.com/${repo}/compare/${prev.version}...${r.version}`);
-  lines.push(`- changelog: https://github.com/${repo}/blob/${r.version}/CHANGELOG.md`);
-  lines.push(`- release: https://github.com/${repo}/releases/tag/${r.version}`);
-  lines.push('');
-  lines.push('What in this release most likely explains the change in these numbers? Look at the diff and changelog, name the specific commits, pull requests, dependency or toolchain changes responsible, and say how confident you are.');
-  return lines.join('\n');
+  if (marks.length) facts.push(`markers: ${marks.join('; ')}`);
+  if (facts.length) sections.push({ pri: 1, text: 'About this release:\n' + facts.map(f => '- ' + f).join('\n') });
+
+  // 4. binary composition movers between the two releases
+  const plat = platFor(r.provider), comp = COMPOSITION[`${r.provider}:${plat}`];
+  if (comp && pi >= 0) {
+    const movers = (kind, n, label) => {
+      const c = comp[kind]; if (!c) return null;
+      const rows = c.names.map((name, j) => ({ name, a: c.rows[pi]?.[j], b: c.rows[mi]?.[j] })).filter(x => x.a != null || x.b != null)
+        .map(x => ({ ...x, d: (x.b || 0) - (x.a || 0) })).filter(x => x.d !== 0).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)).slice(0, n);
+      if (!rows.length) return null;
+      return `${label} (${plat}):\n` + rows.map(x => `- ${x.name}: ${x.a == null ? 'new' : fmt(x.a, 'bytes')} → ${x.b == null ? 'gone' : fmt(x.b, 'bytes')} (${x.a != null && x.b != null ? fmtDelta(x.a, x.b, 'bytes').text : (x.d > 0 ? '+' : '−') + fmt(Math.abs(x.d), 'bytes')})`).join('\n');
+    };
+    const parts = [movers('sections', 8, 'Object-file sections that changed'), movers('modules', 12, 'Modules whose attributed text changed most'), movers('services', 8, 'Provider service packages whose text changed most')].filter(Boolean);
+    if (parts.length) sections.push({ pri: 2, text: parts.join('\n\n') });
+  }
+
+  // 5. everything else that moved
+  const others = METRICS.filter(m => m.provider === r.provider && !focus.some(f => f.key === m.key) && m.unit !== 'comp' && val(m, mi) != null && val(m, pi) != null && val(m, mi) !== val(m, pi));
+  if (others.length) {
+    const byGroup = {};
+    for (const m of others) (byGroup[m.group] ||= []).push(line(m));
+    sections.push({ pri: 4, text: 'Every other tracked metric that changed in this release:\n' + Object.entries(byGroup).map(([g, ls]) => `${(GROUPS.find(x => x.id === g) || { label: g }).label}:\n${ls.join('\n')}`).join('\n') });
+  }
+
+  // 6. links and the ask
+  const links = [];
+  if (prev) links.push(`- diff: https://github.com/${repo}/compare/${prev.version}...${r.version}`);
+  links.push(`- changelog at this tag: https://github.com/${repo}/blob/${r.version}/CHANGELOG.md`);
+  links.push(`- release: https://github.com/${repo}/releases/tag/${r.version}`);
+  if (prev) links.push(`- commits: https://github.com/${repo}/commits/${r.version}`);
+  links.push(`- release zips: https://releases.hashicorp.com/terraform-provider-${r.provider}/${r.version.replace(/^v/, '')}/`);
+  links.push(`- this chart: ${location.href}`);
+  sections.push({ pri: 0, text: `Links:\n${links.join('\n')}\n\nWhat in this release most likely explains the change in the metrics on the chart? Work from the diff and the changelog: name the specific commits, pull requests, dependency or toolchain changes responsible, quantify how much of the change each one accounts for where you can, separate real provider changes from measurement artefacts (toolchain, terraform version, machine), and say how confident you are. If you can run commands, \`git log --stat ${prev ? prev.version + '..' : ''}${r.version}\` on a clone of the repository is the fastest way to confirm.` });
+  return sections;
+}
+function buildPrompt(i, keys, limit) {
+  const sections = buildPromptSections(i, keys);
+  const join = ss => ss.map(x => x.text).join('\n\n');
+  if (!limit) return join(sections);
+  // drop the lowest-priority sections until the handoff url is short enough
+  let kept = sections.slice();
+  while (join(kept).length > limit && kept.some(x => x.pri > 0)) {
+    const worst = Math.max(...kept.map(x => x.pri));
+    kept = kept.filter(x => x.pri !== worst);
+  }
+  return join(kept) + (kept.length < sections.length ? '\n\n(some detail was left out to fit the url; the copied prompt has everything)' : '');
 }
 function showCtx(i, ev, active) {
   const ctx = $('#ctx'), r = R[i];
-  const prompt = buildPrompt(i, active?.keys || []);
+  const keys = active?.keys || [];
+  const prompt = buildPrompt(i, keys);
+  ctx.dataset.i = i; ctx.dataset.keys = keys.join(',');
   ctx.querySelector('.v').innerHTML = `Ask about ${multi() ? r.provider + ' ' : ''}${esc(r.version)} <span>${r.date}</span>`;
   ctx.querySelector('.row').innerHTML = AI_TARGETS.map(t => `<button data-ai="${t.id}">${t.label}</button>`).join('') + `<button data-ai="copy">copy prompt</button><button data-ai="close">close</button>`;
   ctx.querySelector('textarea').value = prompt;
@@ -631,7 +701,8 @@ $('#ctx').addEventListener('click', ev => {
   if (b.dataset.ai === 'close') { ctx.hidden = true; return; }
   if (b.dataset.ai === 'copy') { navigator.clipboard?.writeText(prompt); b.textContent = 'copied'; return; }
   const t = AI_TARGETS.find(x => x.id === b.dataset.ai);
-  window.open(t.url(prompt), '_blank', 'noopener');
+  const short = buildPrompt(+ctx.dataset.i, ctx.dataset.keys ? ctx.dataset.keys.split(',') : [], t.limit);
+  window.open(t.url(short), '_blank', 'noopener');
   ctx.hidden = true;
 });
 document.addEventListener('click', ev => { if (!ev.target.closest('#ctx')) $('#ctx').hidden = true; });
@@ -672,7 +743,7 @@ function metricTipRows(i, ms, activeKeys) {
   const row = (m, sep) => {
     const v = m.values[i], prev = i > 0 ? m.values[i - 1] : null;
     const d = fmtDelta(prev, v, m.unit, m.up_is);
-    return `<tr class="${sep ? 'sep' : ''}"><td><i style="background:${colorOf(m.key)}"></i>${m.label}</td><td class="n">${fmt(v, m.unit)}</td><td class="d ${d.cls}">${d.text}</td></tr>`;
+    return `<tr class="${sep ? 'sep' : ''}"><td><i style="background:${colorOf(m.key)}"></i>${lbl(m)}</td><td class="n">${fmt(v, m.unit)}</td><td class="d ${d.cls}">${d.text}</td></tr>`;
   };
   return [...first.map(m => row(m, false)), ...rest.map((m, j) => row(m, j === 0 && first.length > 0))].join('');
 }
@@ -838,7 +909,7 @@ function renderCharts() {
   const sel = vsel().map(k => M[k]).filter(m => m.unit !== 'comp');
   tipRows = (i, active = []) => metricTipRows(i, sel, active);
 
-  const legend = ms => `<div class="legend">${ms.map(m => `<span><i style="background:${colorOf(m.key)}"></i>${m.label}${state.view === 'twoaxes' ? (state.right.includes(m.key) ? ' (right)' : ' (left)') : ''}</span>`).join('')}</div>`;
+  const legend = ms => `<div class="legend">${ms.map(m => `<span><i style="background:${colorOf(m.key)}"></i>${lbl(m)}${state.view === 'twoaxes' ? (state.right.includes(m.key) ? ' (right)' : ' (left)') : ''}</span>`).join('')}</div>`;
   const cap = sel.length > 8 ? ' · only the first 8 selected metrics are drawn' : '';
 
   if (state.view === 'pct') {
@@ -902,11 +973,12 @@ function renderCharts() {
     }
     if (ms.length === 1) {
       const m = ms[0], { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is);
-      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="sw" style="background:${colorOf(m.key)}"></span>${esc(m.label)}<span class="val">${fmt(l, m.unit)} <span class="delta ${d.cls}" title="change from ${R[0].version} to ${R[N - 1].version}">${d.text}</span> ${wideBtn(g, gi)}</span></h2>${m.desc ? `<p class="desc">${esc(m.desc)}</p>` : ''}<div class="c"></div></div>`;
+      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="sw" style="background:${colorOf(m.key)}"></span>${esc(lbl(m))}<span class="val">${fmt(l, m.unit)} <span class="delta ${d.cls}" title="change from ${R[0].version} to ${R[N - 1].version}">${d.text}</span> ${wideBtn(g, gi)}</span></h2>${m.desc ? `<p class="desc">${esc(m.desc)}</p>` : ''}<div class="c"></div></div>`;
     }
-    const title = `${ms.length} metrics · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}`;
+    const provs = [...new Set(ms.map(m => m.provider))];
+    const title = `${multi() ? provs.join(' + ') + ' · ' : ''}${ms.length} metrics · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}`;
     const stackBtn = units.length === 1 ? `<button class="pbtn ${g.stack ? 'on' : ''}" data-act="stack" data-g="${gi}" title="stack the metrics on top of each other">${g.stack ? 'stacked' : 'stack'}</button>` : '';
-    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span>${title}<span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button></span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is); return `<span><i style="background:${colorOf(m.key)}"></i>${esc(m.label)}${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
+    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span>${title}<span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button></span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is); return `<span><i style="background:${colorOf(m.key)}"></i>${esc(lbl(m))}${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
   }).join('')}</div>`;
   for (const p of el.querySelectorAll('.panel[data-g]')) {
     const g = visibleGroups().find(x => x.gi === +p.dataset.g), units = unitsOf(g);
@@ -991,7 +1063,7 @@ function stackedArea(el, comp, opts) {
     g += `<path d="${d}" fill="${colors[j]}" opacity=".85" stroke="var(--surface)" stroke-width="1.5"/>`;
   });
   g += `<line class="axis" x1="${pad.l}" x2="${w - pad.r}" y1="${h - pad.b}" y2="${h - pad.b}"/>`;
-  g += majorMarks(xs, pad, h);
+  g += majorMarks(xs, pad, h, opts.keys || []);
   g += `<line class="cross" x1="0" x2="0" y1="${pad.t}" y2="${h - pad.b}"/>`;
   g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg><div class="legend">${labels.map((l, j) => `<span><i class="box" style="background:${colors[j]}"></i>${l}</span>`).join('')}</div>`;
@@ -1013,7 +1085,7 @@ function stackedArea(el, comp, opts) {
 function renderComp(el, c) {
   const comp = COMP[`${c.provider}:${c.plat}`];
   if (!comp) { el.innerHTML = '<div class="empty">no binary composition data</div>'; return; }
-  if (c.kind !== 'movers') { stackedArea(el, comp[c.kind], { top: c.kind === 'sections' ? 8 : 7 }); return; }
+  if (c.kind !== 'movers') { stackedArea(el, comp[c.kind], { top: c.kind === 'sections' ? 8 : 7, keys: [c.key] }); return; }
   const mv = comp.modules.names.map((n, j) => {
     const col = comp.modules.rows.map(r => r[j]);
     const { f, l } = firstLast(col);

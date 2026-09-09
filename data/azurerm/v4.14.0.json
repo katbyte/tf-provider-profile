@@ -17,9 +17,8 @@
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:02:23.212048Z",
-      "duration_s": 0.024393584,
-      "error": "git checkout --quiet --force v4.14.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
+      "ran_at": "2026-09-09T03:15:47.581684Z",
+      "duration_s": 5.737856625,
       "host": "katbook",
       "cpu": "Apple M1 Max",
       "os": "darwin/arm64"
@@ -1093,5 +1092,76 @@
     "deprecated_attributes": 32,
     "max_depth": 6,
     "provider_attributes": 28
+  },
+  "source": {
+    "commit": "36996bc68a4a4b80f65338f2066070426abf8551",
+    "go_files": 6207,
+    "go_lines": 1424173,
+    "go_code_lines": 1174895,
+    "go_test_files": 2610,
+    "go_test_lines": 703532,
+    "vendor_go_files": 30843,
+    "vendor_go_lines": 3536677,
+    "total_files": 40929,
+    "tree_bytes": 195042927,
+    "services": 130,
+    "typed_resources": 265,
+    "typed_data_sources": 81,
+    "untyped_resources": 715,
+    "untyped_data_sources": 263,
+    "test_funcs": 10264,
+    "acc_test_funcs": 8490,
+    "files_importing_legacy_sdk": 162,
+    "files_importing_kermit": 178,
+    "files_importing_autorest": 59,
+    "files_importing_go_azure_sdk": 1636,
+    "resource_files_legacy_sdk": 135,
+    "resource_files_go_azure_sdk": 1002,
+    "resource_files_both_sdk": 107,
+    "resource_files_no_sdk": 79,
+    "sdk_by_kind": {
+      "data_source": {
+        "both": 6,
+        "go_azure_sdk": 266,
+        "legacy": 13,
+        "none": 59
+      },
+      "ephemeral": {
+        "none": 2
+      },
+      "resource": {
+        "both": 101,
+        "go_azure_sdk": 736,
+        "legacy": 122,
+        "none": 20
+      }
+    },
+    "identity_resource_files": 0,
+    "docs_resources": 1066,
+    "docs_data_sources": 364,
+    "docs_ephemeral": 2,
+    "docs_list_resources": 0,
+    "docs_actions": 0,
+    "docs_functions": 2,
+    "docs_guides": 12,
+    "go_directive": "1.22.0",
+    "go_version_file": "1.22.7",
+    "direct_deps": 37,
+    "indirect_deps": 52,
+    "go_sum_lines": 361,
+    "prev_version": "v4.13.0",
+    "commits": 26,
+    "authors": 21,
+    "files_changed": 110,
+    "lines_added": 1875,
+    "lines_removed": 330,
+    "days_since_prev": 7.113368055555555,
+    "changelog_entries": {
+      "breaking_changes": 5,
+      "bug_fixes": 1,
+      "enhancements": 11,
+      "features": 2,
+      "total": 19
+    }
   }
 }
