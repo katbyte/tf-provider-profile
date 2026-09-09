@@ -64,12 +64,16 @@ func WriteAll(pds []ProviderData, reportsRoot string) error {
 	}
 	var all []data
 	for _, pd := range pds {
-		if len(pd.All) == 0 {
-			continue
+		if len(pd.All) > 0 {
+			all = append(all, build(pd.P, pd.All))
 		}
-		d := build(pd.P, pd.All)
-		all = append(all, d)
-		dir := filepath.Join(reportsRoot, pd.P.Name)
+	}
+	if len(all) == 0 {
+		return errors.New("no results to report; run `tfpp run` first")
+	}
+	// every page embeds every provider so the provider dropdown works anywhere; per-provider pages just default to theirs
+	for _, d := range all {
+		dir := filepath.Join(reportsRoot, d.Provider)
 		if err := os.MkdirAll(dir, 0o750); err != nil {
 			return err
 		}
@@ -83,12 +87,9 @@ func WriteAll(pds []ProviderData, reportsRoot string) error {
 		if err := writeCSV(filepath.Join(dir, "data.csv"), d); err != nil {
 			return err
 		}
-		if err := writePage(filepath.Join(dir, "index.html"), []data{d}, pd.P.Name); err != nil {
+		if err := writePage(filepath.Join(dir, "index.html"), all, d.Provider); err != nil {
 			return err
 		}
-	}
-	if len(all) == 0 {
-		return errors.New("no results to report; run `tfpp run` first")
 	}
 	return writePage(filepath.Join(reportsRoot, "index.html"), all, "all")
 }

@@ -253,7 +253,7 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
     { keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_data_sources', 'source.untyped_data_sources'], stack: true },
   ].map(g => ({ keys: g.keys.map(k).filter(x => M[x]), stack: !!g.stack, wide: false })).filter(g => g.keys.length);
 });
-const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['releases', 'majors'], tip: 'current', p: PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '') };
+const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['releases', 'majors'], tip: 'current', p: PROVIDERS.includes('__TFPP_PROVIDER__') ? '__TFPP_PROVIDER__' : (PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '')) };
 applyRange();
 function syncSel() { state.groups = state.groups.filter(g => g.keys.length); state.sel = state.groups.flatMap(g => g.keys); assignColors(); }
 // groups restricted to what the current provider selection can show; gi keeps the index into state.groups
