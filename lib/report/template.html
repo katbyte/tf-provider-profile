@@ -285,12 +285,13 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
     { keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'], stack: true },
     { keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct', 'schema.list_resources', 'schema.identity_resources'] }, // percent left, counts right
     { keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
-    { keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1', 'source.sdk_count.go_azure_sdk', 'source.sdk_count.both', 'source.sdk_count.kermit', 'source.sdk_count.track1'] },
+    // the go-azure-sdk share/count dwarf the rest, so they start hidden (legend click shows them)
+    { keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1', 'source.sdk_count.go_azure_sdk', 'source.sdk_count.both', 'source.sdk_count.kermit', 'source.sdk_count.track1'], hidden: ['source.sdk_pct.go_azure_sdk', 'source.sdk_count.go_azure_sdk'] },
     { keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines'], stack: true },
     { keys: ['binary.{plat}.zip_bytes', 'binary.{plat}.binary_bytes'] },
     { keys: ['schema.provider_max_rss_bytes', 'startup.max_rss_bytes'] },
     { keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_data_sources', 'source.untyped_data_sources'], stack: true },
-  ].map(g => ({ keys: g.keys.map(k).filter(x => M[x]), stack: !!g.stack, wide: false })).filter(g => g.keys.length);
+  ].map(g => ({ keys: g.keys.map(k).filter(x => M[x]), hidden: (g.hidden || []).map(k).filter(x => M[x]), stack: !!g.stack, wide: false })).filter(g => g.keys.length);
 });
 const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['releases', 'majors'], tip: 'current', p: PROVIDERS.includes('__TFPP_PROVIDER__') ? '__TFPP_PROVIDER__' : (PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '')) };
 applyRange();
