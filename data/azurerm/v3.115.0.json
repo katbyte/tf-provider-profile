@@ -3,46 +3,45 @@
   "date": "2024-08-09T08:47:16Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-09T03:01:41.949434Z",
-      "duration_s": 0.820237667,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T13:24:34.70668Z",
+      "duration_s": 0.887659375,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "build": {
-      "ran_at": "2026-09-09T04:26:23.829585Z",
-      "duration_s": 117.176427708,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T13:24:49.607842Z",
+      "duration_s": 94.546971125,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "lint": {
-      "ran_at": "2026-09-09T03:09:31.213376Z",
-      "duration_s": 0.024381208,
-      "error": "git checkout --quiet --force v3.115.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T13:26:24.155423Z",
+      "duration_s": 2882.309918667,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-09T03:02:54.421287Z",
-      "duration_s": 2.014911584,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T13:24:39.895473Z",
+      "duration_s": 1.9976075,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:35:15.760045Z",
-      "duration_s": 5.440992833,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T13:24:41.893843Z",
+      "duration_s": 7.711986834,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-09T03:02:50.379143Z",
-      "duration_s": 4.041320833,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T13:24:35.596043Z",
+      "duration_s": 4.298386458,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     }
   },
@@ -1088,18 +1087,74 @@
   "startup": {
     "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 59.996,
-    "handshake_med_ms": 61.69,
-    "max_rss_bytes": 123486208,
-    "protocol_version": "5"
+    "handshake_min_ms": 60.229,
+    "handshake_med_ms": 61.375,
+    "max_rss_bytes": 124616704,
+    "protocol_version": "5",
+    "init_packages": 1091,
+    "init_ms": 4.513999999999923,
+    "init_heap_bytes": 1966296,
+    "init_allocs": 13243,
+    "init_top": [
+      {
+        "package": "github.com/google/go-cmp/cmp",
+        "ms": 0.2,
+        "bytes": 178360
+      },
+      {
+        "package": "encoding/gob",
+        "ms": 0.13,
+        "bytes": 29848
+      },
+      {
+        "package": "google.golang.org/protobuf/reflect/protodesc",
+        "ms": 0.13,
+        "bytes": 137320
+      },
+      {
+        "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+        "ms": 0.097,
+        "bytes": 23496
+      },
+      {
+        "package": "github.com/google/go-cmp/cmp/internal/function",
+        "ms": 0.092,
+        "bytes": 35640
+      },
+      {
+        "package": "github.com/hashicorp/go-azure-helpers/resourcemanager/recaser",
+        "ms": 0.082,
+        "bytes": 25160
+      },
+      {
+        "package": "google.golang.org/grpc",
+        "ms": 0.078,
+        "bytes": 28984
+      },
+      {
+        "package": "github.com/hashicorp/go-azure-sdk/resource-manager/web/2023-01-01/webapps",
+        "ms": 0.071,
+        "bytes": 16496
+      },
+      {
+        "package": "github.com/hashicorp/go-version",
+        "ms": 0.066,
+        "bytes": 75936
+      },
+      {
+        "package": "github.com/hashicorp/terraform-provider-azurerm/internal/services/fluidrelay/validate",
+        "ms": 0.065,
+        "bytes": 42048
+      }
+    ]
   },
   "schema": {
     "platform": "darwin_arm64",
     "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 226.085,
-    "wall_med_ms": 232.158,
-    "provider_max_rss_bytes": 145113088,
+    "wall_min_ms": 227.415,
+    "wall_med_ms": 234.424,
+    "provider_max_rss_bytes": 146636800,
     "json_bytes": 3041124,
     "gzip_bytes": 216665,
     "resources": 1103,
@@ -1188,6 +1243,14 @@
       }
     },
     "identity_resource_files": 0,
+    "deprecated_resource_files": 90,
+    "resource_files_without_tests": 23,
+    "resource_files_total": 1405,
+    "nolint_directives": 430,
+    "todos": 659,
+    "services_with_resources": 129,
+    "services_fully_typed": 29,
+    "services_fully_go_azure_sdk": 103,
     "docs_resources": 1102,
     "docs_data_sources": 357,
     "docs_ephemeral": 0,
@@ -1207,7 +1270,8 @@
     "lines_added": 1420,
     "lines_removed": 451,
     "days_since_prev": 7.629768518518518,
-    "tag_date": "0001-01-01T00:00:00Z",
+    "tag_date": "2024-08-09T08:27:23Z",
+    "release_lag_hours": 0.3313888888888889,
     "changelog_entries": {
       "bug_fixes": 4,
       "enhancements": 12,
@@ -1216,10 +1280,17 @@
   },
   "build": {
     "go_toolchain": "go1.21.6 darwin/arm64",
-    "clean_build_s": 91.703640583,
-    "warm_build_s": 11.443856125,
-    "stripped_build_s": 8.654637833,
-    "local_binary_bytes": 340301282,
-    "stripped_binary_bytes": 274055154
+    "clean_build_s": 63.3572025,
+    "warm_build_s": 15.504520417,
+    "stripped_build_s": 12.721468375,
+    "local_binary_bytes": 340284738,
+    "stripped_binary_bytes": 274038594
+  },
+  "lint": {
+    "tool": "golangci-lint",
+    "tool_version": "2.13.2",
+    "duration_s": 2880.416672375,
+    "exit_code": 1,
+    "issues": 117
   }
 }
