@@ -57,40 +57,51 @@ func (r *Runner) lintStage(ctx context.Context, res *results.Result) (string, er
 			clog.Log.Warnf("%s: golangci-lint migrate failed, running with the original config: %v", res.Version, err)
 		}
 	}
-	if _, err := runCmd(ctx, src, env, tool, "cache", "clean"); err != nil {
-		return "", err
-	}
-
 	timeout := r.Opts.Timeout
 	if timeout <= 0 {
 		timeout = 90 * time.Minute
 	}
-	lctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
 
-	cmd := exec.CommandContext(lctx, tool, "run", "./...", "--timeout", timeout.String())
-	cmd.Dir = src
-	cmd.Env = append(os.Environ(), env...)
-	start := time.Now()
-	out, err := cmd.CombinedOutput()
-	elapsed := time.Since(start).Seconds()
+	// hanging go subprocesses on darwin (golang/go#76685) intermittently kill the goimports linter with
+	// "exec: WaitDelay expired before I/O complete"; the checkout is fine, so retry those runs cold
+	var lr *results.LintResult
+	for attempt := 1; ; attempt++ {
+		if _, err := runCmd(ctx, src, env, tool, "cache", "clean"); err != nil {
+			return "", err
+		}
 
-	lr := &results.LintResult{
-		Tool:        filepath.Base(tool),
-		ToolVersion: strings.TrimSpace(ver),
-		DurationS:   elapsed,
-		Issues:      len(reLintIssue.FindAllIndex(out, -1)),
-	}
-	if err != nil {
+		lctx, cancel := context.WithTimeout(ctx, timeout)
+		cmd := exec.CommandContext(lctx, tool, "run", "./...", "--timeout", timeout.String())
+		cmd.Dir = src
+		cmd.Env = append(os.Environ(), env...)
+		start := time.Now()
+		out, err := cmd.CombinedOutput()
+		cancel()
+		elapsed := time.Since(start).Seconds()
+
+		lr = &results.LintResult{
+			Tool:        filepath.Base(tool),
+			ToolVersion: strings.TrimSpace(ver),
+			DurationS:   elapsed,
+			Issues:      len(reLintIssue.FindAllIndex(out, -1)),
+		}
+		if err == nil {
+			break
+		}
 		var ee *exec.ExitError
 		if !errors.As(err, &ee) {
 			return "", err
 		}
 		lr.ExitCode = ee.ExitCode()
 		// 1 = issues found, which is a valid timing; anything else is a broken run
-		if lr.ExitCode != 1 {
-			return "", fmt.Errorf("%s exit %d after %.0fs: %s", lr.Tool, lr.ExitCode, elapsed, lastLines(string(out), 6))
+		if lr.ExitCode == 1 {
+			break
 		}
+		if attempt < 3 && strings.Contains(string(out), "WaitDelay expired") {
+			clog.Log.Warnf("%s: lint attempt %d hit the darwin WaitDelay flake after %.0fs, retrying", res.Version, attempt, elapsed)
+			continue
+		}
+		return "", fmt.Errorf("%s exit %d after %.0fs: %s", lr.Tool, lr.ExitCode, elapsed, lastLines(string(out), 6))
 	}
 
 	res.Lint = lr
