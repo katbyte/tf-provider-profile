@@ -3,10 +3,10 @@
   "date": "2026-06-18T21:21:43Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-09T03:09:25.025892Z",
-      "duration_s": 0.130426667,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T15:50:55.854682Z",
+      "duration_s": 0.103424916,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "build": {
@@ -25,24 +25,24 @@
       "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-09T03:09:26.367268Z",
-      "duration_s": 0.926105875,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:14:18.547916Z",
+      "duration_s": 0.916432167,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T04:37:47.17351Z",
-      "duration_s": 11.168450292,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:04:15.76902Z",
+      "duration_s": 2.3485671249999998,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-09T03:09:25.156936Z",
-      "duration_s": 1.209734667,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:14:17.64095Z",
+      "duration_s": 0.906388959,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     }
   },
@@ -452,18 +452,74 @@
   "startup": {
     "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 21.067,
-    "handshake_med_ms": 22.769,
-    "max_rss_bytes": 36749312,
-    "protocol_version": "5"
+    "handshake_min_ms": 18.767,
+    "handshake_med_ms": 19.169,
+    "max_rss_bytes": 36487168,
+    "protocol_version": "5",
+    "init_packages": 231,
+    "init_ms": 1.8009999999999966,
+    "init_heap_bytes": 1339880,
+    "init_allocs": 6579,
+    "init_top": [
+      {
+        "package": "github.com/google/go-cmp/cmp",
+        "ms": 0.16,
+        "bytes": 178568
+      },
+      {
+        "package": "google.golang.org/protobuf/reflect/protodesc",
+        "ms": 0.13,
+        "bytes": 165152
+      },
+      {
+        "package": "github.com/hashicorp/terraform-registry-address",
+        "ms": 0.1,
+        "bytes": 91872
+      },
+      {
+        "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+        "ms": 0.095,
+        "bytes": 22848
+      },
+      {
+        "package": "encoding/gob",
+        "ms": 0.09,
+        "bytes": 27248
+      },
+      {
+        "package": "github.com/google/go-cmp/cmp/internal/function",
+        "ms": 0.085,
+        "bytes": 35640
+      },
+      {
+        "package": "google.golang.org/grpc",
+        "ms": 0.063,
+        "bytes": 30824
+      },
+      {
+        "package": "google.golang.org/protobuf/types/descriptorpb",
+        "ms": 0.051,
+        "bytes": 49488
+      },
+      {
+        "package": "github.com/hashicorp/hc-install/version",
+        "ms": 0.045,
+        "bytes": 62576
+      },
+      {
+        "package": "os",
+        "ms": 0.045,
+        "bytes": 616
+      }
+    ]
   },
   "schema": {
     "platform": "darwin_arm64",
     "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 92.337,
-    "wall_med_ms": 93.901,
-    "provider_max_rss_bytes": 44154880,
+    "wall_min_ms": 83.683,
+    "wall_med_ms": 85.699,
+    "provider_max_rss_bytes": 44662784,
     "json_bytes": 192148,
     "gzip_bytes": 23004,
     "resources": 54,

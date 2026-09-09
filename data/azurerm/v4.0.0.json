@@ -3,31 +3,46 @@
   "date": "2024-08-22T22:07:17Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-09T03:01:43.57799Z",
-      "duration_s": 0.82073025,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T15:49:46.788393Z",
+      "duration_s": 0.791347458,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "build": {
+      "ran_at": "2026-09-09T15:07:59.817366Z",
+      "duration_s": 96.771246333,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "lint": {
+      "ran_at": "2026-09-09T15:09:36.590081Z",
+      "duration_s": 2387.24324075,
+      "error": "golangci-lint exit -1 after 2385s: ",
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-09T03:03:06.619754Z",
-      "duration_s": 1.975026875,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:04:35.964315Z",
+      "duration_s": 1.7122606660000002,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:35:26.539351Z",
-      "duration_s": 5.74531275,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T15:51:37.437569Z",
+      "duration_s": 6.593520333,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-09T03:03:02.385349Z",
-      "duration_s": 4.233561125,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:04:35.313792Z",
+      "duration_s": 0.649724916,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     }
   },
@@ -1077,18 +1092,74 @@
   "startup": {
     "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 59.252,
-    "handshake_med_ms": 59.608,
-    "max_rss_bytes": 120651776,
-    "protocol_version": "5"
+    "handshake_min_ms": 57.92,
+    "handshake_med_ms": 59.147,
+    "max_rss_bytes": 122863616,
+    "protocol_version": "5",
+    "init_packages": 1108,
+    "init_ms": 4.490999999999928,
+    "init_heap_bytes": 1968784,
+    "init_allocs": 13310,
+    "init_top": [
+      {
+        "package": "github.com/google/go-cmp/cmp",
+        "ms": 0.17,
+        "bytes": 178360
+      },
+      {
+        "package": "google.golang.org/protobuf/reflect/protodesc",
+        "ms": 0.13,
+        "bytes": 137320
+      },
+      {
+        "package": "encoding/gob",
+        "ms": 0.12,
+        "bytes": 29224
+      },
+      {
+        "package": "github.com/google/go-cmp/cmp/internal/function",
+        "ms": 0.096,
+        "bytes": 35640
+      },
+      {
+        "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+        "ms": 0.094,
+        "bytes": 23496
+      },
+      {
+        "package": "github.com/hashicorp/go-azure-helpers/resourcemanager/recaser",
+        "ms": 0.088,
+        "bytes": 25160
+      },
+      {
+        "package": "google.golang.org/grpc",
+        "ms": 0.075,
+        "bytes": 28984
+      },
+      {
+        "package": "github.com/hashicorp/go-azure-sdk/resource-manager/web/2023-01-01/webapps",
+        "ms": 0.071,
+        "bytes": 16496
+      },
+      {
+        "package": "github.com/hashicorp/go-version",
+        "ms": 0.07,
+        "bytes": 75936
+      },
+      {
+        "package": "github.com/hashicorp/terraform-provider-azurerm/internal/services/fluidrelay/validate",
+        "ms": 0.068,
+        "bytes": 42048
+      }
+    ]
   },
   "schema": {
     "platform": "darwin_arm64",
     "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 227.936,
-    "wall_med_ms": 233.13,
-    "provider_max_rss_bytes": 140820480,
+    "wall_min_ms": 232.111,
+    "wall_med_ms": 235.178,
+    "provider_max_rss_bytes": 144277504,
     "json_bytes": 2883692,
     "gzip_bytes": 207701,
     "resources": 1041,
@@ -1177,6 +1248,14 @@
       }
     },
     "identity_resource_files": 0,
+    "deprecated_resource_files": 90,
+    "resource_files_without_tests": 24,
+    "resource_files_total": 1408,
+    "nolint_directives": 411,
+    "todos": 693,
+    "services_with_resources": 129,
+    "services_fully_typed": 29,
+    "services_fully_go_azure_sdk": 104,
     "docs_resources": 1048,
     "docs_data_sources": 349,
     "docs_ephemeral": 0,
@@ -1196,12 +1275,21 @@
     "lines_added": 5390,
     "lines_removed": 14480,
     "days_since_prev": -189.51761574074075,
-    "tag_date": "0001-01-01T00:00:00Z",
+    "tag_date": "2024-08-22T21:47:47Z",
+    "release_lag_hours": 0.325,
     "changelog_entries": {
       "bug_fixes": 6,
       "enhancements": 17,
       "notes": 2,
       "total": 25
     }
+  },
+  "build": {
+    "go_toolchain": "go1.21.6 darwin/arm64",
+    "clean_build_s": 64.214801791,
+    "warm_build_s": 16.77139325,
+    "stripped_build_s": 12.850191416,
+    "local_binary_bytes": 338647090,
+    "stripped_binary_bytes": 272367922
   }
 }

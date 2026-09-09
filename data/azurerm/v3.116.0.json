@@ -3,8 +3,8 @@
   "date": "2024-08-16T05:57:13Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-09T14:14:26.486195Z",
-      "duration_s": 0.85678475,
+      "ran_at": "2026-09-09T15:49:45.954749Z",
+      "duration_s": 0.832386916,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -24,22 +24,22 @@
       "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-09T14:14:31.70168Z",
-      "duration_s": 1.975252,
+      "ran_at": "2026-09-09T16:04:33.587751Z",
+      "duration_s": 1.7247836250000002,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T14:14:33.6776Z",
-      "duration_s": 7.681637875,
+      "ran_at": "2026-09-09T15:51:31.057917Z",
+      "duration_s": 6.378029375,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-09T14:14:27.344687Z",
-      "duration_s": 4.356077791,
+      "ran_at": "2026-09-09T16:04:32.658409Z",
+      "duration_s": 0.927707583,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1091,14 +1091,14 @@
   "startup": {
     "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 60.079,
-    "handshake_med_ms": 61.771,
-    "max_rss_bytes": 125779968,
+    "handshake_min_ms": 61.54,
+    "handshake_med_ms": 62.163,
+    "max_rss_bytes": 124862464,
     "protocol_version": "5",
     "init_packages": 1093,
-    "init_ms": 4.585999999999931,
-    "init_heap_bytes": 1963984,
-    "init_allocs": 13249,
+    "init_ms": 4.526999999999936,
+    "init_heap_bytes": 1966288,
+    "init_allocs": 13304,
     "init_top": [
       {
         "package": "github.com/google/go-cmp/cmp",
@@ -1107,48 +1107,48 @@
       },
       {
         "package": "google.golang.org/protobuf/reflect/protodesc",
-        "ms": 0.14,
+        "ms": 0.13,
         "bytes": 137320
       },
       {
         "package": "encoding/gob",
-        "ms": 0.13,
+        "ms": 0.12,
         "bytes": 29640
       },
       {
         "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
-        "ms": 0.1,
+        "ms": 0.098,
         "bytes": 23496
       },
       {
         "package": "github.com/google/go-cmp/cmp/internal/function",
-        "ms": 0.1,
+        "ms": 0.096,
         "bytes": 35640
       },
       {
-        "package": "github.com/hashicorp/go-azure-helpers/resourcemanager/recaser",
-        "ms": 0.08,
-        "bytes": 25448
-      },
-      {
         "package": "google.golang.org/grpc",
-        "ms": 0.08,
-        "bytes": 29400
+        "ms": 0.079,
+        "bytes": 28984
       },
       {
-        "package": "github.com/hashicorp/terraform-provider-azurerm/internal/services/fluidrelay/validate",
+        "package": "github.com/hashicorp/go-azure-helpers/resourcemanager/recaser",
         "ms": 0.078,
-        "bytes": 42048
+        "bytes": 24872
       },
       {
         "package": "github.com/hashicorp/go-azure-sdk/resource-manager/web/2023-01-01/webapps",
-        "ms": 0.074,
+        "ms": 0.072,
         "bytes": 16496
       },
       {
-        "package": "google.golang.org/protobuf/types/descriptorpb",
+        "package": "github.com/hashicorp/go-version",
+        "ms": 0.07,
+        "bytes": 77352
+      },
+      {
+        "package": "github.com/hashicorp/terraform-provider-azurerm/internal/services/fluidrelay/validate",
         "ms": 0.065,
-        "bytes": 48504
+        "bytes": 42048
       }
     ]
   },
@@ -1156,9 +1156,9 @@
     "platform": "darwin_arm64",
     "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 229.884,
-    "wall_med_ms": 233.124,
-    "provider_max_rss_bytes": 144965632,
+    "wall_min_ms": 231.44,
+    "wall_med_ms": 235.987,
+    "provider_max_rss_bytes": 148275200,
     "json_bytes": 3050336,
     "gzip_bytes": 217175,
     "resources": 1108,

@@ -3,8 +3,8 @@
   "date": "2024-07-19T05:29:47Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-09T10:13:24.405584Z",
-      "duration_s": 0.797933042,
+      "ran_at": "2026-09-09T15:49:43.509389Z",
+      "duration_s": 0.7651605,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -24,22 +24,22 @@
       "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-09T10:13:25.872411Z",
-      "duration_s": 1.7286912920000002,
+      "ran_at": "2026-09-09T16:04:25.636684Z",
+      "duration_s": 1.732845083,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T10:13:27.601869Z",
-      "duration_s": 6.65964575,
+      "ran_at": "2026-09-09T15:51:11.833997Z",
+      "duration_s": 6.25879475,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-09T10:13:25.205924Z",
-      "duration_s": 0.66560425,
+      "ran_at": "2026-09-09T16:04:24.710785Z",
+      "duration_s": 0.925020666,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1063,24 +1063,19 @@
   "startup": {
     "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 59.641,
-    "handshake_med_ms": 60.432,
-    "max_rss_bytes": 124403712,
+    "handshake_min_ms": 59.512,
+    "handshake_med_ms": 60.592,
+    "max_rss_bytes": 124289024,
     "protocol_version": "5",
     "init_packages": 1091,
-    "init_ms": 4.686999999999947,
-    "init_heap_bytes": 2174688,
-    "init_allocs": 13026,
+    "init_ms": 4.482999999999931,
+    "init_heap_bytes": 2176880,
+    "init_allocs": 13027,
     "init_top": [
       {
         "package": "github.com/google/go-cmp/cmp",
-        "ms": 0.19,
+        "ms": 0.17,
         "bytes": 178360
-      },
-      {
-        "package": "google.golang.org/protobuf/reflect/protodesc",
-        "ms": 0.13,
-        "bytes": 131576
       },
       {
         "package": "encoding/gob",
@@ -1088,39 +1083,44 @@
         "bytes": 29640
       },
       {
+        "package": "google.golang.org/protobuf/reflect/protodesc",
+        "ms": 0.12,
+        "bytes": 131576
+      },
+      {
         "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
         "ms": 0.1,
         "bytes": 23496
       },
       {
+        "package": "github.com/hashicorp/go-plugin/internal/plugin",
+        "ms": 0.1,
+        "bytes": 261360
+      },
+      {
         "package": "github.com/google/go-cmp/cmp/internal/function",
-        "ms": 0.096,
+        "ms": 0.089,
         "bytes": 35640
       },
       {
-        "package": "github.com/hashicorp/go-azure-helpers/resourcemanager/recaser",
-        "ms": 0.083,
-        "bytes": 24872
+        "package": "os",
+        "ms": 0.08,
+        "bytes": 840
       },
       {
-        "package": "github.com/hashicorp/go-azure-sdk/resource-manager/web/2023-01-01/webapps",
-        "ms": 0.067,
-        "bytes": 16496
+        "package": "github.com/hashicorp/go-azure-helpers/resourcemanager/recaser",
+        "ms": 0.078,
+        "bytes": 25160
       },
       {
         "package": "github.com/hashicorp/go-version",
-        "ms": 0.066,
+        "ms": 0.076,
         "bytes": 76080
       },
       {
-        "package": "github.com/hashicorp/terraform-provider-azurerm/internal/services/fluidrelay/validate",
-        "ms": 0.066,
-        "bytes": 42048
-      },
-      {
-        "package": "google.golang.org/protobuf/types/descriptorpb",
-        "ms": 0.066,
-        "bytes": 48216
+        "package": "github.com/hashicorp/go-azure-sdk/resource-manager/web/2023-01-01/webapps",
+        "ms": 0.068,
+        "bytes": 16496
       }
     ]
   },
@@ -1128,9 +1128,9 @@
     "platform": "darwin_arm64",
     "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 231.148,
-    "wall_med_ms": 238.894,
-    "provider_max_rss_bytes": 143507456,
+    "wall_min_ms": 233.441,
+    "wall_med_ms": 236.177,
+    "provider_max_rss_bytes": 145063936,
     "json_bytes": 3036498,
     "gzip_bytes": 216316,
     "resources": 1101,

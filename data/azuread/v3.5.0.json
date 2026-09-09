@@ -3,31 +3,31 @@
   "date": "2025-08-08T14:46:59Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-09T03:09:03.85418Z",
-      "duration_s": 0.111571,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T15:50:55.465193Z",
+      "duration_s": 0.095927167,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-09T03:09:05.12681Z",
-      "duration_s": 1.004170583,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:14:09.957423Z",
+      "duration_s": 0.925757084,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:44:31.753621Z",
-      "duration_s": 1.55334675,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:04:05.232605Z",
+      "duration_s": 2.565217208,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-09T03:09:03.966258Z",
-      "duration_s": 1.160004125,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:14:09.083407Z",
+      "duration_s": 0.873430625,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     }
   },
@@ -443,18 +443,74 @@
   "startup": {
     "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 21.193,
-    "handshake_med_ms": 22.333,
-    "max_rss_bytes": 36405248,
-    "protocol_version": "5"
+    "handshake_min_ms": 17.902,
+    "handshake_med_ms": 18.895,
+    "max_rss_bytes": 36159488,
+    "protocol_version": "5",
+    "init_packages": 233,
+    "init_ms": 1.8089999999999966,
+    "init_heap_bytes": 1320648,
+    "init_allocs": 6997,
+    "init_top": [
+      {
+        "package": "github.com/google/go-cmp/cmp",
+        "ms": 0.17,
+        "bytes": 178568
+      },
+      {
+        "package": "google.golang.org/protobuf/reflect/protodesc",
+        "ms": 0.13,
+        "bytes": 162056
+      },
+      {
+        "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+        "ms": 0.097,
+        "bytes": 23512
+      },
+      {
+        "package": "encoding/gob",
+        "ms": 0.096,
+        "bytes": 26608
+      },
+      {
+        "package": "github.com/google/go-cmp/cmp/internal/function",
+        "ms": 0.085,
+        "bytes": 35640
+      },
+      {
+        "package": "os",
+        "ms": 0.074,
+        "bytes": 616
+      },
+      {
+        "package": "github.com/hashicorp/terraform-registry-address",
+        "ms": 0.066,
+        "bytes": 91872
+      },
+      {
+        "package": "google.golang.org/grpc",
+        "ms": 0.054,
+        "bytes": 28024
+      },
+      {
+        "package": "google.golang.org/protobuf/internal/detrand",
+        "ms": 0.053,
+        "bytes": 440
+      },
+      {
+        "package": "google.golang.org/protobuf/types/descriptorpb",
+        "ms": 0.053,
+        "bytes": 48112
+      }
+    ]
   },
   "schema": {
     "platform": "darwin_arm64",
     "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 93.433,
-    "wall_med_ms": 95.532,
-    "provider_max_rss_bytes": 44204032,
+    "wall_min_ms": 85.03,
+    "wall_med_ms": 87.356,
+    "provider_max_rss_bytes": 44302336,
     "json_bytes": 189622,
     "gzip_bytes": 22869,
     "resources": 53,
@@ -536,6 +592,13 @@
       }
     },
     "identity_resource_files": 0,
+    "deprecated_resource_files": 1,
+    "resource_files_total": 71,
+    "nolint_directives": 77,
+    "todos": 28,
+    "services_with_resources": 15,
+    "services_fully_typed": 1,
+    "services_fully_go_azure_sdk": 15,
     "docs_resources": 53,
     "docs_data_sources": 20,
     "docs_ephemeral": 0,
@@ -555,7 +618,8 @@
     "lines_added": 513,
     "lines_removed": 210,
     "days_since_prev": 84.33099537037037,
-    "tag_date": "0001-01-01T00:00:00Z",
+    "tag_date": "2025-08-08T14:31:59Z",
+    "release_lag_hours": 0.25,
     "changelog_entries": {
       "bug_fixes": 1,
       "enhancements": 1,

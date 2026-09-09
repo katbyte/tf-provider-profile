@@ -3,29 +3,31 @@
   "date": "2026-05-21T22:03:38Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-09T01:46:09.077441Z",
-      "duration_s": 0.735250833,
-      "host": "katbook"
+      "ran_at": "2026-09-09T15:50:40.964765Z",
+      "duration_s": 0.655007208,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-09T03:07:35.520861Z",
-      "duration_s": 2.026553042,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:12:29.437978Z",
+      "duration_s": 2.160679042,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:42:56.108663Z",
-      "duration_s": 6.176440458,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:01:43.622789Z",
+      "duration_s": 8.560714167,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-09T03:07:34.708874Z",
-      "duration_s": 0.811025334,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:12:25.522358Z",
+      "duration_s": 3.914732583,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     }
   },
@@ -1094,18 +1096,74 @@
   "startup": {
     "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 64.052,
-    "handshake_med_ms": 70.167,
-    "max_rss_bytes": 131776512,
-    "protocol_version": "5"
+    "handshake_min_ms": 62.186,
+    "handshake_med_ms": 63.143,
+    "max_rss_bytes": 131842048,
+    "protocol_version": "5",
+    "init_packages": 1228,
+    "init_ms": 4.711999999999915,
+    "init_heap_bytes": 2188464,
+    "init_allocs": 14361,
+    "init_top": [
+      {
+        "package": "github.com/google/go-cmp/cmp",
+        "ms": 0.17,
+        "bytes": 178568
+      },
+      {
+        "package": "google.golang.org/protobuf/reflect/protodesc",
+        "ms": 0.15,
+        "bytes": 165456
+      },
+      {
+        "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+        "ms": 0.1,
+        "bytes": 22832
+      },
+      {
+        "package": "encoding/gob",
+        "ms": 0.099,
+        "bytes": 27728
+      },
+      {
+        "package": "google.golang.org/grpc",
+        "ms": 0.098,
+        "bytes": 29320
+      },
+      {
+        "package": "github.com/google/go-cmp/cmp/internal/function",
+        "ms": 0.097,
+        "bytes": 35640
+      },
+      {
+        "package": "github.com/hashicorp/go-azure-helpers/resourcemanager/recaser",
+        "ms": 0.077,
+        "bytes": 24408
+      },
+      {
+        "package": "os",
+        "ms": 0.072,
+        "bytes": 616
+      },
+      {
+        "package": "github.com/hashicorp/go-azure-sdk/resource-manager/web/2023-12-01/webapps",
+        "ms": 0.069,
+        "bytes": 16992
+      },
+      {
+        "package": "google.golang.org/protobuf/types/descriptorpb",
+        "ms": 0.065,
+        "bytes": 49440
+      }
+    ]
   },
   "schema": {
     "platform": "darwin_arm64",
     "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 262.683,
-    "wall_med_ms": 266.732,
-    "provider_max_rss_bytes": 158728192,
+    "wall_min_ms": 255.392,
+    "wall_med_ms": 258.78,
+    "provider_max_rss_bytes": 160038912,
     "json_bytes": 3256819,
     "gzip_bytes": 235895,
     "resources": 1132,
@@ -1205,6 +1263,14 @@
       }
     },
     "identity_resource_files": 98,
+    "deprecated_resource_files": 61,
+    "resource_files_without_tests": 17,
+    "resource_files_total": 1353,
+    "nolint_directives": 306,
+    "todos": 571,
+    "services_with_resources": 128,
+    "services_fully_typed": 36,
+    "services_fully_go_azure_sdk": 109,
     "docs_resources": 1128,
     "docs_data_sources": 397,
     "docs_ephemeral": 2,
@@ -1224,7 +1290,8 @@
     "lines_added": 4372,
     "lines_removed": 7223,
     "days_since_prev": 7.175,
-    "tag_date": "0001-01-01T00:00:00Z",
+    "tag_date": "2026-05-21T21:23:48Z",
+    "release_lag_hours": 0.6638888888888889,
     "changelog_entries": {
       "bug_fixes": 3,
       "enhancements": 8,
