@@ -43,11 +43,11 @@ help: ## Show this help
 ##@ Build
 build: ## Compile tfpp with version info from git
 	@echo "==> building..."
-	go build -ldflags "-X github.com/katbyte/tf-provider-profile/lib/version.GitCommit=${GIT_COMMIT} -X github.com/katbyte/tf-provider-profile/lib/version.Version=${GIT_VERSION}"
+	go build -o tfpp -ldflags "-X github.com/katbyte/tf-provider-profile/lib/version.GitCommit=${GIT_COMMIT} -X github.com/katbyte/tf-provider-profile/lib/version.Version=${GIT_VERSION}"
 
 install: ## Install tfpp into GOPATH/bin with version info from git
 	@echo "==> installing..."
-	go install -ldflags "-X github.com/katbyte/tf-provider-profile/lib/version.GitCommit=${GIT_COMMIT} -X github.com/katbyte/tf-provider-profile/lib/version.Version=${GIT_VERSION}" .
+	go build -o "$$(go env GOPATH)/bin/tfpp" -ldflags "-X github.com/katbyte/tf-provider-profile/lib/version.GitCommit=${GIT_COMMIT} -X github.com/katbyte/tf-provider-profile/lib/version.Version=${GIT_VERSION}" .
 
 tools: $(ACTIONLINT) $(GOFUMPT) $(GOLANGCI_LINT) $(GOLANGCI_LINT_MODULES) $(YAMLLINT) ## Install all pinned dev tools into .tools/bin
 
