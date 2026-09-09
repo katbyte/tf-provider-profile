@@ -746,7 +746,8 @@ function showCtx(i, ev, active, i0) {
   ctx.style.top = Math.min(ev.clientY, innerHeight - h - 8) + 'px';
 }
 $('#ctx').addEventListener('click', ev => {
-  const b = ev.target.closest('button[data-ai]'); if (!b) return;
+  const b = ev.target.closest('button[data-ai]');
+  if (!b) { if (!ev.target.closest('textarea')) { $('#ctx').hidden = true; clearSel(); } return; } // anywhere else in the box closes it
   const ctx = $('#ctx'), prompt = ctx.querySelector('textarea').value;
   if (b.dataset.ai === 'close') { ctx.hidden = true; clearSel(); return; }
   if (b.dataset.ai === 'copy') { navigator.clipboard?.writeText(prompt); b.textContent = 'copied'; return; }
@@ -786,6 +787,7 @@ function attachCtx(c) {
     const i = nearestIndex(c, ev);
     setHover(-1);
     if (d.moved && i !== d.i0) { const [lo, hi] = d.i0 < i ? [d.i0, i] : [i, d.i0]; drawSel(c, lo, hi); showCtx(hi, ev, c, lo); }
+    else if (!$('#ctx').hidden) { $('#ctx').hidden = true; clearSel(); } // a click while the menu is open just closes it
     else { clearSel(); showCtx(i, ev, c); }
   });
 }
