@@ -273,6 +273,8 @@ func fixedDefs() []def {
 	so := func(r *results.Result) *results.SourceResult { return r.Source }
 	bu := func(r *results.Result) *results.BuildResult { return r.Build }
 	li := func(r *results.Result) *results.LintResult { return r.Lint }
+	te := func(r *results.Result) *results.TestResult { return r.Test }
+	pc := func(r *results.Result) *results.PRCheckResult { return r.PRCheck }
 
 	return []def{
 		{"startup.handshake_med_ms", "Plugin handshake (median)", "ms", "startup", "time from exec to go-plugin handshake line, no terraform", func(r *results.Result) (float64, bool) {
@@ -799,6 +801,24 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		{"test.duration_s", "Unit test time", "s", "build", "the provider's own unit test run (sampled)", func(r *results.Result) (float64, bool) {
+			if x := te(r); x != nil {
+				return x.DurationS, true
+			}
+			return 0, false
+		}},
+		{"test.failures", "Unit test failures", "count", "build", "packages reported FAIL (sampled)", func(r *results.Result) (float64, bool) {
+			if x := te(r); x != nil {
+				return f(x.Failures)
+			}
+			return 0, false
+		}},
+		{"prcheck.duration_s", "PR checks time", "s", "build", "make pr-check where the release has it: the full PR gate, every lint flavour included; lint time covers the releases without it (sampled)", func(r *results.Result) (float64, bool) {
+			if x := pc(r); x != nil {
+				return x.DurationS, true
+			}
+			return 0, false
+		}},
 	}
 }
 
@@ -818,7 +838,7 @@ func upIs(d def) string {
 		return "neutral"
 	}
 	switch d.key {
-	case "schema.deprecated_attributes", "lint.issues", "source.untyped_resources", "source.untyped_data_sources",
+	case "schema.deprecated_attributes", "lint.issues", "test.failures", "source.untyped_resources", "source.untyped_data_sources",
 		"source.deprecated_resource_files", "source.resource_files_without_tests", "source.nolint_directives", "source.todos",
 		"startup.init_ms", "startup.init_heap_bytes", "startup.init_allocs",
 		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_autorest",

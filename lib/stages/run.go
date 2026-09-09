@@ -1,6 +1,6 @@
 // Package stages implements the profiling stages tfpp runs against each provider release: download the release
 // zips, dissect the binaries, time the plugin handshake and terraform schema fetch, count things in the source tree
-// at the tag, and (sampled) time a clean build and a lint run.
+// at the tag, and (sampled) time a clean build, the unit tests, a lint run, and the provider's pr-check target.
 package stages
 
 import (
@@ -154,8 +154,12 @@ func (r *Runner) runStage(ctx context.Context, res *results.Result, stage string
 		summary, err = r.sourceStage(ctx, res)
 	case results.StageBuild:
 		summary, err = r.buildStage(ctx, res)
+	case results.StageTest:
+		summary, err = r.testStage(ctx, res)
 	case results.StageLint:
 		summary, err = r.lintStage(ctx, res)
+	case results.StagePRCheck:
+		summary, err = r.prcheckStage(ctx, res)
 	default:
 		err = fmt.Errorf("unknown stage %q", stage)
 	}

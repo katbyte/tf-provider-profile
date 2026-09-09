@@ -25,6 +25,10 @@ func (r *Runner) lintStage(ctx context.Context, res *results.Result) (string, er
 		return "", err
 	}
 	src := r.P.SrcDir()
+	// pr-check includes a lint run, so releases with the target are measured by the prcheck stage instead
+	if makeTarget(src, "pr-check") {
+		return "skipped: pr-check includes lint", nil
+	}
 	env := append(r.buildEnv(src), "GOLANGCI_LINT_CACHE="+filepath.Join(r.P.CacheDir, "golangci-cache"))
 
 	tool := ""

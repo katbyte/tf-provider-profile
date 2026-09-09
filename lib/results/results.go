@@ -23,14 +23,16 @@ const (
 	StageSchema   = "schema"
 	StageSource   = "source"
 	StageBuild    = "build"
+	StageTest     = "test"
 	StageLint     = "lint"
+	StagePRCheck  = "prcheck"
 )
 
 // AllStages lists every stage in run order.
-var AllStages = []string{StageDownload, StageBinary, StageStartup, StageSchema, StageSource, StageBuild, StageLint}
+var AllStages = []string{StageDownload, StageBinary, StageStartup, StageSchema, StageSource, StageBuild, StageTest, StageLint, StagePRCheck}
 
 // ExpensiveStages are the stages sampled by --sample.
-var ExpensiveStages = []string{StageBuild, StageLint}
+var ExpensiveStages = []string{StageBuild, StageTest, StageLint, StagePRCheck}
 
 // StageMeta records when a stage ran and whether it failed.
 type StageMeta struct {
@@ -227,6 +229,22 @@ type LintResult struct {
 	Issues      int     `json:"issues"`
 }
 
+// TestResult times the provider's unit tests at the release tag.
+type TestResult struct {
+	Tool      string  `json:"tool"` // "make test" or "go test"
+	DurationS float64 `json:"duration_s"`
+	ExitCode  int     `json:"exit_code"`
+	Packages  int     `json:"packages,omitempty"` // packages reported ok or FAIL
+	Failures  int     `json:"failures,omitempty"` // packages reported FAIL
+}
+
+// PRCheckResult times the provider's aggregate pr-check make target, where one exists.
+type PRCheckResult struct {
+	Target    string  `json:"target"`
+	DurationS float64 `json:"duration_s"`
+	ExitCode  int     `json:"exit_code"`
+}
+
 // Result is everything recorded for one release.
 type Result struct {
 	Version string    `json:"version"`
@@ -238,7 +256,9 @@ type Result struct {
 	Schema  *SchemaResult            `json:"schema,omitempty"`
 	Source  *SourceResult            `json:"source,omitempty"`
 	Build   *BuildResult             `json:"build,omitempty"`
+	Test    *TestResult              `json:"test,omitempty"`
 	Lint    *LintResult              `json:"lint,omitempty"`
+	PRCheck *PRCheckResult           `json:"prcheck,omitempty"`
 }
 
 // Store reads and writes per-release result files.
