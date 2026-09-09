@@ -284,7 +284,8 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
   return [
     { keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'], stack: true },
     { keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct', 'schema.list_resources', 'schema.identity_resources'] }, // percent left, counts right
-    { keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
+    // typed migration progress: shares left, typed counts right (untyped counts there too, hidden until clicked)
+    { keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct', 'source.typed_resources', 'source.typed_data_sources', 'source.untyped_resources', 'source.untyped_data_sources'], hidden: ['source.untyped_resources', 'source.untyped_data_sources'] },
     // the go-azure-sdk share/count dwarf the rest, so they start hidden (legend click shows them)
     { keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1', 'source.sdk_count.go_azure_sdk', 'source.sdk_count.both', 'source.sdk_count.kermit', 'source.sdk_count.track1'], hidden: ['source.sdk_pct.go_azure_sdk', 'source.sdk_count.go_azure_sdk'] },
     { keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines'], stack: true },
@@ -1060,7 +1061,7 @@ const PRESETS = [
   { name: 'churn', desc: 'per release', keys: ['source.commits', 'source.files_changed', 'source.lines_added', 'source.lines_removed', 'source.changelog_total'] },
   { name: 'build & lint', desc: 'sampled', keys: ['build.clean_build_s', 'build.warm_build_s', 'build.local_binary_bytes', 'lint.duration_s', 'lint.issues'] },
   { name: 'sdk coverage', desc: '% left, counts right', panels: [{ keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1', 'source.sdk_count.go_azure_sdk', 'source.sdk_count.both', 'source.sdk_count.kermit', 'source.sdk_count.track1'] }] },
-  { name: 'typed coverage %', desc: 'resources + data sources', keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
+  { name: 'typed coverage', desc: '% left, counts right', panels: [{ keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct', 'source.typed_resources', 'source.typed_data_sources', 'source.untyped_resources', 'source.untyped_data_sources'] }] },
   { name: 'go-azure-sdk migration', desc: 'by kind and sdk, stacked', panels: ['resource', 'data_source', 'list', 'action', 'ephemeral'].map(kind => ({ stack: true, keys: ['go_azure_sdk', 'both', 'kermit', 'track1', 'none'].map(c => `source.sdk.${kind}.${c}`) })) },
   { name: 'composition', desc: 'stacked charts', keys: ['modules', 'services', 'sections', 'movers'].map(k => `comp.{plat}.${k}`) },
 ];
