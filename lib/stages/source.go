@@ -219,14 +219,17 @@ func walkTree(src string, sr *results.SourceResult) error {
 			untyped := len(reUntypedResource.FindAllIndex(b, -1)) + len(reUntypedDataSrc.FindAllIndex(b, -1))
 			sr.UntypedResources += len(reUntypedResource.FindAllIndex(b, -1))
 			sr.UntypedDataSources += len(reUntypedDataSrc.FindAllIndex(b, -1))
-			legacy := reImportLegacySDK.Match(b) || reImportKermit.Match(b)
-			modern := reImportGoAzure.Match(b)
+			track1, kermit, modern := reImportLegacySDK.Match(b), reImportKermit.Match(b), reImportGoAzure.Match(b)
+			legacy := track1 || kermit
+			// classes: go_azure_sdk | both (legacy and go-azure-sdk) | kermit | track1 (azure-sdk-for-go) | none
 			class := "none"
 			switch {
 			case legacy && modern:
 				class = "both"
-			case legacy:
-				class = "legacy"
+			case kermit:
+				class = "kermit"
+			case track1:
+				class = "track1"
 			case modern:
 				class = "go_azure_sdk"
 			}
@@ -234,7 +237,7 @@ func walkTree(src string, sr *results.SourceResult) error {
 				switch class {
 				case "both":
 					sr.ResourceFilesBothSDK++
-				case "legacy":
+				case "kermit", "track1":
 					sr.ResourceFilesLegacySDK++
 				case "go_azure_sdk":
 					sr.ResourceFilesGoAzureSDK++

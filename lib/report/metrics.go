@@ -183,9 +183,32 @@ func sdkKindDefs() []def {
 		{"resource", "Resources"}, {"data_source", "Data sources"}, {"list", "List resources"}, {"action", "Actions"}, {"ephemeral", "Ephemeral resources"},
 	}
 	classes := []struct{ id, label, upIs string }{
-		{"legacy", "legacy SDK", "bad"}, {"both", "both SDKs", "bad"}, {"go_azure_sdk", "go-azure-sdk", "good"}, {"none", "neither SDK", "neutral"},
+		{"go_azure_sdk", "go-azure-sdk", "good"}, {"both", "both SDKs", "bad"}, {"kermit", "kermit", "bad"}, {"track1", "azure-sdk-for-go (track1)", "bad"}, {"none", "neither SDK", "neutral"},
 	}
-	defs := make([]def, 0, len(kinds)*len(classes))
+	defs := make([]def, 0, len(kinds)*len(classes)+8)
+	// share of resource + data source files on each sdk family, of those importing any family
+	total := func(x *results.SourceResult) int {
+		n := 0
+		for _, k := range []string{"resource", "data_source"} {
+			for _, c := range []string{"go_azure_sdk", "both", "kermit", "track1"} {
+				n += x.SDKByKind[k][c]
+			}
+		}
+		return n
+	}
+	for _, c := range classes[:4] {
+		defs = append(defs, def{"source.sdk_pct." + c.id, "Resources on " + c.label + " share", "pct", "deps", "share of resource and data source files importing an sdk family", func(r *results.Result) (float64, bool) {
+			x := r.Source
+			if x == nil || x.SDKByKind == nil {
+				return 0, false
+			}
+			t := total(x)
+			if t == 0 {
+				return 0, false
+			}
+			return 100 * float64(x.SDKByKind["resource"][c.id]+x.SDKByKind["data_source"][c.id]) / float64(t), true
+		}})
+	}
 	for _, k := range kinds {
 		for _, c := range classes {
 			defs = append(defs, def{"source.sdk." + k.id + "." + c.id, k.label + " on " + c.label, "files", "deps", "files defining one, by the sdk family they import", func(r *results.Result) (float64, bool) {
@@ -481,6 +504,18 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		{"source.typed_data_source_pct", "Typed data sources share", "pct", "resources", "typed / (typed + untyped) data sources", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && x.TypedDataSources+x.UntypedDataSources > 0 {
+				return 100 * float64(x.TypedDataSources) / float64(x.TypedDataSources+x.UntypedDataSources), true
+			}
+			return 0, false
+		}},
+		{"source.typed_pct", "Typed share (resources + data sources)", "pct", "resources", "typed / all resources and data sources", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && x.TypedResources+x.UntypedResources+x.TypedDataSources+x.UntypedDataSources > 0 {
+				return 100 * float64(x.TypedResources+x.TypedDataSources) / float64(x.TypedResources+x.UntypedResources+x.TypedDataSources+x.UntypedDataSources), true
+			}
+			return 0, false
+		}},
 		{"source.typed_data_sources", "Typed data sources", "resources", "resources", "", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil {
 				return f(x.TypedDataSources)
@@ -661,9 +696,9 @@ func upIs(d def) string {
 	case "bytes", "ms", "s":
 		return "bad"
 	}
-	if strings.HasPrefix(d.key, "source.sdk.") {
+	if strings.HasPrefix(d.key, "source.sdk.") || strings.HasPrefix(d.key, "source.sdk_pct.") {
 		switch {
-		case strings.HasSuffix(d.key, ".legacy"), strings.HasSuffix(d.key, ".both"):
+		case strings.HasSuffix(d.key, ".kermit"), strings.HasSuffix(d.key, ".track1"), strings.HasSuffix(d.key, ".both"):
 			return "bad"
 		case strings.HasSuffix(d.key, ".go_azure_sdk"):
 			return "good"
@@ -675,7 +710,7 @@ func upIs(d def) string {
 		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_autorest",
 		"source.resource_files_legacy_sdk", "source.resource_files_both_sdk":
 		return "bad"
-	case "source.typed_resource_pct", "source.typed_resources", "source.typed_data_sources",
+	case "source.typed_resource_pct", "source.typed_data_source_pct", "source.typed_pct", "source.typed_resources", "source.typed_data_sources",
 		"schema.identity_coverage_pct", "schema.list_coverage_pct", "schema.identity_resources", "schema.list_resources":
 		return "good"
 	}

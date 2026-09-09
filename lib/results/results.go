@@ -130,7 +130,7 @@ type SourceResult struct {
 	ResourceFilesNoSDK      int `json:"resource_files_no_sdk"`       // neither (other clients, helpers)
 
 	// per kind (resource, data_source, list, action, ephemeral): files defining one, by sdk family
-	// (legacy, both, go_azure_sdk, none)
+	// (go_azure_sdk, both, kermit, track1 = azure-sdk-for-go, none)
 	SDKByKind map[string]map[string]int `json:"sdk_by_kind,omitempty"`
 	// resource files declaring a resource identity (schema.ResourceIdentity or sdk.ResourceWithIdentity)
 	IdentityResourceFiles int `json:"identity_resource_files"`

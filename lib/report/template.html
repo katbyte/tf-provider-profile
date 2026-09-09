@@ -30,8 +30,11 @@ header h1 span { color: var(--muted); font-weight: 400; }
 header h1 select { font: inherit; font-weight: 650; background: transparent; color: var(--ink); border: 0; border-bottom: 1px dashed var(--axis); padding: 0 2px; cursor: pointer; }
 header h1 select:disabled { border-bottom: 0; color: var(--ink); opacity: 1; -webkit-text-fill-color: var(--ink); }
 header .sub { color: var(--ink-2); font-size: 13px; }
-.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: calc(100vh - 56px); }
-aside { border-right: 1px solid var(--border); padding: 12px 14px 40px; overflow-y: auto; max-height: calc(100vh - 56px); position: sticky; top: 0; }
+.layout { display: grid; grid-template-columns: var(--side, 290px) 6px minmax(0, 1fr); min-height: calc(100vh - 56px); }
+.splitter { cursor: col-resize; background: transparent; border-left: 1px solid var(--border); }
+.splitter:hover, .splitter.on { background: var(--wash); }
+body.resizing { cursor: col-resize; user-select: none; }
+aside { min-width: 0; overflow-x: hidden; padding: 12px 14px 40px; overflow-y: auto; max-height: calc(100vh - 56px); position: sticky; top: 0; }
 aside input[type=search] { width: 100%; padding: 6px 8px; border: 1px solid var(--axis); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; margin-bottom: 8px; }
 aside details { margin: 0; }
 aside details details { margin-left: 12px; }
@@ -104,6 +107,7 @@ svg .cross { stroke: var(--ink-2); stroke-width: 1; opacity: 0; }
 svg .hit { fill: transparent; }
 svg .mark { stroke-width: 1; stroke-dasharray: 2 3; opacity: .55; }
 svg .marklbl { opacity: .8; font-size: 10px; }
+svg .sel { fill: var(--s1); opacity: .12; }
 svg .tick { stroke-width: 2; opacity: .7; }
 svg .tick.small { stroke-width: 1; opacity: .6; }
 svg .bar { stroke: var(--surface); stroke-width: 1; }
@@ -126,6 +130,10 @@ svg .endlbl { fill: var(--ink-2); font-size: 11px; }
 #ctx .v { font-weight: 600; margin-bottom: 6px; }
 #ctx .v span { color: var(--muted); font-weight: 400; }
 #ctx .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+#ctx table.sum { border-collapse: collapse; margin: 0 0 8px; width: 100%; }
+#ctx table.sum td { padding: 1px 8px 1px 0; white-space: nowrap; }
+#ctx table.sum td.n { text-align: right; font-variant-numeric: tabular-nums; }
+#ctx table.sum i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
 #ctx .row button { border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
 #ctx .row button:hover { background: var(--wash); }
 #ctx textarea { width: 100%; height: 260px; resize: vertical; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--page); color: var(--ink-2); border: 1px solid var(--grid); border-radius: 6px; padding: 6px; }
@@ -141,7 +149,7 @@ table.data tr:last-child td { border-bottom: 0; }
 .note { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
 .stagefail { color: var(--down); font-size: 12px; }
 details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
-@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } aside { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); } .panels { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .splitter { display: none; } aside { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); } .panels { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -155,6 +163,7 @@ details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
     <div class="actions"><button class="plain" id="clear">clear</button><button class="plain" id="defaults">defaults</button></div>
     <div id="groups"></div>
   </aside>
+  <div class="splitter" id="splitter" title="drag to resize"></div>
   <main>
     <div class="controls">
       <span>view</span>
@@ -183,7 +192,7 @@ details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
   </main>
 </div>
 <div id="tip"></div>
-<div id="ctx" hidden><div class="v"></div><div class="row"></div><textarea readonly></textarea></div>
+<div id="ctx" hidden><div class="v"></div><table class="sum"></table><div class="row"></div><textarea readonly></textarea></div>
 <script id="data" type="application/json">/*__TFPP_DATA__*/</script>
 <script>
 (() => {
@@ -247,6 +256,9 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
   const k = x => `${prov}:${x.replace('{plat}', platFor(prov))}`;
   return [
     { keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'], stack: true },
+    { keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct'] },
+    { keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
+    { keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1'], stack: true },
     { keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines'], stack: true },
     { keys: ['binary.{plat}.zip_bytes', 'binary.{plat}.binary_bytes'] },
     { keys: ['schema.provider_max_rss_bytes', 'startup.max_rss_bytes'] },
@@ -535,7 +547,7 @@ function lineChart(el, series, opts) {
   g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg>`;
   const svg = el.firstChild;
-  const c = { svg, xs, scaleOf, series, w, pad, unit: opts.unit, keys: opts.keys || [], cross: svg.querySelector('.cross'), dots: [...svg.querySelectorAll('.dot.hov')] };
+  const c = { svg, xs, scaleOf, series, w, h, pad, unit: opts.unit, keys: opts.keys || [], cross: svg.querySelector('.cross'), dots: [...svg.querySelectorAll('.dot.hov')] };
   charts.push(c); attachCtx(c);
   svg.addEventListener('mousemove', ev => {
     const r = svg.getBoundingClientRect();
@@ -577,7 +589,7 @@ function barChart(el, values, unit, upIs, color, opts = {}) {
   g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg>`;
   const svg = el.firstChild;
-  const c = { svg, xs, w, scaleOf: () => ys, series: [{ values: d }], keys: opts.keys || [], cross: svg.querySelector('.cross'), dots: [] };
+  const c = { svg, xs, w, h, pad, scaleOf: () => ys, series: [{ values: d }], keys: opts.keys || [], cross: svg.querySelector('.cross'), dots: [] };
   charts.push(c); attachCtx(c);
   svg.addEventListener('mousemove', ev => {
     const r = svg.getBoundingClientRect();
@@ -596,52 +608,76 @@ const AI_TARGETS = [
   { id: 'perplexity', label: 'Perplexity', limit: 6000, url: q => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(q) },
 ];
 // the prompt is built as prioritised sections; the copy box gets everything, a url handoff drops the tail until it fits
-function buildPromptSections(i, keys) {
-  const r = R[i], mi = ROW[r.id];
-  const prev = [...RELEASES].reverse().find(x => x.provider === r.provider && x.ts < r.ts) || null;
+function buildPromptSections(i, keys, i0) {
+  const r = R[i];
+  const provider = keys.length ? provOf(keys[0]) : r.provider;
+  const mine = RELEASES.map((x, j) => [x, j]).filter(([x]) => x.provider === provider);
+  const mi = ROW[r.id];
+  // span mode: from the first release of this provider inside the selection to the clicked one; point mode: previous release
+  let prev = null, span = [];
+  if (i0 !== undefined && i0 < i) {
+    const lo = R[i0].ts;
+    span = mine.filter(([x]) => x.ts >= lo && x.ts <= r.ts).map(([x]) => x);
+    prev = span.length > 1 ? span[0] : null;
+  }
+  if (!prev) { prev = [...mine].reverse().map(([x]) => x).find(x => x.ts < r.ts) || null; span = prev ? [prev, r] : [r]; }
   const pi = prev ? ROW[prev.id] : -1;
-  const repo = META[r.provider].repo;
+  const isSpan = span.length > 2;
+  const repo = META[provider].repo;
   const full = k => METRICS.find(x => x.key === k);
   const val = (m, idx) => idx >= 0 ? m.values[idx] : null;
   const line = m => {
     const cur = val(m, mi), before = val(m, pi);
     if (cur == null) return null;
     const d = before != null ? fmtDelta(before, cur, m.unit).text : '';
-    return `- ${m.label}: ${before != null ? fmt(before, m.unit) + ' → ' : ''}${fmt(cur, m.unit)}${d ? ` (${d})` : ''}`;
+    let extra = '';
+    if (span.length > 2) {
+      // a dip or spike inside the span is the interesting part even when the ends match
+      const pts = span.map(x => [x, m.values[ROW[x.id]]]).filter(([, v]) => v != null);
+      const lo = pts.reduce((a, b) => b[1] < a[1] ? b : a), hi = pts.reduce((a, b) => b[1] > a[1] ? b : a);
+      const ends = [before, cur].filter(v => v != null);
+      const notes = [];
+      if (ends.length && lo[1] < Math.min(...ends)) notes.push(`dropped to ${fmt(lo[1], m.unit)} at ${lo[0].version} (${lo[0].date}), ${fmtDelta(before ?? cur, lo[1], m.unit).text} against the start`);
+      if (ends.length && hi[1] > Math.max(...ends)) notes.push(`rose to ${fmt(hi[1], m.unit)} at ${hi[0].version} (${hi[0].date}), ${fmtDelta(before ?? cur, hi[1], m.unit).text} against the start`);
+      if (notes.length) extra = `; within the span it ${notes.join(' and ')}`;
+    }
+    return `- ${m.label}: ${before != null ? fmt(before, m.unit) + ' → ' : ''}${fmt(cur, m.unit)}${d ? `, changed by ${d}` : ''}${extra}`;
   };
-  const focus = (keys.length ? keys : vsel()).map(k => full(k)).filter(m => m && m.unit !== 'comp');
+  const focus = (keys.length ? keys : vsel()).map(k => full(k)).filter(m => m && m.unit !== 'comp' && m.provider === provider);
   const sections = [];
 
-  // 1. what was asked about
-  sections.push({ pri: 0, text: `Provider: ${repo}, release ${r.version} (${r.date})${prev ? `, compared with the previous release ${prev.version} (${prev.date})` : ''}.\n\nMetrics on the chart that was right-clicked (measured by tfpp, https://github.com/katbyte/tf-provider-profile):\n${focus.map(line).filter(Boolean).join('\n')}` });
+  const head = isSpan
+    ? `In ${repo}, from release ${prev.version} (${prev.date}) to release ${r.version} (${r.date}), ${span.length} releases (${span.map(x => x.version).join(', ')}), these values changed:\n${focus.map(line).filter(Boolean).join('\n')}\n\nWhy? Which releases and changes caused it, including any dip or spike inside the span?`
+    : `In ${repo}, release ${r.version} (${r.date}) compared with the previous release ${prev ? `${prev.version} (${prev.date})` : ''}, these values changed:\n${focus.map(line).filter(Boolean).join('\n')}\n\nWhy? What in this release caused it?`;
+  sections.push({ pri: 0, text: `${head}\n\n(Measured by tfpp, https://github.com/katbyte/tf-provider-profile.)` });
 
-  // 2. the same metrics over the neighbouring releases, so a spike reads differently from a step
-  const around = RELEASES.map((x, j) => [x, j]).filter(([x]) => x.provider === r.provider);
-  const pos = around.findIndex(([x]) => x.id === r.id);
-  const win = around.slice(Math.max(0, pos - 3), pos + 3);
+  // the same metrics release by release (span) or around the release (point)
+  let win;
+  if (isSpan) { win = span.map(x => [x, ROW[x.id]]); if (win.length > 14) { const step = (win.length - 1) / 13; win = Array.from({ length: 14 }, (_, k) => win[Math.round(k * step)]); } }
+  else { const pos = mine.findIndex(([x]) => x.id === r.id); win = mine.slice(Math.max(0, pos - 3), pos + 3); }
   if (win.length > 2 && focus.length) {
     const rows = focus.map(m => `- ${m.label}: ` + win.map(([x, j]) => `${x.version}=${m.values[j] == null ? '?' : fmt(m.values[j], m.unit)}`).join(', '));
-    sections.push({ pri: 3, text: `The same metrics across the surrounding releases (oldest first, the release in question is ${r.version}):\n${rows.join('\n')}` });
+    sections.push({ pri: 3, text: `${isSpan ? 'The same metrics release by release' : 'The same metrics across the surrounding releases'} (oldest first):\n${rows.join('\n')}` });
   }
 
-  // 3. release facts
+  // release facts (aggregated over the span)
   const facts = [];
-  if (r.go_version) facts.push(`built with ${r.go_version}${prev?.go_version && prev.go_version !== r.go_version ? ` (previous release: ${prev.go_version})` : ''}`);
-  if (r.plugin_sdk) facts.push(`terraform-plugin-sdk/v2 ${r.plugin_sdk}${prev?.plugin_sdk && prev.plugin_sdk !== r.plugin_sdk ? ` (was ${prev.plugin_sdk})` : ''}`);
-  if (r.framework) facts.push(`terraform-plugin-framework ${r.framework}${prev?.framework && prev.framework !== r.framework ? ` (was ${prev.framework})` : ''}`);
-  if (r.terraform) facts.push(`schema measured with terraform ${r.terraform}${prev?.terraform && prev.terraform !== r.terraform ? ` (previous release measured with ${prev.terraform}, so schema timing is not comparable)` : ''}`);
-  if (r.host) facts.push(`timing stages ran on ${r.host}${prev?.host && prev.host !== r.host ? ` (previous release: ${prev.host}, so timings are not comparable)` : ''}`);
-  if (r.deps_added?.length) facts.push(`modules newly linked: ${r.deps_added.join(', ')}`);
-  if (r.deps_removed?.length) facts.push(`modules no longer linked: ${r.deps_removed.join(', ')}`);
-  const churn = ['source.days_since_prev', 'source.commits', 'source.authors', 'source.files_changed', 'source.lines_added', 'source.lines_removed', 'source.changelog_features', 'source.changelog_enhancements', 'source.changelog_bug_fixes']
-    .map(k => full(`${r.provider}:${k}`)).filter(m => m && val(m, mi) != null).map(m => `${m.label.toLowerCase()}: ${fmt(val(m, mi), m.unit)}`);
-  if (churn.length) facts.push(`since the previous release: ${churn.join(', ')}`);
-  const marks = (MARKS[r.id] || []).map(m => m.title || m.label).filter(Boolean);
+  const changed = (name, get) => { const a = get(prev), b = get(r); return b ? `${name} ${b}${a && a !== b ? ` (${isSpan ? 'at the start' : 'previous release'}: ${a})` : ''}` : null; };
+  for (const f of [changed('built with', x => x?.go_version), changed('terraform-plugin-sdk/v2', x => x?.plugin_sdk), changed('terraform-plugin-framework', x => x?.framework), changed('schema measured with terraform', x => x?.terraform), changed('timing stages ran on', x => x?.host)]) if (f) facts.push(f);
+  const after = span.slice(1);
+  const added = [...new Set(after.flatMap(x => x.deps_added || []))], gone = [...new Set(after.flatMap(x => x.deps_removed || []))];
+  if (added.length) facts.push(`modules newly linked: ${added.join(', ')}`);
+  if (gone.length) facts.push(`modules no longer linked: ${gone.join(', ')}`);
+  const sum = k => after.reduce((acc, x) => { const m = full(`${provider}:${k}`); const v = m ? m.values[ROW[x.id]] : null; return v == null ? acc : (acc || 0) + v; }, null);
+  const churn = [['commits', 'source.commits'], ['files changed', 'source.files_changed'], ['lines added', 'source.lines_added'], ['lines removed', 'source.lines_removed'], ['changelog features', 'source.changelog_features'], ['changelog enhancements', 'source.changelog_enhancements'], ['changelog bug fixes', 'source.changelog_bug_fixes']]
+    .map(([n, k]) => { const v = sum(k); return v == null ? null : `${n}: ${fmt(v, 'count')}`; }).filter(Boolean);
+  if (churn.length) facts.push(`${isSpan ? 'over the span' : 'since the previous release'}: ${churn.join(', ')}`);
+  const marks = after.flatMap(x => (MARKS[x.id] || []).filter(m => m.layer.id !== 'releases').map(m => (isSpan ? x.version + ': ' : '') + (m.title || m.label))).filter(Boolean);
   if (marks.length) facts.push(`markers: ${marks.join('; ')}`);
-  if (facts.length) sections.push({ pri: 1, text: 'About this release:\n' + facts.map(f => '- ' + f).join('\n') });
+  if (facts.length) sections.push({ pri: 1, text: `About ${isSpan ? 'these releases' : 'this release'}:\n` + facts.map(f => '- ' + f).join('\n') });
 
-  // 4. binary composition movers between the two releases
-  const plat = platFor(r.provider), comp = COMPOSITION[`${r.provider}:${plat}`];
+  // binary composition movers between the two ends
+  const plat = platFor(provider), comp = COMPOSITION[`${provider}:${plat}`];
   if (comp && pi >= 0) {
     const movers = (kind, n, label) => {
       const c = comp[kind]; if (!c) return null;
@@ -654,27 +690,28 @@ function buildPromptSections(i, keys) {
     if (parts.length) sections.push({ pri: 2, text: parts.join('\n\n') });
   }
 
-  // 5. everything else that moved
-  const others = METRICS.filter(m => m.provider === r.provider && !focus.some(f => f.key === m.key) && m.unit !== 'comp' && val(m, mi) != null && val(m, pi) != null && val(m, mi) !== val(m, pi));
+  // everything else that moved between the two ends
+  const others = METRICS.filter(m => m.provider === provider && !focus.some(f => f.key === m.key) && m.unit !== 'comp' && val(m, mi) != null && val(m, pi) != null && val(m, mi) !== val(m, pi));
   if (others.length) {
     const byGroup = {};
     for (const m of others) (byGroup[m.group] ||= []).push(line(m));
-    sections.push({ pri: 4, text: 'Every other tracked metric that changed in this release:\n' + Object.entries(byGroup).map(([g, ls]) => `${(GROUPS.find(x => x.id === g) || { label: g }).label}:\n${ls.join('\n')}`).join('\n') });
+    sections.push({ pri: 4, text: `Every other tracked metric that changed ${isSpan ? 'across the span' : 'in this release'}:\n` + Object.entries(byGroup).map(([g, ls]) => `${(GROUPS.find(x => x.id === g) || { label: g }).label}:\n${ls.join('\n')}`).join('\n') });
   }
 
-  // 6. links and the ask
   const links = [];
   if (prev) links.push(`- diff: https://github.com/${repo}/compare/${prev.version}...${r.version}`);
-  links.push(`- changelog at this tag: https://github.com/${repo}/blob/${r.version}/CHANGELOG.md`);
-  links.push(`- release: https://github.com/${repo}/releases/tag/${r.version}`);
-  if (prev) links.push(`- commits: https://github.com/${repo}/commits/${r.version}`);
-  links.push(`- release zips: https://releases.hashicorp.com/terraform-provider-${r.provider}/${r.version.replace(/^v/, '')}/`);
+  links.push(`- changelog at the latest tag: https://github.com/${repo}/blob/${r.version}/CHANGELOG.md`);
+  if (isSpan) for (const x of after) links.push(`- release ${x.version}: https://github.com/${repo}/releases/tag/${x.version}`); else links.push(`- release: https://github.com/${repo}/releases/tag/${r.version}`);
+  links.push(`- release zips: https://releases.hashicorp.com/terraform-provider-${provider}/${r.version.replace(/^v/, '')}/`);
   links.push(`- this chart: ${location.href}`);
-  sections.push({ pri: 0, text: `Links:\n${links.join('\n')}\n\nWhat in this release most likely explains the change in the metrics on the chart? Work from the diff and the changelog: name the specific commits, pull requests, dependency or toolchain changes responsible, quantify how much of the change each one accounts for where you can, separate real provider changes from measurement artefacts (toolchain, terraform version, machine), and say how confident you are. If you can run commands, \`git log --stat ${prev ? prev.version + '..' : ''}${r.version}\` on a clone of the repository is the fastest way to confirm.` });
-  return sections;
+  const ask = isSpan
+    ? `What across these releases most likely explains the change in the metrics on the chart? Work from the diff and the changelog: name the specific releases, commits, pull requests, dependency or toolchain changes responsible, say which release contributed most, separate real provider changes from measurement artefacts (toolchain, terraform version, machine), and say how confident you are.`
+    : `What in this release most likely explains the change in the metrics on the chart? Work from the diff and the changelog: name the specific commits, pull requests, dependency or toolchain changes responsible, quantify how much of the change each one accounts for where you can, separate real provider changes from measurement artefacts (toolchain, terraform version, machine), and say how confident you are.`;
+  sections.push({ pri: 0, text: `Links:\n${links.join('\n')}\n\n${ask} If you can run commands, \`git log --stat ${prev ? prev.version + '..' : ''}${r.version}\` on a clone of the repository is the fastest way to confirm.` });
+  return { sections, prev, focus, pi, mi, isSpan, span };
 }
-function buildPrompt(i, keys, limit) {
-  const sections = buildPromptSections(i, keys);
+function buildPrompt(i, keys, limit, i0) {
+  const { sections } = buildPromptSections(i, keys, i0);
   const join = ss => ss.map(x => x.text).join('\n\n');
   if (!limit) return join(sections);
   // drop the lowest-priority sections until the handoff url is short enough
@@ -685,12 +722,21 @@ function buildPrompt(i, keys, limit) {
   }
   return join(kept) + (kept.length < sections.length ? '\n\n(some detail was left out to fit the url; the copied prompt has everything)' : '');
 }
-function showCtx(i, ev, active) {
+function showCtx(i, ev, active, i0) {
   const ctx = $('#ctx'), r = R[i];
   const keys = active?.keys || [];
-  const prompt = buildPrompt(i, keys);
-  ctx.dataset.i = i; ctx.dataset.keys = keys.join(',');
-  ctx.querySelector('.v').innerHTML = `Ask about ${multi() ? r.provider + ' ' : ''}${esc(r.version)} <span>${r.date}</span>`;
+  const info = buildPromptSections(i, keys, i0);
+  const prompt = buildPrompt(i, keys, undefined, i0);
+  ctx.dataset.i = i; ctx.dataset.i0 = i0 === undefined ? '' : i0; ctx.dataset.keys = keys.join(',');
+  const who = multi() ? (info.prev?.provider || r.provider) + ' ' : '';
+  ctx.querySelector('.v').innerHTML = info.isSpan
+    ? `${who}${esc(info.prev.version)} → ${esc(r.version)} <span>${info.prev.date} → ${r.date} · ${info.span.length} releases</span>`
+    : `${who}${esc(r.version)} <span>${r.date}${info.prev ? ' · vs ' + esc(info.prev.version) : ''}</span>`;
+  ctx.querySelector('table.sum').innerHTML = info.focus.map(m => {
+    const a = info.pi >= 0 ? m.values[info.pi] : null, b = m.values[info.mi];
+    const d = fmtDelta(a, b, m.unit, m.up_is);
+    return `<tr><td><i style="background:${colorOf(m.key)}"></i>${esc(lbl(m))}</td><td class="n">${fmt(a, m.unit)}</td><td>→</td><td class="n">${fmt(b, m.unit)}</td><td class="n ${d.cls}">${d.text}</td></tr>`;
+  }).join('');
   ctx.querySelector('.row').innerHTML = AI_TARGETS.map(t => `<button data-ai="${t.id}">${t.label}</button>`).join('') + `<button data-ai="copy">copy prompt</button><button data-ai="close">close</button>`;
   ctx.querySelector('textarea').value = prompt;
   ctx.hidden = false;
@@ -701,15 +747,15 @@ function showCtx(i, ev, active) {
 $('#ctx').addEventListener('click', ev => {
   const b = ev.target.closest('button[data-ai]'); if (!b) return;
   const ctx = $('#ctx'), prompt = ctx.querySelector('textarea').value;
-  if (b.dataset.ai === 'close') { ctx.hidden = true; return; }
+  if (b.dataset.ai === 'close') { ctx.hidden = true; clearSel(); return; }
   if (b.dataset.ai === 'copy') { navigator.clipboard?.writeText(prompt); b.textContent = 'copied'; return; }
   const t = AI_TARGETS.find(x => x.id === b.dataset.ai);
-  const short = buildPrompt(+ctx.dataset.i, ctx.dataset.keys ? ctx.dataset.keys.split(',') : [], t.limit);
+  const short = buildPrompt(+ctx.dataset.i, ctx.dataset.keys ? ctx.dataset.keys.split(',') : [], t.limit, ctx.dataset.i0 === '' ? undefined : +ctx.dataset.i0);
   window.open(t.url(short), '_blank', 'noopener');
   ctx.hidden = true;
 });
-document.addEventListener('click', ev => { if (!ev.target.closest('#ctx')) $('#ctx').hidden = true; });
-document.addEventListener('keydown', ev => { if (ev.key === 'Escape') $('#ctx').hidden = true; });
+document.addEventListener('click', ev => { if (!ev.target.closest('#ctx') && !ev.target.closest('#charts svg')) { $('#ctx').hidden = true; clearSel(); } });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') { $('#ctx').hidden = true; clearSel(); } });
 function nearestIndex(c, ev) {
   const r = c.svg.getBoundingClientRect();
   const x = (ev.clientX - r.left) / r.width * c.w;
@@ -717,9 +763,32 @@ function nearestIndex(c, ev) {
   for (let i = 0; i < N; i++) { const d = Math.abs(c.xs.at(i) - x); if (d < bd) { bd = d; best = i; } }
   return best;
 }
+function clearSel() { for (const r of document.querySelectorAll('#charts svg rect.sel')) r.remove(); }
+function drawSel(c, a, b) {
+  clearSel();
+  const [lo, hi] = a < b ? [a, b] : [b, a];
+  const x0 = c.xs.at(lo), x1 = c.xs.at(hi);
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('class', 'sel'); rect.setAttribute('x', x0); rect.setAttribute('width', Math.max(2, x1 - x0));
+  rect.setAttribute('y', c.pad.t); rect.setAttribute('height', c.h - c.pad.t - c.pad.b);
+  c.svg.insertBefore(rect, c.svg.firstChild);
+}
+// click = ask about that release; drag = select a run of releases and ask about the span; right-click works too
+let dragSel = null;
 function attachCtx(c) {
   c.svg.addEventListener('contextmenu', ev => { ev.preventDefault(); setHover(-1); showCtx(nearestIndex(c, ev), ev, c); });
+  c.svg.addEventListener('mousedown', ev => { if (ev.button !== 0) return; ev.preventDefault(); dragSel = { c, i0: nearestIndex(c, ev), moved: false }; });
+  c.svg.addEventListener('mousemove', ev => { if (!dragSel || dragSel.c !== c) return; const i = nearestIndex(c, ev); if (i !== dragSel.i0) dragSel.moved = true; if (dragSel.moved) drawSel(c, dragSel.i0, i); });
+  c.svg.addEventListener('mouseup', ev => {
+    if (!dragSel || dragSel.c !== c || ev.button !== 0) return;
+    const d = dragSel; dragSel = null;
+    const i = nearestIndex(c, ev);
+    setHover(-1);
+    if (d.moved && i !== d.i0) { const [lo, hi] = d.i0 < i ? [d.i0, i] : [i, d.i0]; drawSel(c, lo, hi); showCtx(hi, ev, c, lo); }
+    else { clearSel(); showCtx(i, ev, c); }
+  });
 }
+document.addEventListener('mouseup', () => { dragSel = null; });
 function setHover(i, ev, active) {
   const tip = $('#tip');
   for (const c of charts) {
@@ -764,7 +833,9 @@ const PRESETS = [
   { name: 'typed migration', desc: 'typed vs untyped, stacked', stack: true, keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_resource_pct', 'source.typed_data_sources', 'source.untyped_data_sources'] },
   { name: 'churn', desc: 'per release', keys: ['source.commits', 'source.files_changed', 'source.lines_added', 'source.lines_removed', 'source.changelog_total'] },
   { name: 'build & lint', desc: 'sampled', keys: ['build.clean_build_s', 'build.warm_build_s', 'build.local_binary_bytes', 'lint.duration_s', 'lint.issues'] },
-  { name: 'go-azure-sdk migration', desc: 'by kind and sdk, stacked', panels: ['resource', 'data_source', 'list', 'action', 'ephemeral'].map(kind => ({ stack: true, keys: ['legacy', 'both', 'go_azure_sdk', 'none'].map(c => `source.sdk.${kind}.${c}`) })) },
+  { name: 'sdk coverage %', desc: 'go-azure-sdk / both / kermit / track1', stack: true, keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1'] },
+  { name: 'typed coverage %', desc: 'resources + data sources', keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
+  { name: 'go-azure-sdk migration', desc: 'by kind and sdk, stacked', panels: ['resource', 'data_source', 'list', 'action', 'ephemeral'].map(kind => ({ stack: true, keys: ['go_azure_sdk', 'both', 'kermit', 'track1', 'none'].map(c => `source.sdk.${kind}.${c}`) })) },
   { name: 'composition', desc: 'stacked charts', keys: ['modules', 'services', 'sections', 'movers'].map(k => `comp.{plat}.${k}`) },
 ];
 // a preset's concrete keys depend on which providers are visible
@@ -1007,6 +1078,7 @@ $('#charts').addEventListener('click', ev => {
 // drag one panel onto another to combine them
 let dragFrom = -1;
 $('#charts').addEventListener('dragstart', ev => {
+  if (ev.target.closest('svg')) { ev.preventDefault(); return; } // the chart area is for selecting releases
   const p = ev.target.closest('.panel[data-g]'); if (!p) return;
   dragFrom = +p.dataset.g; p.classList.add('dragging');
   ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', p.dataset.g);
@@ -1074,7 +1146,7 @@ function stackedArea(el, comp, opts) {
   g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg><div class="legend">${labels.map((l, j) => `<span><i class="box" style="background:${colors[j]}"></i>${l}</span>`).join('')}</div>`;
   const svg = el.firstChild;
-  const c = { svg, xs, w, scaleOf: () => ys, series, cross: svg.querySelector('.cross'), dots: [], unit: 'bytes', own: true, totals, keys: [] };
+  const c = { svg, xs, w, h, pad, scaleOf: () => ys, series, cross: svg.querySelector('.cross'), dots: [], unit: 'bytes', own: true, totals, keys: opts.keys || [] };
   charts.push(c); attachCtx(c);
   svg.addEventListener('mousemove', ev => {
     const r = svg.getBoundingClientRect();
@@ -1157,6 +1229,17 @@ function renderSubtitle() {
 }
 update();
 addEventListener('hashchange', () => { readHash(); update(); });
+// draggable divider between the tree and the charts; width remembered per browser
+{
+  const sp = $('#splitter'), root = document.documentElement;
+  try { const w = +localStorage.getItem('tfpp.side'); if (w >= 180 && w <= 800) root.style.setProperty('--side', w + 'px'); } catch (e) { /* ignore */ }
+  sp.addEventListener('mousedown', ev => {
+    ev.preventDefault(); sp.classList.add('on'); document.body.classList.add('resizing');
+    const move = e => { const w = Math.min(800, Math.max(180, e.clientX)); root.style.setProperty('--side', w + 'px'); };
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); sp.classList.remove('on'); document.body.classList.remove('resizing'); try { localStorage.setItem('tfpp.side', parseInt(root.style.getPropertyValue('--side'))); } catch (e) { /* ignore */ } renderCharts(); };
+    document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+  });
+}
 let resizeTimer;
 addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderCharts(); }, 150); });
 })();
