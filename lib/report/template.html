@@ -125,7 +125,7 @@ svg .endlbl { fill: var(--ink-2); font-size: 11px; }
 #tip td { padding: 1px 6px 1px 0; white-space: nowrap; }
 #tip td.n { text-align: right; font-variant-numeric: tabular-nums; }
 #tip td.d { color: var(--muted); font-variant-numeric: tabular-nums; }
-#tip tr.sep td { border-top: 1px solid var(--grid); padding-top: 4px; }
+#tip tr.sep td, #ctx tr.sep td { border-top: 1px solid var(--grid); padding-top: 4px; }
 #tip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
 #ctx { position: fixed; z-index: 20; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 560px; max-width: calc(100vw - 24px); font-size: 12px; }
 #ctx .v { font-weight: 600; margin-bottom: 6px; }
@@ -548,7 +548,7 @@ function lineChart(el, series, opts) {
   g += `<rect class="hit" x="${pad.l}" y="0" width="${w - pad.l - pad.r}" height="${h}"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg>`;
   const svg = el.firstChild;
-  const c = { svg, xs, scaleOf, series, w, h, pad, unit: opts.unit, keys: opts.keys || [], cross: svg.querySelector('.cross'), dots: [...svg.querySelectorAll('.dot.hov')] };
+  const c = { svg, xs, scaleOf, series, w, h, pad, unit: opts.unit, keys: opts.keys || [], stacked: !!opts.stacked, cross: svg.querySelector('.cross'), dots: [...svg.querySelectorAll('.dot.hov')] };
   charts.push(c); attachCtx(c);
   svg.addEventListener('mousemove', ev => {
     const r = svg.getBoundingClientRect();
@@ -609,7 +609,7 @@ const AI_TARGETS = [
   { id: 'perplexity', label: 'Perplexity', limit: 6000, url: q => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(q) },
 ];
 // the prompt is built as prioritised sections; the copy box gets everything, a url handoff drops the tail until it fits
-function buildPromptSections(i, keys, i0) {
+function buildPromptSections(i, keys, i0, stacked) {
   const r = R[i];
   const provider = keys.length ? provOf(keys[0]) : r.provider;
   const mine = RELEASES.map((x, j) => [x, j]).filter(([x]) => x.provider === provider);
@@ -646,10 +646,18 @@ function buildPromptSections(i, keys, i0) {
   };
   const focus = (keys.length ? keys : vsel()).map(k => full(k)).filter(m => m && m.unit !== 'comp' && m.provider === provider);
   const sections = [];
+  // stacked panels: the sum is what the eye sees, so report it too
+  const totalLine = () => {
+    if (!stacked || focus.length < 2) return '';
+    const sumAt = idx => idx < 0 ? null : focus.reduce((acc, m) => { const v = m.values[idx]; return v == null ? acc : (acc || 0) + v; }, null);
+    const a = sumAt(pi), b = sumAt(mi);
+    if (b == null) return '';
+    return `\n- total of the above (stacked): ${a != null ? fmt(a, focus[0].unit) + ' → ' : ''}${fmt(b, focus[0].unit)}${a != null ? ', changed by ' + fmtDelta(a, b, focus[0].unit).text : ''}`;
+  };
 
   const head = isSpan
-    ? `In ${repo}, from release ${prev.version} (${prev.date}) to release ${r.version} (${r.date}), ${span.length} releases (${span.map(x => x.version).join(', ')}), these values changed:\n${focus.map(line).filter(Boolean).join('\n')}\n\nWhy? Which releases and changes caused it, including any dip or spike inside the span?`
-    : `In ${repo}, release ${r.version} (${r.date}) compared with the previous release ${prev ? `${prev.version} (${prev.date})` : ''}, these values changed:\n${focus.map(line).filter(Boolean).join('\n')}\n\nWhy? What in this release caused it?`;
+    ? `In ${repo}, from release ${prev.version} (${prev.date}) to release ${r.version} (${r.date}), ${span.length} releases (${span.map(x => x.version).join(', ')}), these values changed:\n${focus.map(line).filter(Boolean).join('\n')}${totalLine()}\n\nWhy? Which releases and changes caused it, including any dip or spike inside the span?`
+    : `In ${repo}, release ${r.version} (${r.date}) compared with the previous release ${prev ? `${prev.version} (${prev.date})` : ''}, these values changed:\n${focus.map(line).filter(Boolean).join('\n')}${totalLine()}\n\nWhy? What in this release caused it?`;
   sections.push({ pri: 0, text: `${head}\n\n(Measured by tfpp, https://github.com/katbyte/tf-provider-profile.)` });
 
   // the same metrics release by release (span) or around the release (point)
@@ -711,8 +719,8 @@ function buildPromptSections(i, keys, i0) {
   sections.push({ pri: 0, text: `Links:\n${links.join('\n')}\n\n${ask} If you can run commands, \`git log --stat ${prev ? prev.version + '..' : ''}${r.version}\` on a clone of the repository is the fastest way to confirm.` });
   return { sections, prev, focus, pi, mi, isSpan, span };
 }
-function buildPrompt(i, keys, limit, i0) {
-  const { sections } = buildPromptSections(i, keys, i0);
+function buildPrompt(i, keys, limit, i0, stacked) {
+  const { sections } = buildPromptSections(i, keys, i0, stacked);
   const join = ss => ss.map(x => x.text).join('\n\n');
   if (!limit) return join(sections);
   // drop the lowest-priority sections until the handoff url is short enough
@@ -726,9 +734,10 @@ function buildPrompt(i, keys, limit, i0) {
 function showCtx(i, ev, active, i0) {
   const ctx = $('#ctx'), r = R[i];
   const keys = active?.keys || [];
-  const info = buildPromptSections(i, keys, i0);
-  const prompt = buildPrompt(i, keys, undefined, i0);
-  ctx.dataset.i = i; ctx.dataset.i0 = i0 === undefined ? '' : i0; ctx.dataset.keys = keys.join(',');
+  const stacked = !!active?.stacked;
+  const info = buildPromptSections(i, keys, i0, stacked);
+  const prompt = buildPrompt(i, keys, undefined, i0, stacked);
+  ctx.dataset.i = i; ctx.dataset.i0 = i0 === undefined ? '' : i0; ctx.dataset.keys = keys.join(','); ctx.dataset.stacked = stacked ? '1' : '';
   const who = multi() ? (info.prev?.provider || r.provider) + ' ' : '';
   ctx.querySelector('.v').innerHTML = info.isSpan
     ? `${who}${esc(info.prev.version)} → ${esc(r.version)} <span>${info.prev.date} → ${r.date} · ${info.span.length} releases</span>`
@@ -737,7 +746,11 @@ function showCtx(i, ev, active, i0) {
     const a = info.pi >= 0 ? m.values[info.pi] : null, b = m.values[info.mi];
     const d = fmtDelta(a, b, m.unit, m.up_is);
     return `<tr><td><i style="background:${colorOf(m.key)}"></i>${esc(lbl(m))}</td><td class="n">${fmt(a, m.unit)}</td><td>→</td><td class="n">${fmt(b, m.unit)}</td><td class="n ${d.cls}">${d.text}</td></tr>`;
-  }).join('');
+  }).join('') + (stacked && info.focus.length > 1 ? (() => {
+    const sumAt = idx => idx < 0 ? null : info.focus.reduce((acc, m) => { const v = m.values[idx]; return v == null ? acc : (acc || 0) + v; }, null);
+    const a = sumAt(info.pi), b = sumAt(info.mi), u = info.focus[0].unit, d = fmtDelta(a, b, u, info.focus[0].up_is);
+    return `<tr class="sep"><td><b>total</b></td><td class="n">${fmt(a, u)}</td><td>→</td><td class="n">${fmt(b, u)}</td><td class="n ${d.cls}">${d.text}</td></tr>`;
+  })() : '');
   ctx.querySelector('.row').innerHTML = AI_TARGETS.map(t => `<button data-ai="${t.id}">${t.label}</button>`).join('') + `<button data-ai="copy">copy prompt</button><button data-ai="close">close</button>`;
   ctx.querySelector('textarea').value = prompt;
   ctx.hidden = false;
@@ -752,7 +765,7 @@ $('#ctx').addEventListener('click', ev => {
   if (b.dataset.ai === 'close') { ctx.hidden = true; clearSel(); return; }
   if (b.dataset.ai === 'copy') { navigator.clipboard?.writeText(prompt); b.textContent = 'copied'; return; }
   const t = AI_TARGETS.find(x => x.id === b.dataset.ai);
-  const short = buildPrompt(+ctx.dataset.i, ctx.dataset.keys ? ctx.dataset.keys.split(',') : [], t.limit, ctx.dataset.i0 === '' ? undefined : +ctx.dataset.i0);
+  const short = buildPrompt(+ctx.dataset.i, ctx.dataset.keys ? ctx.dataset.keys.split(',') : [], t.limit, ctx.dataset.i0 === '' ? undefined : +ctx.dataset.i0, ctx.dataset.stacked === '1');
   window.open(t.url(short), '_blank', 'noopener');
   ctx.hidden = true;
 });
@@ -801,7 +814,7 @@ function setHover(i, ev, active) {
     c.dots.forEach((d, si) => { const v = c.series[si].values[i]; if (v == null) { d.setAttribute('opacity', 0); return; } d.setAttribute('cx', x); d.setAttribute('cy', c.scaleOf(si)(v)); d.setAttribute('opacity', 1); });
   }
   if (i < 0) { tip.style.display = 'none'; return; }
-  const rows = tipRows(i, active?.keys || []);
+  const rows = tipRows(i, active?.keys || [], !!active?.stacked);
   tip.innerHTML = `<div class="v">${multi() ? R[i].provider + ' ' : ''}${R[i].version} <span>${R[i].date}${R[i].go_version ? ' · ' + R[i].go_version : ''}</span></div><table>${rows}</table>`;
   tip.style.display = 'block';
   const tw = tip.offsetWidth, th = tip.offsetHeight;
@@ -812,15 +825,21 @@ function setHover(i, ev, active) {
 }
 let tipRows = () => '';
 // rows for the tooltip: the hovered chart's metrics first, a divider, then everything else selected
-function metricTipRows(i, ms, activeKeys) {
+function metricTipRows(i, ms, activeKeys, stacked) {
   const first = ms.filter(m => activeKeys.includes(m.key));
+  let totalRow = '';
+  if (stacked && first.length > 1) {
+    const sumAt = idx => idx < 0 ? null : first.reduce((acc, m) => { const v = m.values[idx]; return v == null ? acc : (acc || 0) + v; }, null);
+    const a = sumAt(i - 1), b = sumAt(i), u = first[0].unit, d = fmtDelta(a, b, u, first[0].up_is);
+    totalRow = `<tr><td><b>total</b></td><td class="n">${fmt(b, u)}</td><td class="d ${d.cls}">${d.text}</td></tr>`;
+  }
   const rest = state.tip === 'current' && first.length ? [] : ms.filter(m => !activeKeys.includes(m.key));
   const row = (m, sep) => {
     const v = m.values[i], prev = i > 0 ? m.values[i - 1] : null;
     const d = fmtDelta(prev, v, m.unit, m.up_is);
     return `<tr class="${sep ? 'sep' : ''}"><td><i style="background:${colorOf(m.key)}"></i>${lbl(m)}</td><td class="n">${fmt(v, m.unit)}</td><td class="d ${d.cls}">${d.text}</td></tr>`;
   };
-  return [...first.map(m => row(m, false)), ...rest.map((m, j) => row(m, j === 0 && first.length > 0))].join('');
+  return [...first.map(m => row(m, false)), totalRow, ...rest.map((m, j) => row(m, j === 0 && first.length > 0))].join('');
 }
 
 // ---------- sidebar: enabled / presets / catalogue tree ----------
@@ -998,7 +1017,7 @@ function renderCharts() {
   const el = $('#charts');
   if (!vsel().length) { el.innerHTML = '<div class="empty">pick metrics on the left</div>'; tipRows = () => ''; return; }
   const sel = vsel().map(k => M[k]).filter(m => m.unit !== 'comp');
-  tipRows = (i, active = []) => metricTipRows(i, sel, active);
+  tipRows = (i, active = [], stacked = false) => metricTipRows(i, sel, active, stacked);
 
   const legend = ms => `<div class="legend">${ms.map(m => `<span><i style="background:${colorOf(m.key)}"></i>${lbl(m)}${state.view === 'twoaxes' ? (state.right.includes(m.key) ? ' (right)' : ' (left)') : ''}</span>`).join('')}</div>`;
   const cap = sel.length > 8 ? ' · only the first 8 selected metrics are drawn' : '';
