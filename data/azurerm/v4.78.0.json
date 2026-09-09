@@ -15,8 +15,8 @@
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:22:18.903383Z",
-      "duration_s": 5.725320208,
+      "ran_at": "2026-09-09T03:43:20.941164Z",
+      "duration_s": 5.623193625,
       "host": "katbook",
       "cpu": "Apple M1 Max",
       "os": "darwin/arm64"
@@ -1145,21 +1145,21 @@
     "go_test_lines": 790265,
     "vendor_go_files": 34718,
     "vendor_go_lines": 3779243,
-    "total_files": 45739,
-    "tree_bytes": 208404695,
+    "total_files": 45740,
+    "tree_bytes": 208405781,
     "services": 130,
     "typed_resources": 264,
     "typed_data_sources": 109,
-    "untyped_resources": 712,
-    "untyped_data_sources": 261,
+    "untyped_resources": 718,
+    "untyped_data_sources": 264,
     "test_funcs": 11146,
     "acc_test_funcs": 9378,
     "files_importing_legacy_sdk": 112,
     "files_importing_kermit": 163,
     "files_importing_autorest": 54,
     "files_importing_go_azure_sdk": 1907,
-    "resource_files_legacy_sdk": 101,
-    "resource_files_go_azure_sdk": 1095,
+    "resource_files_legacy_sdk": 104,
+    "resource_files_go_azure_sdk": 1096,
     "resource_files_both_sdk": 91,
     "resource_files_no_sdk": 58,
     "sdk_by_kind": {
@@ -1168,9 +1168,10 @@
       },
       "data_source": {
         "both": 6,
-        "go_azure_sdk": 305,
-        "legacy": 10,
-        "none": 49
+        "go_azure_sdk": 308,
+        "kermit": 6,
+        "none": 49,
+        "track1": 4
       },
       "ephemeral": {
         "none": 2
@@ -1181,9 +1182,10 @@
       },
       "resource": {
         "both": 85,
-        "go_azure_sdk": 790,
-        "legacy": 91,
-        "none": 9
+        "go_azure_sdk": 791,
+        "kermit": 45,
+        "none": 9,
+        "track1": 49
       }
     },
     "identity_resource_files": 99,

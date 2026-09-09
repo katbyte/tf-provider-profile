@@ -257,7 +257,7 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
   const k = x => `${prov}:${x.replace('{plat}', platFor(prov))}`;
   return [
     { keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'], stack: true },
-    { keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct'] },
+    { keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct', 'schema.list_resources', 'schema.identity_resources'] }, // percent left, counts right
     { keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
     { keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1'], stack: true },
     { keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines'], stack: true },
@@ -849,7 +849,7 @@ const PRESETS = [
   { name: 'speed', desc: 'startup, schema, build, lint', keys: ['startup.handshake_med_ms', 'schema.wall_med_ms', 'build.clean_build_s', 'lint.duration_s'] },
   { name: 'binary make-up', desc: 'sections', keys: ['text', 'pclntab', 'rodata', 'noptrbss', 'typelink'].map(x => `binary.{plat}.section.${x}`) },
   { name: 'resources', desc: 'stacked by kind', stack: true, keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'] },
-  { name: 'coverage', desc: 'list + identity %', keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct'] },
+  { name: 'coverage', desc: 'list + identity % and counts', panels: [{ keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct', 'schema.list_resources', 'schema.identity_resources'] }] },
   { name: 'schema', desc: 'attrs + json', keys: ['schema.attributes', 'schema.blocks', 'schema.json_bytes'] },
   { name: 'source', desc: 'lines + files, stacked', stack: true, keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines', 'source.go_files', 'source.go_test_files', 'source.vendor_go_files'] },
   { name: 'typed migration', desc: 'typed vs untyped, stacked', stack: true, keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_resource_pct', 'source.typed_data_sources', 'source.untyped_data_sources'] },
