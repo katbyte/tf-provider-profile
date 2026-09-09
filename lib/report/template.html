@@ -105,6 +105,7 @@ svg .hit { fill: transparent; }
 svg .mark { stroke-width: 1; stroke-dasharray: 2 3; opacity: .55; }
 svg .marklbl { opacity: .8; font-size: 10px; }
 svg .tick { stroke-width: 2; opacity: .7; }
+svg .tick.small { stroke-width: 1; opacity: .6; }
 svg .bar { stroke: var(--surface); stroke-width: 1; }
 svg .endlbl { fill: var(--ink-2); font-size: 11px; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-2); margin: 4px 0 2px; }
@@ -252,7 +253,7 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
     { keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_data_sources', 'source.untyped_data_sources'], stack: true },
   ].map(g => ({ keys: g.keys.map(k).filter(x => M[x]), stack: !!g.stack, wide: false })).filter(g => g.keys.length);
 });
-const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['majors'], tip: 'current', p: PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '') };
+const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['releases', 'majors'], tip: 'current', p: PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '') };
 applyRange();
 function syncSel() { state.groups = state.groups.filter(g => g.keys.length); state.sel = state.groups.flatMap(g => g.keys); assignColors(); }
 // groups restricted to what the current provider selection can show; gi keeps the index into state.groups
@@ -397,6 +398,8 @@ function xScale(w, pad) {
 // ---------- markers: toggleable vertical layers, computed once over every release ----------
 const goMinor = v => (v || '').replace(/^go/, '').split('.').slice(0, 2).join('.');
 const MARKER_LAYERS = [
+  // every release as a small baseline tick, so sporadic cadences (azuread) read against the date axis
+  { id: 'releases', label: 'releases', color: '--muted', tick: true, small: true, test: r => ({ label: '', title: `${r.provider} ${r.version} (${r.date})` }) },
   { id: 'majors', label: 'majors', color: '--s8', test: r => { const m = r.version.match(/^v?(\d+)\.0\.0$/); return m && { label: 'v' + m[1] }; } },
   { id: 'go', label: 'go version', color: '--s7', test: (r, p) => p && r.go_version && p.go_version && goMinor(r.go_version) !== goMinor(p.go_version) && { label: 'go' + goMinor(r.go_version), title: p.go_version + ' → ' + r.go_version } },
   { id: 'patch', label: 'patch releases', color: '--muted', tick: true, test: r => /\.\d+\.[1-9]\d*$/.test(r.version) && { label: '', title: 'patch release ' + r.version } },
@@ -432,7 +435,7 @@ function markers(xs, pad, h, keys = []) {
     for (const m of (MARKS[r.id] || [])) {
       if (!state.mk.includes(m.layer.id)) continue;
       const x = xs.at(i), c = `var(${m.layer.color})`, t = m.title ? `<title>${esc(m.title)}</title>` : '';
-      if (m.layer.tick) { g += `<line class="tick" stroke="${c}" x1="${x}" x2="${x}" y1="${h - pad.b - 7}" y2="${h - pad.b}">${t}</line>`; continue; }
+      if (m.layer.tick) { g += `<line class="tick ${m.layer.small ? 'small' : ''}" stroke="${c}" x1="${x}" x2="${x}" y1="${h - pad.b - (m.layer.small ? 4 : 7)}" y2="${h - pad.b}">${t}</line>`; continue; }
       g += `<line class="mark" stroke="${c}" x1="${x}" x2="${x}" y1="${pad.t}" y2="${h - pad.b}">${t}</line>`;
       if (!m.label) continue;
       const label = mixed ? `${r.provider} ${m.label}` : m.label;

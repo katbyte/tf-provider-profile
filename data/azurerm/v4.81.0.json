@@ -31,9 +31,8 @@
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-09T03:02:24.959772Z",
-      "duration_s": 0.024078917,
-      "error": "git checkout --quiet --force v4.81.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
+      "ran_at": "2026-09-09T03:22:36.366083Z",
+      "duration_s": 6.3258994170000005,
       "host": "katbook",
       "cpu": "Apple M1 Max",
       "os": "darwin/arm64"
@@ -1182,7 +1181,31 @@
     "resource_files_go_azure_sdk": 1095,
     "resource_files_both_sdk": 91,
     "resource_files_no_sdk": 57,
-    "identity_resource_files": 0,
+    "sdk_by_kind": {
+      "action": {
+        "go_azure_sdk": 6
+      },
+      "data_source": {
+        "both": 6,
+        "go_azure_sdk": 309,
+        "legacy": 10,
+        "none": 48
+      },
+      "ephemeral": {
+        "none": 2
+      },
+      "list": {
+        "go_azure_sdk": 80,
+        "none": 2
+      },
+      "resource": {
+        "both": 85,
+        "go_azure_sdk": 786,
+        "legacy": 89,
+        "none": 9
+      }
+    },
+    "identity_resource_files": 102,
     "docs_resources": 1137,
     "docs_data_sources": 400,
     "docs_ephemeral": 2,
