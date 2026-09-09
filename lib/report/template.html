@@ -358,7 +358,20 @@ function stageKey(k) {
   if (!staging.keys.includes(k)) staging.keys.push(k);
   syncSel();
 }
-function placeStaging() { if (staging && staging.keys.length) state.groups.unshift({ keys: staging.keys, stack: staging.stack, wide: false }); staging = null; syncSel(); }
+// place at the end, or at a position (before/after a grid panel when dropped there)
+function placeStaging(at) {
+  if (staging && staging.keys.length) {
+    const g = { keys: staging.keys, stack: staging.stack, wide: false };
+    if (at === undefined || at >= state.groups.length) state.groups.push(g); else state.groups.splice(at, 0, g);
+  }
+  staging = null; syncSel();
+}
+// combine the staging panel into an existing grid panel
+function mergeStagingInto(to) {
+  if (!staging || !state.groups[to]) return;
+  state.groups.push({ keys: staging.keys, stack: false }); staging = null; syncSel();
+  mergeGroups(state.groups.length - 1, to);
+}
 function discardStaging() { staging = null; syncSel(); }
 function mergeGroups(from, to) {
   if (from === to || !state.groups[from] || !state.groups[to]) return;
@@ -1288,7 +1301,7 @@ function renderStage() {
   const ms = staging.keys.map(k => M[k]), units = [...new Set(ms.map(m => m.unit))];
   const provs = [...new Set(ms.map(m => m.provider))];
   st.hidden = false;
-  st.innerHTML = `<div class="panel"><h2>${multi() ? provs.join(' + ') + ' · ' : ''}building · ${ms.length} metric${ms.length > 1 ? 's' : ''} · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}<span class="val">${units.length === 1 && ms.length > 1 ? `<button class="pbtn ${staging.stack ? 'on' : ''}" data-stage="stack">${staging.stack ? 'stacked' : 'stack'}</button> ` : ''}<button class="pbtn on" data-stage="place">place</button> <button class="pbtn" data-stage="discard">discard</button></span></h2><p class="desc">cmd/ctrl/shift-click more metrics in the tree to add them here; place puts the panel at the top of the grid</p><div class="c"></div><div class="legend">${ms.map(m => `<span><i style="background:${colorOf(m.key)}"></i>${esc(lbl(m))}${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''}<span class="rm" data-rm="${m.key}" title="remove">✕</span></span>`).join('')}</div></div>`;
+  st.innerHTML = `<div class="panel" draggable="true" data-stage-drag="1"><h2><span class="handle" title="drag into the grid">⠿</span>${multi() ? provs.join(' + ') + ' · ' : ''}building · ${ms.length} metric${ms.length > 1 ? 's' : ''} · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}<span class="val">${units.length === 1 && ms.length > 1 ? `<button class="pbtn ${staging.stack ? 'on' : ''}" data-stage="stack">${staging.stack ? 'stacked' : 'stack'}</button> ` : ''}<button class="pbtn on" data-stage="place">place</button> <button class="pbtn" data-stage="discard">discard</button></span></h2><p class="desc">cmd/ctrl/shift-click more metrics in the tree to add them here; place appends it to the grid, or drag this panel onto a grid panel's edge to insert it there (its middle combines)</p><div class="c"></div><div class="legend">${ms.map(m => `<span><i style="background:${colorOf(m.key)}"></i>${esc(lbl(m))}${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''}<span class="rm" data-rm="${m.key}" title="remove">✕</span></span>`).join('')}</div></div>`;
   const series = staging.keys.map(k => ({ label: M[k].label, color: colorOf(k), values: M[k].values, right: M[k].unit !== units[0] }));
   lineChart(st.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: staging.stack && units.length === 1, h: 200, keys: staging.keys });
 }
@@ -1357,7 +1370,12 @@ $('#charts').addEventListener('click', ev => {
   update();
 });
 // drag one panel onto another to combine them
-let dragFrom = -1;
+let dragFrom = -1, dragStage = false;
+$('#stage').addEventListener('dragstart', ev => {
+  if (ev.target.closest('svg')) { ev.preventDefault(); return; }
+  dragStage = true; ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', 'stage');
+});
+$('#stage').addEventListener('dragend', () => { dragStage = false; clearDrop(); });
 $('#charts').addEventListener('dragstart', ev => {
   if (ev.target.closest('svg')) { ev.preventDefault(); return; } // the chart area is for selecting releases
   const p = ev.target.closest('.panel[data-g]'); if (!p) return;
@@ -1369,19 +1387,23 @@ const clearDrop = () => { for (const p of document.querySelectorAll('.panel.over
 const dropMode = (p, ev) => { const r = p.getBoundingClientRect(), f = (ev.clientX - r.left) / r.width; return f < 0.25 ? 'before' : f > 0.75 ? 'after' : 'over'; };
 $('#charts').addEventListener('dragend', () => { dragFrom = -1; clearDrop(); for (const p of document.querySelectorAll('.panel.dragging')) p.classList.remove('dragging'); });
 $('#charts').addEventListener('dragover', ev => {
-  const p = ev.target.closest('.panel[data-g]'); if (!p || dragFrom < 0 || +p.dataset.g === dragFrom) return;
+  const p = ev.target.closest('.panel[data-g]'); if (!p || (!dragStage && (dragFrom < 0 || +p.dataset.g === dragFrom))) return;
   ev.preventDefault(); ev.dataTransfer.dropEffect = 'move';
   const mode = dropMode(p, ev);
   if (!p.classList.contains(mode)) { clearDrop(); p.classList.add(mode); }
 });
 $('#charts').addEventListener('dragleave', ev => { const p = ev.target.closest('.panel[data-g]'); if (p && !p.contains(ev.relatedTarget)) p.classList.remove('over', 'before', 'after'); });
 $('#charts').addEventListener('drop', ev => {
-  const p = ev.target.closest('.panel[data-g]'); if (!p || dragFrom < 0) return;
+  const p = ev.target.closest('.panel[data-g]'); if (!p || (dragFrom < 0 && !dragStage)) return;
   ev.preventDefault();
   const mode = dropMode(p, ev), to = +p.dataset.g;
-  if (mode === 'over') mergeGroups(dragFrom, to); else moveGroup(dragFrom, to, mode === 'after');
-  dragFrom = -1; clearDrop(); update();
+  if (dragStage) { if (mode === 'over') mergeStagingInto(to); else placeStaging(mode === 'after' ? to + 1 : to); }
+  else if (mode === 'over') mergeGroups(dragFrom, to); else moveGroup(dragFrom, to, mode === 'after');
+  dragFrom = -1; dragStage = false; clearDrop(); update();
 });
+// dropping the staging panel on empty grid space appends it
+$('#charts').addEventListener('dragover', ev => { if (dragStage && !ev.target.closest('.panel[data-g]')) ev.preventDefault(); });
+$('#charts').addEventListener('drop', ev => { if (dragStage && !ev.target.closest('.panel[data-g]')) { ev.preventDefault(); placeStaging(); dragStage = false; clearDrop(); update(); } });
 
 // ---------- table ----------
 function renderTable() {
