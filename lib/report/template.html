@@ -455,6 +455,19 @@ function moveGroup(from, to, after) {
   state.groups.splice(idx, 0, g);
   syncSel();
 }
+function removeGroup(i) { if (state.groups[i]) { state.groups.splice(i, 1); syncSel(); } }
+// a metric dragged from the tree: a panel's middle adds it to that chart, an edge inserts a new panel there, no panel appends one
+function dropKey(k, to, mode) {
+  if (!M[k]) return;
+  const tgt = state.groups[to];
+  for (const g of state.groups) g.keys = g.keys.filter(x => x !== k); // moving it if it is already on the page
+  if (staging) staging.keys = staging.keys.filter(x => x !== k);
+  const g = { keys: [k], stack: false, wide: false };
+  if (tgt && mode === 'over' && tgt.keys.length && !isComp(k) && !tgt.keys.some(isComp)) { state.groups.push(g); mergeGroups(state.groups.length - 1, state.groups.indexOf(tgt)); return; }
+  const at = tgt ? state.groups.indexOf(tgt) + (mode === 'after' ? 1 : 0) : state.groups.length;
+  state.groups.splice(at, 0, g);
+  syncSel();
+}
 function splitGroup(i) { const g = state.groups[i]; if (!g) return; state.groups.splice(i, 1, ...g.keys.map(k => ({ keys: [k], stack: false }))); syncSel(); }
 const unitsOf = g => [...new Set(g.keys.filter(k => M[k]).map(k => M[k].unit))];
 // color follows the metric for as long as it stays selected; a new selection takes the lowest free slot
@@ -1199,7 +1212,7 @@ function metricRow(m, opts = {}) {
     const r = state.right.includes(m.key);
     lr = `<span class="lr"><button data-lr="L" data-k="${m.key}" class="${r ? '' : 'on'}" title="left axis">L</button><button data-lr="R" data-k="${m.key}" class="${r ? 'on' : ''}" title="right axis">R</button></span>`;
   }
-  return `<label class="${on ? 'on' : ''}" style="--c:${on ? colorOf(m.key) : 'transparent'}" title="${esc(m.desc || m.key)}"><input type="checkbox" data-k="${m.key}" ${on ? 'checked' : ''} hidden><span class="sw"></span>${esc(opts.full ? lbl(m) : shortLabel(m))}${lr}<span class="unit">${m.unit}</span></label>`;
+  return `<label class="${on ? 'on' : ''}" style="--c:${on ? colorOf(m.key) : 'transparent'}" title="${esc(m.desc || m.key)}" draggable="true"><input type="checkbox" data-k="${m.key}" ${on ? 'checked' : ''} hidden><span class="sw"></span>${esc(opts.full ? lbl(m) : shortLabel(m))}${lr}<span class="unit">${m.unit}</span></label>`;
 }
 function node(id, title, count, body, force) {
   const open = force !== undefined ? force : openNodes.has(id);
@@ -1389,22 +1402,23 @@ function renderCharts() {
   }
 
   const wideBtn = (g, gi) => `<button class="pbtn ${g.wide ? 'on' : ''}" data-act="wide" data-g="${gi}" title="span the full row">wide</button>`;
+  const rmBtn = gi => `<button class="pbtn" data-act="rm" data-g="${gi}" title="remove this panel">✕</button>`;
   renderStage();
   // panels: one chart per group; drag a panel onto another to combine, split to separate
   el.innerHTML = `<div class="panels" data-cols="${state.cols}">${visibleGroups().map(g => {
     const gi = g.gi, ms = g.keys.map(k => M[k]), units = unitsOf(g);
     if (isComp(g.keys[0])) {
       const c = ms[0];
-      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag to reorder">⠿</span>${esc(c.label)}<span class="val">${wideBtn(g, gi)} <span class="rm" data-rm="${c.key}" title="remove">✕</span></span></h2><p class="desc">${esc(c.desc)}</p><div class="c"></div></div>`;
+      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag to reorder">⠿</span>${esc(c.label)}<span class="val">${wideBtn(g, gi)} ${rmBtn(gi)}</span></h2><p class="desc">${esc(c.desc)}</p><div class="c"></div></div>`;
     }
     if (ms.length === 1) {
       const m = ms[0], { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is);
-      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="sw" style="background:${colorOf(m.key)}"></span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${esc(lbl(m))}</span><span class="val">${fmt(l, m.unit)} <span class="delta ${d.cls}" title="change from ${R[0].version} to ${R[N - 1].version}">${d.text}</span> ${wideBtn(g, gi)}</span></h2>${m.desc ? `<p class="desc">${esc(m.desc)}</p>` : ''}<div class="c"></div></div>`;
+      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="sw" style="background:${colorOf(m.key)}"></span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${esc(lbl(m))}</span><span class="val">${fmt(l, m.unit)} <span class="delta ${d.cls}" title="change from ${R[0].version} to ${R[N - 1].version}">${d.text}</span> ${wideBtn(g, gi)} ${rmBtn(gi)}</span></h2>${m.desc ? `<p class="desc">${esc(m.desc)}</p>` : ''}<div class="c"></div></div>`;
     }
     const provs = [...new Set(ms.map(m => m.provider))];
     const title = `${multi() ? provs.join(' + ') + ' · ' : ''}${ms.length} metrics · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}`;
     const stackBtn = units.length === 1 ? `<button class="pbtn ${g.stack ? 'on' : ''}" data-act="stack" data-g="${gi}" title="stack the metrics on top of each other">${g.stack ? 'stacked' : 'stack'}</button>` : '';
-    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${title}</span><span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button></span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is), off = (g.hidden || []).includes(m.key); return `<span class="${off ? 'off' : ''}" data-toggle="${m.key}" title="click to ${off ? 'show' : 'hide'}"><i style="background:${colorOf(m.key)}"></i><span class="lbl">${esc(lbl(m))}</span>${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
+    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${title}</span><span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button> ${rmBtn(gi)}</span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is), off = (g.hidden || []).includes(m.key); return `<span class="${off ? 'off' : ''}" data-toggle="${m.key}" title="click to ${off ? 'show' : 'hide'}"><i style="background:${colorOf(m.key)}"></i><span class="lbl">${esc(lbl(m))}</span>${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
   }).join('')}</div>`;
   for (const p of el.querySelectorAll('.panel[data-g]')) {
     const g = visibleGroups().find(x => x.gi === +p.dataset.g), units = unitsOf(g);
@@ -1484,12 +1498,20 @@ $('#charts').addEventListener('click', ev => {
   const b = ev.target.closest('button[data-act]'); if (!b) return;
   const gi = +b.dataset.g;
   if (b.dataset.act === 'split') splitGroup(gi);
+  else if (b.dataset.act === 'rm') removeGroup(gi);
   else if (b.dataset.act === 'stack') state.groups[gi].stack = !state.groups[gi].stack;
   else if (b.dataset.act === 'wide') state.groups[gi].wide = !state.groups[gi].wide;
   update();
 });
 // drag one panel onto another to combine them
-let dragFrom = -1, dragStage = false;
+let dragFrom = -1, dragStage = false, dragKey = '';
+// a metric row in the tree can be dragged onto the grid
+$('aside').addEventListener('dragstart', ev => {
+  const k = ev.target.closest('label')?.querySelector('input[data-k]')?.dataset.k;
+  if (!k) { ev.preventDefault(); return; }
+  dragKey = k; ev.dataTransfer.effectAllowed = 'copyMove'; ev.dataTransfer.setData('text/plain', k);
+});
+$('aside').addEventListener('dragend', () => { dragKey = ''; clearDrop(); });
 $('#stage').addEventListener('dragstart', ev => {
   if (ev.target.closest('svg')) { ev.preventDefault(); return; }
   dragStage = true; ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', 'stage');
@@ -1506,23 +1528,29 @@ const clearDrop = () => { for (const p of document.querySelectorAll('.panel.over
 const dropMode = (p, ev) => { const r = p.getBoundingClientRect(), f = (ev.clientX - r.left) / r.width; return f < 0.25 ? 'before' : f > 0.75 ? 'after' : 'over'; };
 $('#charts').addEventListener('dragend', () => { dragFrom = -1; clearDrop(); for (const p of document.querySelectorAll('.panel.dragging')) p.classList.remove('dragging'); });
 $('#charts').addEventListener('dragover', ev => {
-  const p = ev.target.closest('.panel[data-g]'); if (!p || (!dragStage && (dragFrom < 0 || +p.dataset.g === dragFrom))) return;
-  ev.preventDefault(); ev.dataTransfer.dropEffect = 'move';
+  const p = ev.target.closest('.panel[data-g]'); if (!p || (!dragStage && !dragKey && (dragFrom < 0 || +p.dataset.g === dragFrom))) return;
+  ev.preventDefault(); ev.dataTransfer.dropEffect = dragKey ? 'copy' : 'move';
   const mode = dropMode(p, ev);
   if (!p.classList.contains(mode)) { clearDrop(); p.classList.add(mode); }
 });
 $('#charts').addEventListener('dragleave', ev => { const p = ev.target.closest('.panel[data-g]'); if (p && !p.contains(ev.relatedTarget)) p.classList.remove('over', 'before', 'after'); });
 $('#charts').addEventListener('drop', ev => {
-  const p = ev.target.closest('.panel[data-g]'); if (!p || (dragFrom < 0 && !dragStage)) return;
+  const p = ev.target.closest('.panel[data-g]'); if (!p || (dragFrom < 0 && !dragStage && !dragKey)) return;
   ev.preventDefault();
   const mode = dropMode(p, ev), to = +p.dataset.g;
-  if (dragStage) { if (mode === 'over') mergeStagingInto(to); else placeStaging(mode === 'after' ? to + 1 : to); }
+  if (dragKey) dropKey(dragKey, to, mode);
+  else if (dragStage) { if (mode === 'over') mergeStagingInto(to); else placeStaging(mode === 'after' ? to + 1 : to); }
   else if (mode === 'over') mergeGroups(dragFrom, to); else moveGroup(dragFrom, to, mode === 'after');
-  dragFrom = -1; dragStage = false; clearDrop(); update();
+  dragFrom = -1; dragStage = false; dragKey = ''; clearDrop(); update();
 });
-// dropping the staging panel on empty grid space appends it
-$('#charts').addEventListener('dragover', ev => { if (dragStage && !ev.target.closest('.panel[data-g]')) ev.preventDefault(); });
-$('#charts').addEventListener('drop', ev => { if (dragStage && !ev.target.closest('.panel[data-g]')) { ev.preventDefault(); placeStaging(); dragStage = false; clearDrop(); update(); } });
+// dropping the staging panel or a tree metric on empty grid space appends it
+$('#charts').addEventListener('dragover', ev => { if ((dragStage || dragKey) && !ev.target.closest('.panel[data-g]')) ev.preventDefault(); });
+$('#charts').addEventListener('drop', ev => {
+  if ((!dragStage && !dragKey) || ev.target.closest('.panel[data-g]')) return;
+  ev.preventDefault();
+  if (dragKey) dropKey(dragKey); else placeStaging();
+  dragStage = false; dragKey = ''; clearDrop(); update();
+});
 
 // ---------- table ----------
 function renderTable() {
