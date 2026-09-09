@@ -187,8 +187,9 @@ details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
   <h1>tfpp <span>·</span> <select id="prov" title="provider"></select></h1>
   <div class="sub" id="subtitle"></div>
   <div class="layouts">
-    <select id="layoutSel" title="saved layouts (this browser)"><option value="">layouts…</option></select>
-    <button class="plain" id="layoutSave" title="save the current panels, view and settings under a name">save</button>
+    <select id="layoutSel" title="saved layouts (this browser)"></select>
+    <button class="plain" id="layoutSave" title="overwrite the selected layout with the current state">save</button>
+    <button class="plain" id="layoutSaveAs" title="save the current panels, view and settings under a new name">save as…</button>
     <button class="plain" id="layoutDel" title="delete the selected layout">delete</button>
     <button class="plain" id="layoutDown" title="download the current layout as a file">download</button>
     <label class="plain" for="layoutUp" title="load a layout file and save it here">upload<input type="file" id="layoutUp" accept=".json,application/json" hidden></label>
@@ -326,6 +327,7 @@ function parseGroups(str) {
     return { keys, hidden, stack: flags.includes('s'), wide: flags.includes('w') };
   }).filter(g => g.keys.length);
 }
+const serializeGroups = gs => gs.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : ''); return (f ? f + ':' : '') + g.keys.map(k => ((g.hidden || []).includes(k) ? '!' : '') + k).join(','); }).join('|');
 function readHash() {
   const h = new URLSearchParams(location.hash.slice(1));
   if (h.get('p') && (h.get('p') === 'all' || PROVIDERS.includes(h.get('p')))) state.p = h.get('p');
@@ -340,7 +342,7 @@ function readHash() {
 function writeHash() {
   const h = new URLSearchParams();
   h.set('p', state.p);
-  h.set('m', state.groups.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : ''); return (f ? f + ':' : '') + g.keys.map(k => ((g.hidden || []).includes(k) ? '!' : '') + k).join(','); }).join('|'));
+  h.set('m', serializeGroups(state.groups));
   h.set('r', state.right.join(','));
   for (const k of ['view','x','zero','table']) h.set(k, state[k]);
   if (state.cols !== '2') h.set('cols', state.cols);
@@ -1051,9 +1053,9 @@ function showInfo(m, ev) {
   el.style.top = Math.min(ev.clientY + 8, innerHeight - h - 8) + 'px';
 }
 document.addEventListener('contextmenu', ev => {
-  const row = ev.target.closest('aside label[title], .legend span, .panel h2 .sw');
+  const row = ev.target.closest('aside label[title], .legend [data-toggle], .legend > span, #stage .legend > span, .panel h2 .sw, #ctx tr, #pmenu label');
   if (!row) return;
-  let key = row.querySelector?.('input[data-k]')?.dataset.k || row.querySelector?.('[data-rm]')?.dataset.rm;
+  let key = row.dataset?.toggle || row.querySelector?.('input[data-k]')?.dataset.k || row.querySelector?.('[data-rm]')?.dataset.rm || row.querySelector?.('input[data-pk]')?.dataset.pk;
   if (!key && row.classList.contains('sw')) key = row.closest('.panel')?.dataset.k;
   if (!key || !M[key]) return;
   ev.preventDefault(); showInfo(M[key], ev);
@@ -1180,7 +1182,7 @@ $('#groups').addEventListener('toggle', ev => {
 }, true);
 $('#search').addEventListener('input', renderSidebar);
 $('#clear').onclick = () => { state.groups = []; syncSel(); update(); };
-$('#defaults').onclick = () => { state.groups = DEFAULT_GROUPS(); state.colors = {}; syncSel(); update(); };
+$('#defaults').onclick = () => { layoutName = 'default'; state.groups = DEFAULT_GROUPS(); state.colors = {}; syncSel(); update(); };
 
 // ---------- controls ----------
 function renderControls() {
@@ -1537,6 +1539,7 @@ function update() {
   applyRange();
   writeHash();
   renderSidebar(); renderControls(); renderCharts(); renderTable(); renderCompare(); renderStatus(); renderSubtitle();
+  if (typeof renderLayouts === 'function' && $('#layoutSel')) renderLayouts();
 }
 readHash();
 function renderSubtitle() {
@@ -1546,40 +1549,46 @@ function renderSubtitle() {
   $('#subtitle').textContent = `${rs.length} releases · ${rs[0]?.version} (${rs[0]?.date}) → ${rs[rs.length - 1]?.version} (${rs[rs.length - 1]?.date}) · ${repos} · generated ${gen} by ${META[visible()[0]].tool}`;
   document.title = 'tfpp · ' + state.p;
 }
-update();
-addEventListener('hashchange', () => { readHash(); update(); });
-// draggable divider between the tree and the charts; width remembered per browser
-{
-  const sp = $('#splitter'), root = document.documentElement;
-  try { const w = +localStorage.getItem('tfpp.side'); if (w >= 180 && w <= 800) root.style.setProperty('--side', w + 'px'); } catch (e) { /* ignore */ }
-  sp.addEventListener('mousedown', ev => {
-    ev.preventDefault(); sp.classList.add('on'); document.body.classList.add('resizing');
-    const move = e => { const w = Math.min(800, Math.max(180, e.clientX)); root.style.setProperty('--side', w + 'px'); };
-    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); sp.classList.remove('on'); document.body.classList.remove('resizing'); try { localStorage.setItem('tfpp.side', parseInt(root.style.getPropertyValue('--side'))); } catch (e) { /* ignore */ } renderCharts(); };
-    document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
-  });
-}
 // ---------- saved layouts: the whole url state under a name, kept in this browser, exportable as json ----------
 const LAYOUT_KEY = 'tfpp.layouts';
 function loadLayouts() { try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function storeLayouts(ls) { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(ls)); } catch (e) { /* ignore */ } }
+// which layout the page is showing; "default" is the built-in one. edited = current state differs from it
+let layoutName = 'default';
+function layoutEdited() {
+  if (layoutName === 'default') return serializeGroups(state.groups) !== serializeGroups(DEFAULT_GROUPS());
+  const l = loadLayouts()[layoutName]; if (!l) return true;
+  writeHash();
+  return location.hash.slice(1) !== l.hash;
+}
 function renderLayouts(selected) {
+  if (selected) layoutName = selected;
   const ls = loadLayouts(), sel = $('#layoutSel');
-  sel.innerHTML = '<option value="">layouts…</option>' + Object.keys(ls).sort().map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
-  if (selected && ls[selected]) sel.value = selected;
+  if (!ls[layoutName] && layoutName !== 'default') layoutName = 'default';
+  const edited = layoutEdited();
+  const opt = n => `<option value="${esc(n)}">${esc(n)}${n === layoutName && edited ? ' (edited)' : ''}</option>`;
+  sel.innerHTML = opt('default') + Object.keys(ls).sort().map(opt).join('');
+  sel.value = layoutName;
+  $('#layoutSave').disabled = layoutName === 'default' || !edited;
+  $('#layoutDel').disabled = layoutName === 'default';
 }
 function currentLayout(name) { writeHash(); return { tfpp: 'layout', name, saved: new Date().toISOString(), hash: location.hash.slice(1) }; }
 function applyLayout(l) { if (!l || typeof l.hash !== 'string') return; history.replaceState(null, '', '#' + l.hash); readHash(); update(); }
 function saveLayoutAs(name) { if (!name) return; const ls = loadLayouts(); ls[name] = currentLayout(name); storeLayouts(ls); renderLayouts(name); }
-$('#layoutSave').onclick = () => { const box = $('#layoutbox'); box.hidden = false; const inp = $('#layoutName'); inp.value = $('#layoutSel').value || ''; inp.focus(); inp.select(); };
+$('#layoutSave').onclick = () => { if (layoutName !== 'default') saveLayoutAs(layoutName); };
+$('#layoutSaveAs').onclick = () => { const box = $('#layoutbox'); box.hidden = false; const inp = $('#layoutName'); inp.value = layoutName === 'default' ? '' : layoutName; inp.focus(); inp.select(); };
 $('#layoutCancel').onclick = () => { $('#layoutbox').hidden = true; };
 $('#layoutOk').onclick = () => { saveLayoutAs($('#layoutName').value.trim()); $('#layoutbox').hidden = true; };
 $('#layoutName').addEventListener('keydown', ev => { if (ev.key === 'Enter') $('#layoutOk').click(); if (ev.key === 'Escape') $('#layoutCancel').click(); });
-$('#layoutSel').onchange = () => { const l = loadLayouts()[$('#layoutSel').value]; if (l) applyLayout(l); };
-$('#layoutDel').onclick = () => { const n = $('#layoutSel').value; if (!n) return; const ls = loadLayouts(); delete ls[n]; storeLayouts(ls); renderLayouts(); };
+$('#layoutSel').onchange = () => {
+  const n = $('#layoutSel').value;
+  if (n === 'default') { layoutName = 'default'; state.groups = DEFAULT_GROUPS(); state.colors = {}; syncSel(); update(); return; }
+  const l = loadLayouts()[n]; if (l) { layoutName = n; applyLayout(l); }
+};
+$('#layoutDel').onclick = () => { const n = layoutName; if (n === 'default') return; const ls = loadLayouts(); delete ls[n]; storeLayouts(ls); layoutName = 'default'; renderLayouts(); };
 $('#layoutDown').onclick = () => {
-  const name = ($('#layoutSel').value || 'layout').replace(/[^a-z0-9._-]+/gi, '-').toLowerCase();
-  const l = currentLayout($('#layoutSel').value || name);
+  const name = layoutName.replace(/[^a-z0-9._-]+/gi, '-').toLowerCase();
+  const l = currentLayout(layoutName);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(l, null, 2)], { type: 'application/json' }));
   a.download = `tfpp-${name}-${new Date().toISOString().slice(0, 10)}.json`;
@@ -1597,6 +1606,19 @@ $('#layoutUp').addEventListener('change', async ev => {
   ev.target.value = '';
 });
 renderLayouts();
+update();
+addEventListener('hashchange', () => { readHash(); update(); });
+// draggable divider between the tree and the charts; width remembered per browser
+{
+  const sp = $('#splitter'), root = document.documentElement;
+  try { const w = +localStorage.getItem('tfpp.side'); if (w >= 180 && w <= 800) root.style.setProperty('--side', w + 'px'); } catch (e) { /* ignore */ }
+  sp.addEventListener('mousedown', ev => {
+    ev.preventDefault(); sp.classList.add('on'); document.body.classList.add('resizing');
+    const move = e => { const w = Math.min(800, Math.max(180, e.clientX)); root.style.setProperty('--side', w + 'px'); };
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); sp.classList.remove('on'); document.body.classList.remove('resizing'); try { localStorage.setItem('tfpp.side', parseInt(root.style.getPropertyValue('--side'))); } catch (e) { /* ignore */ } renderCharts(); };
+    document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+  });
+}
 let resizeTimer;
 addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderCharts(); }, 150); });
 })();
