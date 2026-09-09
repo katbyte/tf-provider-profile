@@ -17,9 +17,9 @@
       "os": "darwin/arm64"
     },
     "lint": {
-      "ran_at": "2026-09-09T15:09:36.590081Z",
-      "duration_s": 2387.24324075,
-      "error": "golangci-lint exit -1 after 2385s: ",
+      "ran_at": "2026-09-09T16:21:41.543963Z",
+      "duration_s": 1714.68580675,
+      "error": "golangci-lint exit -1 after 1708s: ",
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"

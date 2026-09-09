@@ -10,10 +10,10 @@
       "os": "darwin/arm64"
     },
     "build": {
-      "ran_at": "2026-09-09T03:11:29.128388Z",
-      "duration_s": 47.686947042,
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T16:17:47.815341Z",
+      "duration_s": 39.206495208,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "lint": {
@@ -637,9 +637,9 @@
   },
   "build": {
     "go_toolchain": "go: downloading go1.26.4 (darwin/arm64)\ngo version go1.26.4 darwin/arm64",
-    "clean_build_s": 31.234702125,
-    "warm_build_s": 5.023271416,
-    "stripped_build_s": 2.1585256250000002,
+    "clean_build_s": 25.561617625,
+    "warm_build_s": 3.363987625,
+    "stripped_build_s": 2.388582208,
     "local_binary_bytes": 86074946,
     "stripped_binary_bytes": 60880978
   }
