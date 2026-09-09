@@ -196,6 +196,15 @@ func sdkKindDefs() []def {
 		}
 		return n
 	}
+	for _, c := range classes {
+		defs = append(defs, def{"source.sdk_count." + c.id, "Resources on " + c.label, "files", "deps", "resource and data source files importing this sdk family", func(r *results.Result) (float64, bool) {
+			x := r.Source
+			if x == nil || x.SDKByKind == nil {
+				return 0, false
+			}
+			return f(x.SDKByKind["resource"][c.id] + x.SDKByKind["data_source"][c.id])
+		}})
+	}
 	for _, c := range classes[:4] {
 		defs = append(defs, def{"source.sdk_pct." + c.id, "Resources on " + c.label + " share", "pct", "deps", "share of resource and data source files importing an sdk family", func(r *results.Result) (float64, bool) {
 			x := r.Source
@@ -696,7 +705,7 @@ func upIs(d def) string {
 	case "bytes", "ms", "s":
 		return "bad"
 	}
-	if strings.HasPrefix(d.key, "source.sdk.") || strings.HasPrefix(d.key, "source.sdk_pct.") {
+	if strings.HasPrefix(d.key, "source.sdk.") || strings.HasPrefix(d.key, "source.sdk_pct.") || strings.HasPrefix(d.key, "source.sdk_count.") {
 		switch {
 		case strings.HasSuffix(d.key, ".kermit"), strings.HasSuffix(d.key, ".track1"), strings.HasSuffix(d.key, ".both"):
 			return "bad"

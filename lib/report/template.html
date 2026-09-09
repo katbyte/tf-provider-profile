@@ -90,6 +90,10 @@ button.plain { border: 1px solid var(--axis); background: var(--surface); color:
 .panel h2 .pbtn { border: 1px solid var(--axis); background: var(--surface); color: var(--ink-2); border-radius: 4px; padding: 0 6px; font: inherit; font-size: 11px; line-height: 18px; cursor: pointer; }
 .panel h2 .pbtn.on { background: var(--ink-2); color: var(--surface); }
 .legend .rm { color: var(--muted); cursor: pointer; margin-left: 2px; font-size: 11px; }
+.legend span[data-toggle] { cursor: pointer; }
+.legend span.off { opacity: .45; }
+.legend span.off > i { background: transparent !important; border: 1px solid var(--muted); box-sizing: border-box; }
+.legend span.off b, .legend span.off .lbl { text-decoration: line-through; }
 .legend .rm:hover { color: var(--down); }
 .panel h2 { font-size: 13px; font-weight: 600; margin: 0 0 2px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .panel h2 .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
@@ -127,6 +131,25 @@ svg .endlbl { fill: var(--ink-2); font-size: 11px; }
 #tip td.d { color: var(--muted); font-variant-numeric: tabular-nums; }
 #tip tr.sep td, #ctx tr.sep td { border-top: 1px solid var(--grid); padding-top: 4px; }
 #tip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+#stage { position: fixed; right: 16px; bottom: 16px; width: min(560px, calc(100vw - 32px)); z-index: 15; box-shadow: 0 8px 28px rgba(0,0,0,.28); }
+#stage .panel { border-color: var(--s1); }
+#stage .desc { color: var(--muted); }
+#pmenu { position: fixed; z-index: 21; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 380px; max-width: calc(100vw - 24px); font-size: 12px; }
+#pmenu .v { font-weight: 600; margin-bottom: 6px; }
+#pmenu label { display: flex; align-items: center; gap: 8px; padding: 3px 2px; cursor: pointer; }
+#pmenu label i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+#pmenu label .unit { margin-left: auto; color: var(--muted); font-size: 11px; }
+#pmenu .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--grid); }
+#pmenu .row button { border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+#pmenu .row button:hover { background: var(--wash); }
+.panel h2 .ttl { cursor: pointer; }
+.panel h2 .ttl:hover { text-decoration: underline dotted; }
+#info { position: fixed; z-index: 21; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 440px; max-width: calc(100vw - 24px); font-size: 12px; line-height: 1.5; }
+#info .v { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+#info .meta { color: var(--muted); margin-bottom: 6px; }
+#info .meta code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+#info .body p { margin: 0 0 6px; }
+#info .body p:last-child { margin: 0; }
 #ctx { position: fixed; z-index: 20; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 560px; max-width: calc(100vw - 24px); font-size: 12px; }
 #ctx .v { font-weight: 600; margin-bottom: 6px; }
 #ctx .v span { color: var(--muted); font-weight: 400; }
@@ -192,6 +215,9 @@ details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
     <details style="margin-top:12px"><summary>Release and stage status</summary><div class="scroll" id="status"></div></details>
   </main>
 </div>
+<div id="stage" hidden></div>
+<div id="pmenu" hidden><div class="v"></div><div class="list"></div><div class="row"></div></div>
+<div id="info" hidden><div class="v"></div><div class="meta"></div><div class="body"></div></div>
 <div id="tip"></div>
 <div id="ctx" hidden><div class="v"></div><table class="sum"></table><div class="row"></div><textarea readonly></textarea></div>
 <script id="data" type="application/json">/*__TFPP_DATA__*/</script>
@@ -259,7 +285,7 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
     { keys: ['schema.resources', 'schema.data_sources', 'schema.ephemeral_resources', 'schema.list_resources', 'schema.actions', 'schema.functions'], stack: true },
     { keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct', 'schema.list_resources', 'schema.identity_resources'] }, // percent left, counts right
     { keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
-    { keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1'], stack: true },
+    { keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1', 'source.sdk_count.go_azure_sdk', 'source.sdk_count.both', 'source.sdk_count.kermit', 'source.sdk_count.track1'] },
     { keys: ['source.go_code_lines', 'source.go_test_lines', 'source.vendor_go_lines'], stack: true },
     { keys: ['binary.{plat}.zip_bytes', 'binary.{plat}.binary_bytes'] },
     { keys: ['schema.provider_max_rss_bytes', 'startup.max_rss_bytes'] },
@@ -268,7 +294,9 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
 });
 const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['releases', 'majors'], tip: 'current', p: PROVIDERS.includes('__TFPP_PROVIDER__') ? '__TFPP_PROVIDER__' : (PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '')) };
 applyRange();
-function syncSel() { state.groups = state.groups.filter(g => g.keys.length); state.sel = state.groups.flatMap(g => g.keys); assignColors(); }
+// staging: a panel being built with modifier-clicks, shown floating until placed; never persisted
+let staging = null;
+function syncSel() { state.groups = state.groups.filter(g => g.keys.length); if (staging && !staging.keys.length) staging = null; state.sel = [...state.groups.flatMap(g => g.keys), ...(staging ? staging.keys : [])]; assignColors(); }
 // groups restricted to what the current provider selection can show; gi keeps the index into state.groups
 const visibleGroups = () => state.groups.map((g, gi) => ({ ...g, gi, keys: g.keys.filter(k => M[k]) })).filter(g => g.keys.length);
 const vsel = () => state.sel.filter(k => M[k]);
@@ -276,7 +304,10 @@ function parseGroups(str) {
   return str.split('|').filter(Boolean).map(part => {
     const m = part.match(/^([sw]+):(.*)$/);
     const flags = m ? m[1] : '', body = m ? m[2] : part;
-    return { keys: body.split(',').filter(k => CATALOGUE.some(c => c.key === k)), stack: flags.includes('s'), wide: flags.includes('w') };
+    const raw = body.split(',').filter(Boolean);
+    const keys = raw.map(k => k.replace(/^!/, '')).filter(k => CATALOGUE.some(c => c.key === k));
+    const hidden = raw.filter(k => k.startsWith('!')).map(k => k.slice(1)).filter(k => keys.includes(k));
+    return { keys, hidden, stack: flags.includes('s'), wide: flags.includes('w') };
   }).filter(g => g.keys.length);
 }
 function readHash() {
@@ -293,7 +324,7 @@ function readHash() {
 function writeHash() {
   const h = new URLSearchParams();
   h.set('p', state.p);
-  h.set('m', state.groups.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : ''); return (f ? f + ':' : '') + g.keys.join(','); }).join('|'));
+  h.set('m', state.groups.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : ''); return (f ? f + ':' : '') + g.keys.map(k => ((g.hidden || []).includes(k) ? '!' : '') + k).join(','); }).join('|'));
   h.set('r', state.right.join(','));
   for (const k of ['view','x','zero','table']) h.set(k, state[k]);
   if (state.cols !== '2') h.set('cols', state.cols);
@@ -305,16 +336,30 @@ function writeHash() {
   history.replaceState(null, '', '#' + h.toString());
 }
 // add metrics: combined = one new panel holding all of them, otherwise one panel each
+// new panels go to the top of the grid so they are visible right away
 function addKeys(keys, combined, stack = false) {
   const fresh = keys.filter(k => M[k] && !state.sel.includes(k));
   if (!fresh.length) return;
   const comps = fresh.filter(isComp), plain = fresh.filter(k => !isComp(k));
-  if (combined && plain.length) state.groups.push({ keys: plain, stack: !!stack });
-  else for (const k of plain) state.groups.push({ keys: [k], stack: false });
-  for (const k of comps) state.groups.push({ keys: [k], stack: false });
+  const add = [];
+  if (combined && plain.length) add.push({ keys: plain, stack: !!stack });
+  else for (const k of plain) add.push({ keys: [k], stack: false });
+  for (const k of comps) add.push({ keys: [k], stack: false });
+  state.groups.unshift(...add);
   syncSel();
 }
-function removeKeys(keys) { for (const g of state.groups) g.keys = g.keys.filter(k => !keys.includes(k)); syncSel(); }
+function removeKeys(keys) { for (const g of state.groups) g.keys = g.keys.filter(k => !keys.includes(k)); if (staging) staging.keys = staging.keys.filter(k => !keys.includes(k)); syncSel(); }
+// add a metric to the floating staging panel (two units at most; a third starts a fresh staging panel)
+function stageKey(k) {
+  if (!M[k] || isComp(k)) return;
+  if (!staging) staging = { keys: [], stack: false };
+  const units = new Set(staging.keys.map(x => M[x].unit));
+  if (!units.has(M[k].unit) && units.size >= 2) { placeStaging(); staging = { keys: [], stack: false }; }
+  if (!staging.keys.includes(k)) staging.keys.push(k);
+  syncSel();
+}
+function placeStaging() { if (staging && staging.keys.length) state.groups.unshift({ keys: staging.keys, stack: staging.stack, wide: false }); staging = null; syncSel(); }
+function discardStaging() { staging = null; syncSel(); }
 function mergeGroups(from, to) {
   if (from === to || !state.groups[from] || !state.groups[to]) return;
   if ([...state.groups[from].keys, ...state.groups[to].keys].some(isComp)) return; // composition panels stand alone
@@ -842,6 +887,151 @@ function metricTipRows(i, ms, activeKeys, stacked) {
   return [...first.map(m => row(m, false)), totalRow, ...rest.map((m, j) => row(m, j === 0 && first.length > 0))].join('');
 }
 
+// ---------- metric explanations (right-click any metric) ----------
+const STAGE_OF = { binary: 'binary stage: dissects the downloaded release zip and executable, nothing is run', startup: 'startup stage: runs the release binary as a plugin with the go-plugin magic cookie, no terraform involved, 7 runs', schema: 'schema stage: runs `terraform providers schema -json` against the release through a wrapper that records the provider process, 7 runs', source: 'source stage: git checkout of the release tag, then counts files and greps patterns', build: 'build stage (sampled): local go build of the tag with an isolated, emptied GOCACHE', lint: 'lint stage (sampled): cold golangci-lint run at the tag', comp: 'binary stage: functions attributed to modules via the pclntab' };
+const SECTION_TEXT = {
+  text: 'Machine code. Every compiled function, including generated SDK clients and inlined helpers. The part the pclntab attribution can assign to modules.',
+  rodata: 'Read-only data: type descriptors, reflection metadata, string literals, constant tables. Grows with the number of types and the size of embedded strings (schemas, enum lists, error messages).',
+  pclntab: 'The Go runtime\'s program-counter to line table: function names, file/line mappings and stack maps used for stack traces, panics and the garbage collector. Roughly proportional to the amount of code, and it stays in the binary even when symbols are stripped.',
+  typelink: 'Table of pointers to type descriptors, used by reflection and interface conversion. Tracks how many distinct types the binary has.',
+  itablink: 'Table of interface tables (itabs) the linker pre-generated for concrete type to interface conversions.',
+  data: 'Initialised writable globals that contain pointers.',
+  noptrdata: 'Initialised writable globals with no pointers (the GC does not scan them).',
+  bss: 'Zero-initialised globals with pointers. Takes no space in the file but is mapped at start-up.',
+  noptrbss: 'Zero-initialised globals without pointers. Takes no space in the file but is reserved in memory at start-up; a large jump here is usually a Go runtime change, not provider code.',
+};
+function explain(m) {
+  const k = bare(m.key), parts = k.split('.');
+  const plat = (parts[0] === 'binary' || parts[0] === 'comp') ? parts[1] : '';
+  const P = plat ? ` for the ${plat} build` : '';
+  const K = k.replace(/^(binary|comp)\.[^.]+\./, '$1.*.');
+  const sdkClass = { go_azure_sdk: 'importing github.com/hashicorp/go-azure-sdk only (the current SDK)', both: 'importing both a legacy SDK and go-azure-sdk, typically mid-migration', kermit: 'importing a kermit fork (jackofallops or tombuildsstuff), the hand-maintained legacy clients', track1: 'importing github.com/Azure/azure-sdk-for-go, the old autorest-based track 1 SDK', none: 'importing neither family, usually resources built on other clients or pure helpers' };
+  const kind = { resource: 'resource', data_source: 'data source', list: 'list resource', action: 'action', ephemeral: 'ephemeral resource' };
+  const t = {
+    'binary.*.zip_bytes': `Size of the release zip${P} exactly as served by releases.hashicorp.com. This is what terraform init downloads for every fresh workspace, so it is the number users feel on the network.`,
+    'binary.*.binary_bytes': `Size of the provider executable inside the zip${P}. This is what lives in .terraform/providers and is mapped into memory whenever terraform launches the provider. Release builds are stripped (-s -w), so there is no DWARF here; the pclntab still is.`,
+    'binary.*.compression_ratio': `Uncompressed size divided by compressed size${P}. Machine code compresses about 4:1; a falling ratio means more incompressible content (already-compressed embedded data), a rising one means more repetitive code such as generated clients.`,
+    'binary.*.funcs': `Number of functions listed in the pclntab${P}. Each generated SDK client, each resource, each closure is one entry. A cheap proxy for how much code the linker kept after dead-code elimination.`,
+    'binary.*.packages': `Number of distinct Go packages with at least one function in the binary${P}, counted from the pclntab.`,
+    'binary.*.dep_count': `Number of dependency modules recorded in the binary's build info (what go version -m prints)${P}. Only modules that contribute code the linker kept are listed.`,
+    'binary.*.module.provider': `Bytes of machine code attributed to the provider's own module${P}: internal/services, the typed sdk wrappers, helpers. Excludes every dependency.`,
+    'binary.*.module.std': `Bytes of machine code attributed to the Go standard library${P}. Moves with the Go version, not with the provider.`,
+    'startup.handshake_med_ms': 'Median wall time from exec to the go-plugin handshake line, with the provider run standalone under the magic cookie (no terraform). This is the fixed cost every terraform command pays per provider launch: Go runtime start plus every package init, which for azurerm includes registering all services and building the resource maps.',
+    'startup.handshake_min_ms': 'Fastest of the 7 handshake runs. The least noise-sensitive statistic; compare this across releases measured on the same machine.',
+    'startup.max_rss_bytes': 'Peak resident memory of the provider process at the moment it handshakes (median of 7 runs), before any schema or RPC work. Package-init allocations plus the runtime.',
+    'schema.wall_med_ms': 'Median wall time of terraform providers schema -json end to end: terraform start, provider launch, GetProviderSchema, JSON encoding. Compare only across runs with the same terraform version and machine (see the terraform and machine markers).',
+    'schema.wall_min_ms': 'Fastest of the 7 schema fetch runs.',
+    'schema.provider_max_rss_bytes': 'Peak resident memory of the provider process while serving GetProviderSchema, captured by a wrapper terraform is pointed at through dev_overrides. Reflects building every resource schema in memory; the closest thing to what a plan pays before touching the network.',
+    'schema.json_bytes': 'Bytes of the providers schema -json output. Grows with resources, attributes, descriptions and nesting; terraform holds a decoded copy of this per provider.',
+    'schema.gzip_bytes': 'The same JSON gzipped, a rough measure of its information content rather than its verbosity.',
+    'schema.resources': 'Managed resources present in the schema output. This is the authoritative count of what the provider offers, independent of how it is declared in source.',
+    'schema.data_sources': 'Data sources present in the schema output.',
+    'schema.ephemeral_resources': 'Ephemeral resources in the schema output. Needs terraform 1.10+ for the schema stage; older versions omit them, which reads as unknown, not zero.',
+    'schema.list_resources': 'List resources in the schema output. Needs terraform 1.14+ for the schema stage.',
+    'schema.actions': 'Actions in the schema output. Needs terraform 1.14+ for the schema stage.',
+    'schema.functions': 'Provider-defined functions in the schema output. Needs terraform 1.8+.',
+    'schema.identity_resources': 'Resources that expose a resource identity schema (terraform 1.12+), the basis for import by identity and for list resources.',
+    'schema.identity_coverage_pct': 'Resources with an identity schema as a share of all resources.',
+    'schema.list_coverage_pct': 'List resources as a share of all managed resources.',
+    'schema.attributes': 'Total attributes across every resource and data source schema, nested blocks included. The single best proxy for "how much schema" terraform has to validate and diff.',
+    'schema.blocks': 'Total nested block types across resource and data source schemas.',
+    'schema.deprecated_attributes': 'Attributes flagged deprecated in the schema. Rises before a major and drops at it.',
+    'schema.max_depth': 'Deepest block nesting found in any resource schema.',
+    'source.go_lines': 'Lines in every .go file outside vendor at the tag, tests included.',
+    'source.go_code_lines': 'Non-blank, non-comment-only lines in .go files outside vendor. Closer to real code volume than raw lines.',
+    'source.go_test_lines': 'Lines in *_test.go files outside vendor.',
+    'source.go_files': 'Number of .go files outside vendor.',
+    'source.go_test_files': 'Number of *_test.go files outside vendor.',
+    'source.vendor_go_lines': 'Lines in .go files under vendor/: the dependency code the provider actually compiles against. The generated Azure SDK clients dominate this.',
+    'source.vendor_go_files': 'Number of .go files under vendor/.',
+    'source.total_files': 'Every file in the working tree at the tag, excluding .git.',
+    'source.tree_bytes': 'Size of the working tree at the tag, excluding .git.',
+    'source.services': 'Service packages under internal/services (azurerm) or internal/service (aws-style layouts).',
+    'source.test_funcs': 'Functions named Test* in test files.',
+    'source.acc_test_funcs': 'Functions named TestAcc*: acceptance tests that hit the real API.',
+    'source.typed_resources': 'Non-test files under the service packages declaring a typed-SDK resource (var _ sdk.Resource… = ). Counts files, which for the typed SDK is one per resource.',
+    'source.untyped_resources': 'Untyped (plugin-sdk schema map) resource constructors: func resourceFoo() *pluginsdk.Resource or func fooResource() *pluginsdk.Resource.',
+    'source.typed_data_sources': 'Files declaring a typed-SDK data source (var _ sdk.DataSource… = ).',
+    'source.untyped_data_sources': 'Untyped data source constructors: func dataSourceFoo() or func fooDataSource().',
+    'source.typed_resource_pct': 'Typed resources as a share of typed plus untyped resources: progress of the typed-SDK migration.',
+    'source.typed_data_source_pct': 'Typed data sources as a share of typed plus untyped data sources.',
+    'source.typed_pct': 'Typed resources and data sources together as a share of all of them.',
+    'source.docs_resources': 'Documentation pages for resources (website/docs/r or docs/resources).',
+    'source.docs_data_sources': 'Documentation pages for data sources.',
+    'source.docs_ephemeral': 'Documentation pages for ephemeral resources.',
+    'source.docs_list_resources': 'Documentation pages for list resources.',
+    'source.docs_actions': 'Documentation pages for actions.',
+    'source.docs_functions': 'Documentation pages for provider functions.',
+    'source.docs_guides': 'Guide pages under the docs.',
+    'source.direct_deps': 'Modules the provider imports directly (go.mod require lines without // indirect).',
+    'source.indirect_deps': 'Modules pulled in transitively (go.mod require lines marked // indirect).',
+    'source.go_sum_lines': 'Lines in go.sum: one or two per module version the build graph has ever needed. A coarse count of dependency versions in play.',
+    'source.commits': 'Commits between the previous release tag and this one.',
+    'source.authors': 'Distinct commit authors between the previous release and this one.',
+    'source.files_changed': 'Files changed between the previous release and this one, excluding vendor and the changelog.',
+    'source.lines_added': 'Lines added between the previous release and this one, excluding vendor and the changelog.',
+    'source.lines_removed': 'Lines removed between the previous release and this one, excluding vendor and the changelog.',
+    'source.days_since_prev': 'Days between this release and the previous one.',
+    'source.changelog_total': 'Bullet entries under this release\'s heading in CHANGELOG.md, all sections.',
+    'source.changelog_features': 'Entries under FEATURES in the changelog for this release.',
+    'source.changelog_enhancements': 'Entries under ENHANCEMENTS in the changelog for this release.',
+    'source.changelog_bug_fixes': 'Entries under BUG FIXES in the changelog for this release.',
+    'source.resource_files_legacy_sdk': 'Resource and data source files importing only a legacy SDK (azure-sdk-for-go or kermit).',
+    'source.resource_files_both_sdk': 'Resource and data source files importing both a legacy SDK and go-azure-sdk.',
+    'source.resource_files_go_azure_sdk': 'Resource and data source files importing only go-azure-sdk.',
+    'source.resource_files_no_sdk': 'Resource and data source files importing neither SDK family.',
+    'source.sdk_count.go_azure_sdk': 'Resource and data source files importing only go-azure-sdk.',
+    'source.sdk_count.both': 'Resource and data source files importing both a legacy SDK and go-azure-sdk.',
+    'source.sdk_count.kermit': 'Resource and data source files importing a kermit fork and not go-azure-sdk.',
+    'source.sdk_count.track1': 'Resource and data source files importing azure-sdk-for-go (track 1) and not go-azure-sdk.',
+    'source.sdk_count.none': 'Resource and data source files importing neither SDK family.',
+    'source.identity_resource_files': 'Resource files declaring a resource identity in source (Identity: &schema.ResourceIdentity{ or sdk.ResourceWithIdentity). The schema-side count is the authoritative one.',
+    'source.files_importing_legacy_sdk': 'Non-test service files importing github.com/Azure/azure-sdk-for-go.',
+    'source.files_importing_kermit': 'Non-test service files importing a kermit fork.',
+    'source.files_importing_autorest': 'Non-test service files importing github.com/Azure/go-autorest.',
+    'source.files_importing_go_azure_sdk': 'Non-test service files importing github.com/hashicorp/go-azure-sdk.',
+    'build.clean_build_s': 'Seconds for go build with an emptied, isolated GOCACHE, using the go toolchain the release pins in .go-version. What a fresh clone or a cold CI runner pays. Sampled: every nth release.',
+    'build.warm_build_s': 'Seconds for a second go build right after the clean one, with everything cached: effectively link time. What a developer pays after a one-line change.',
+    'build.local_binary_bytes': 'Size of the local, unstripped build (with DWARF and symbols). Compare with the release binary to see what stripping saves.',
+    'build.stripped_binary_bytes': 'Size of a local build with -ldflags=-s -w, the same flags the release uses.',
+    'lint.duration_s': 'Seconds for a cold golangci-lint run over the whole module at the tag, using the provider\'s own custom linter binary when it has one. Sampled.',
+    'lint.issues': 'Issues golangci-lint reported at the tag.',
+    'comp.*.modules': `Stacked area of machine-code bytes per module${P}, from attributing every function in the pclntab to the module that owns its package. Top 7 by peak size, the rest folded into other. Text only: rodata and pclntab bytes are not attributed.`,
+    'comp.*.services': `Stacked area of machine-code bytes per provider service package (internal/services/<service>)${P}.`,
+    'comp.*.sections': `Stacked area of object-file section sizes${P}: text, rodata, pclntab, typelink and the rest. Their sum is close to the executable size.`,
+    'comp.*.movers': `Table of the modules whose attributed machine code changed most between the first and last release in the current range${P}.`,
+  };
+  let body = t[K];
+  if (!body && K.startsWith('binary.*.section.')) body = SECTION_TEXT[K.split('.').pop()] + (P ? ` (${plat})` : '');
+  if (!body && K.startsWith('binary.*.module.')) body = `Bytes of machine code attributed to functions of the module ${K.slice('binary.*.module.'.length)}${P}, via the pclntab. Text only; the module's contribution to rodata (type data, strings) is not included, so treat it as a lower bound of its footprint.`;
+  if (!body && K.startsWith('source.sdk_pct.')) body = `Share of resource and data source files ${sdkClass[K.split('.').pop()]}, out of all such files importing any SDK family. The four classes sum to 100%.`;
+  if (!body && K.startsWith('source.sdk.')) { const [, , kd, cl] = K.split('.'); body = `Number of files defining a ${kind[kd] || kd} that are ${sdkClass[cl] || cl}. A file defining several counts once.`; }
+  if (!body) body = m.desc || 'No description yet.';
+  const stage = STAGE_OF[parts[0]] || '';
+  return { body, stage };
+}
+function showInfo(m, ev) {
+  const el = $('#info');
+  const { body, stage } = explain(m);
+  el.querySelector('.v').textContent = lbl(m);
+  el.querySelector('.meta').innerHTML = `unit: ${m.unit}${m.up_is && m.up_is !== 'neutral' ? ` · up is ${m.up_is}` : ''} · <code>${esc(bare(m.key))}</code>`;
+  el.querySelector('.body').innerHTML = `<p>${esc(body)}</p>${stage ? `<p><b>How:</b> ${esc(stage)}.</p>` : ''}`;
+  el.hidden = false;
+  const w = el.offsetWidth, h = el.offsetHeight;
+  el.style.left = Math.min(ev.clientX + 8, innerWidth - w - 8) + 'px';
+  el.style.top = Math.min(ev.clientY + 8, innerHeight - h - 8) + 'px';
+}
+document.addEventListener('contextmenu', ev => {
+  const row = ev.target.closest('aside label[title], .legend span, .panel h2 .sw');
+  if (!row) return;
+  let key = row.querySelector?.('input[data-k]')?.dataset.k || row.querySelector?.('[data-rm]')?.dataset.rm;
+  if (!key && row.classList.contains('sw')) key = row.closest('.panel')?.dataset.k;
+  if (!key || !M[key]) return;
+  ev.preventDefault(); showInfo(M[key], ev);
+});
+document.addEventListener('click', ev => { if (!ev.target.closest('#info')) $('#info').hidden = true; });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') $('#info').hidden = true; });
+
 // ---------- sidebar: enabled / presets / catalogue tree ----------
 const PRESETS = [
   { name: 'size', desc: 'zip + binary', keys: ['binary.{plat}.zip_bytes', 'binary.{plat}.binary_bytes'] },
@@ -855,7 +1045,7 @@ const PRESETS = [
   { name: 'typed migration', desc: 'typed vs untyped, stacked', stack: true, keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_resource_pct', 'source.typed_data_sources', 'source.untyped_data_sources'] },
   { name: 'churn', desc: 'per release', keys: ['source.commits', 'source.files_changed', 'source.lines_added', 'source.lines_removed', 'source.changelog_total'] },
   { name: 'build & lint', desc: 'sampled', keys: ['build.clean_build_s', 'build.warm_build_s', 'build.local_binary_bytes', 'lint.duration_s', 'lint.issues'] },
-  { name: 'sdk coverage %', desc: 'go-azure-sdk / both / kermit / track1', stack: true, keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1'] },
+  { name: 'sdk coverage', desc: '% left, counts right', panels: [{ keys: ['source.sdk_pct.go_azure_sdk', 'source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.track1', 'source.sdk_count.go_azure_sdk', 'source.sdk_count.both', 'source.sdk_count.kermit', 'source.sdk_count.track1'] }] },
   { name: 'typed coverage %', desc: 'resources + data sources', keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct'] },
   { name: 'go-azure-sdk migration', desc: 'by kind and sdk, stacked', panels: ['resource', 'data_source', 'list', 'action', 'ephemeral'].map(kind => ({ stack: true, keys: ['go_azure_sdk', 'both', 'kermit', 'track1', 'none'].map(c => `source.sdk.${kind}.${c}`) })) },
   { name: 'composition', desc: 'stacked charts', keys: ['modules', 'services', 'sections', 'movers'].map(k => `comp.{plat}.${k}`) },
@@ -927,8 +1117,7 @@ function renderSidebar() {
   $('#groups').innerHTML = html;
 }
 // cmd/ctrl/shift-click on a tree metric combines it into the active panel (last added to or clicked) instead of a new one
-let activeKey = null, lastMods = false;
-const activeGroup = () => state.groups.findIndex(g => g.keys.includes(activeKey));
+let lastMods = false;
 $('#groups').addEventListener('click', ev => { lastMods = ev.metaKey || ev.ctrlKey || ev.shiftKey; }, true);
 $('#groups').addEventListener('change', ev => {
   const t = ev.target;
@@ -942,18 +1131,12 @@ $('#groups').addEventListener('change', ev => {
   }
   const k = t.dataset.k; if (!k) return;
   if (t.checked) {
-    const gi = activeGroup();
-    if (lastMods && gi >= 0 && !isComp(k) && !isComp(state.groups[gi].keys[0])) {
-      state.groups.push({ keys: [k], stack: false }); syncSel();
-      mergeGroups(state.groups.length - 1, gi);
-    } else addKeys([k], false);
-    activeKey = k;
+    if (lastMods && !isComp(k)) stageKey(k); else addKeys([k], false);
   } else removeKeys([k]);
   lastMods = false;
   update();
 });
-// clicking a panel makes it the active one for combining
-$('#charts').addEventListener('mousedown', ev => { const p = ev.target.closest('.panel[data-g]'); if (!p) return; const g = state.groups[+p.dataset.g]; if (g && g.keys.length) { activeKey = g.keys[0]; for (const x of document.querySelectorAll('.panel.active')) x.classList.remove('active'); p.classList.add('active'); } });
+
 $('#groups').addEventListener('click', ev => {
   const b = ev.target.closest('button[data-lr]'); if (!b) return;
   ev.preventDefault(); ev.stopPropagation();
@@ -1074,6 +1257,7 @@ function renderCharts() {
   }
 
   const wideBtn = (g, gi) => `<button class="pbtn ${g.wide ? 'on' : ''}" data-act="wide" data-g="${gi}" title="span the full row">wide</button>`;
+  renderStage();
   // panels: one chart per group; drag a panel onto another to combine, split to separate
   el.innerHTML = `<div class="panels" data-cols="${state.cols}">${visibleGroups().map(g => {
     const gi = g.gi, ms = g.keys.map(k => M[k]), units = unitsOf(g);
@@ -1083,25 +1267,88 @@ function renderCharts() {
     }
     if (ms.length === 1) {
       const m = ms[0], { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is);
-      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="sw" style="background:${colorOf(m.key)}"></span>${esc(lbl(m))}<span class="val">${fmt(l, m.unit)} <span class="delta ${d.cls}" title="change from ${R[0].version} to ${R[N - 1].version}">${d.text}</span> ${wideBtn(g, gi)}</span></h2>${m.desc ? `<p class="desc">${esc(m.desc)}</p>` : ''}<div class="c"></div></div>`;
+      return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="sw" style="background:${colorOf(m.key)}"></span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${esc(lbl(m))}</span><span class="val">${fmt(l, m.unit)} <span class="delta ${d.cls}" title="change from ${R[0].version} to ${R[N - 1].version}">${d.text}</span> ${wideBtn(g, gi)}</span></h2>${m.desc ? `<p class="desc">${esc(m.desc)}</p>` : ''}<div class="c"></div></div>`;
     }
     const provs = [...new Set(ms.map(m => m.provider))];
     const title = `${multi() ? provs.join(' + ') + ' · ' : ''}${ms.length} metrics · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}`;
     const stackBtn = units.length === 1 ? `<button class="pbtn ${g.stack ? 'on' : ''}" data-act="stack" data-g="${gi}" title="stack the metrics on top of each other">${g.stack ? 'stacked' : 'stack'}</button>` : '';
-    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span>${title}<span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button></span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is); return `<span><i style="background:${colorOf(m.key)}"></i>${esc(lbl(m))}${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
+    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${title}</span><span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button></span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is), off = (g.hidden || []).includes(m.key); return `<span class="${off ? 'off' : ''}" data-toggle="${m.key}" title="click to ${off ? 'show' : 'hide'}"><i style="background:${colorOf(m.key)}"></i><span class="lbl">${esc(lbl(m))}</span>${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
   }).join('')}</div>`;
   for (const p of el.querySelectorAll('.panel[data-g]')) {
     const g = visibleGroups().find(x => x.gi === +p.dataset.g), units = unitsOf(g);
-    if (g.keys.includes(activeKey)) p.classList.add('active');
     if (isComp(g.keys[0])) { renderComp(p.querySelector('.c'), M[g.keys[0]]); continue; }
-    const series = g.keys.map(k => ({ label: M[k].label, color: colorOf(k), values: M[k].values, right: M[k].unit !== units[0] }));
-    lineChart(p.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: g.stack && units.length === 1, h: series.length > 1 ? 240 : 190, keys: g.keys });
+    const shownKeys = g.keys.filter(k => !(g.hidden || []).includes(k));
+    const series = shownKeys.map(k => ({ label: M[k].label, color: colorOf(k), values: M[k].values, right: M[k].unit !== units[0] }));
+    lineChart(p.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: g.stack && units.length === 1, h: g.keys.length > 1 ? 240 : 190, keys: shownKeys });
   }
 }
-// panel buttons and legend removals
-$('#charts').addEventListener('click', ev => {
+function renderStage() {
+  const st = $('#stage');
+  if (!staging || !staging.keys.length || state.view !== 'panels') { st.hidden = true; st.innerHTML = ''; return; }
+  const ms = staging.keys.map(k => M[k]), units = [...new Set(ms.map(m => m.unit))];
+  const provs = [...new Set(ms.map(m => m.provider))];
+  st.hidden = false;
+  st.innerHTML = `<div class="panel"><h2>${multi() ? provs.join(' + ') + ' · ' : ''}building · ${ms.length} metric${ms.length > 1 ? 's' : ''} · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}<span class="val">${units.length === 1 && ms.length > 1 ? `<button class="pbtn ${staging.stack ? 'on' : ''}" data-stage="stack">${staging.stack ? 'stacked' : 'stack'}</button> ` : ''}<button class="pbtn on" data-stage="place">place</button> <button class="pbtn" data-stage="discard">discard</button></span></h2><p class="desc">cmd/ctrl/shift-click more metrics in the tree to add them here; place puts the panel at the top of the grid</p><div class="c"></div><div class="legend">${ms.map(m => `<span><i style="background:${colorOf(m.key)}"></i>${esc(lbl(m))}${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''}<span class="rm" data-rm="${m.key}" title="remove">✕</span></span>`).join('')}</div></div>`;
+  const series = staging.keys.map(k => ({ label: M[k].label, color: colorOf(k), values: M[k].values, right: M[k].unit !== units[0] }));
+  lineChart(st.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: staging.stack && units.length === 1, h: 200, keys: staging.keys });
+}
+$('#stage').addEventListener('click', ev => {
   const rm = ev.target.closest('[data-rm]');
   if (rm) { removeKeys([rm.dataset.rm]); update(); return; }
+  const b = ev.target.closest('button[data-stage]'); if (!b) return;
+  if (b.dataset.stage === 'place') placeStaging();
+  else if (b.dataset.stage === 'discard') discardStaging();
+  else if (b.dataset.stage === 'stack') staging.stack = !staging.stack;
+  update();
+});
+// panel title menu: drop metrics, or bring in the same metrics for another provider
+function showPanelMenu(gi, ev) {
+  const g = state.groups[gi]; if (!g) return;
+  const el = $('#pmenu');
+  el.dataset.g = gi;
+  el.querySelector('.v').textContent = 'metrics on this panel';
+  el.querySelector('.list').innerHTML = g.keys.map(k => `<label><input type="checkbox" data-pk="${k}" checked><i style="background:${colorOf(k)}"></i>${esc(M[k] ? lbl(M[k]) : k)}<span class="unit">${M[k]?.unit || ''}</span></label>`).join('');
+  const here = new Set(g.keys.map(provOf));
+  const bares = [...new Set(g.keys.map(bare))];
+  const cmp = PROVIDERS.filter(p => !here.has(p)).filter(p => bares.some(b => CATALOGUE.some(c => c.key === `${p}:${b}`)));
+  el.querySelector('.row').innerHTML = cmp.map(p => `<button data-cmp="${p}">compare with ${p}</button>`).join('') + `<button data-pmenu="close">close</button>`;
+  el.hidden = false;
+  const w = el.offsetWidth, h = el.offsetHeight;
+  el.style.left = Math.min(ev.clientX, innerWidth - w - 8) + 'px';
+  el.style.top = Math.min(ev.clientY + 8, innerHeight - h - 8) + 'px';
+}
+$('#pmenu').addEventListener('change', ev => {
+  const k = ev.target.dataset.pk; if (!k || ev.target.checked) return;
+  const el = $('#pmenu'), gi = +el.dataset.g, x = parseInt(el.style.left), y = parseInt(el.style.top) - 8;
+  removeKeys([k]); update();
+  if (state.groups[gi]) showPanelMenu(gi, { clientX: x, clientY: y }); else el.hidden = true;
+});
+$('#pmenu').addEventListener('click', ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  const el = $('#pmenu');
+  if (b.dataset.pmenu === 'close') { el.hidden = true; return; }
+  const p = b.dataset.cmp; if (!p) return;
+  const gi = +el.dataset.g, g = state.groups[gi]; if (!g) return;
+  // the other provider's data is only in M when every provider is visible
+  if (state.p !== 'all') { state.p = 'all'; state.from = state.to = ''; applyRange(); }
+  const add = [...new Set(g.keys.map(bare))].map(b => `${p}:${b}`).filter(k => M[k] && !state.sel.includes(k));
+  g.keys.push(...add);
+  syncSel(); update();
+  el.hidden = true;
+});
+document.addEventListener('click', ev => { if (!ev.target.closest('#pmenu') && !ev.target.closest('.panel h2 .ttl')) $('#pmenu').hidden = true; });
+// panel buttons and legend removals
+$('#charts').addEventListener('click', ev => {
+  const ttl = ev.target.closest('.panel h2 .ttl');
+  if (ttl) { showPanelMenu(+ttl.dataset.menu, ev); return; }
+  const rm = ev.target.closest('[data-rm]');
+  if (rm) { removeKeys([rm.dataset.rm]); update(); return; }
+  const tg = ev.target.closest('.legend span[data-toggle]');
+  if (tg) {
+    const k = tg.dataset.toggle, g = state.groups.find(x => x.keys.includes(k));
+    if (g) { g.hidden = g.hidden || []; g.hidden = g.hidden.includes(k) ? g.hidden.filter(x => x !== k) : [...g.hidden, k]; update(); }
+    return;
+  }
   const b = ev.target.closest('button[data-act]'); if (!b) return;
   const gi = +b.dataset.g;
   if (b.dataset.act === 'split') splitGroup(gi);
