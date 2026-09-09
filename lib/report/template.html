@@ -30,6 +30,12 @@ header h1 span { color: var(--muted); font-weight: 400; }
 header h1 select { font: inherit; font-weight: 650; background: transparent; color: var(--ink); border: 0; border-bottom: 1px dashed var(--axis); padding: 0 2px; cursor: pointer; }
 header h1 select:disabled { border-bottom: 0; color: var(--ink); opacity: 1; -webkit-text-fill-color: var(--ink); }
 header .sub { color: var(--ink-2); font-size: 13px; }
+header .layouts { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+header .layouts select { font: inherit; font-size: 12px; background: var(--surface); color: var(--ink); border: 1px solid var(--axis); border-radius: 6px; padding: 3px 6px; max-width: 220px; }
+header .layouts label.plain { display: inline-block; }
+#layoutbox[hidden] { display: none; }
+#layoutbox { position: fixed; top: 48px; right: 22px; z-index: 22; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px; display: flex; gap: 6px; }
+#layoutbox input { font: inherit; font-size: 13px; padding: 4px 8px; border: 1px solid var(--axis); border-radius: 6px; background: var(--page); color: var(--ink); width: 220px; }
 .layout { display: grid; grid-template-columns: var(--side, 290px) 6px minmax(0, 1fr); min-height: calc(100vh - 56px); }
 .splitter { cursor: col-resize; background: transparent; border-left: 1px solid var(--border); }
 .splitter:hover, .splitter.on { background: var(--wash); }
@@ -69,7 +75,7 @@ main { padding: 12px 22px 60px; min-width: 0; }
 .seg.multi button i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; border: 1px dashed currentColor; }
 .seg.multi button.on i { background: var(--mc); border-color: var(--mc); }
 select { border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 6px; font: inherit; font-size: 12px; }
-button.plain { border: 1px solid var(--axis); background: var(--surface); color: var(--ink-2); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+button.plain, label.plain { border: 1px solid var(--axis); background: var(--surface); color: var(--ink-2); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
 .panels { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 12px; }
 .panels[data-cols="1"] { grid-template-columns: 1fr; }
 .panels[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -180,6 +186,14 @@ details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
 <header>
   <h1>tfpp <span>·</span> <select id="prov" title="provider"></select></h1>
   <div class="sub" id="subtitle"></div>
+  <div class="layouts">
+    <select id="layoutSel" title="saved layouts (this browser)"><option value="">layouts…</option></select>
+    <button class="plain" id="layoutSave" title="save the current panels, view and settings under a name">save</button>
+    <button class="plain" id="layoutDel" title="delete the selected layout">delete</button>
+    <button class="plain" id="layoutDown" title="download the current layout as a file">download</button>
+    <label class="plain" for="layoutUp" title="load a layout file and save it here">upload<input type="file" id="layoutUp" accept=".json,application/json" hidden></label>
+  </div>
+  <div id="layoutbox" hidden><input id="layoutName" placeholder="layout name" autocomplete="off"><button class="plain" id="layoutOk">save</button><button class="plain" id="layoutCancel">cancel</button></div>
 </header>
 <div class="layout">
   <aside>
@@ -1545,6 +1559,44 @@ addEventListener('hashchange', () => { readHash(); update(); });
     document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
   });
 }
+// ---------- saved layouts: the whole url state under a name, kept in this browser, exportable as json ----------
+const LAYOUT_KEY = 'tfpp.layouts';
+function loadLayouts() { try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function storeLayouts(ls) { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(ls)); } catch (e) { /* ignore */ } }
+function renderLayouts(selected) {
+  const ls = loadLayouts(), sel = $('#layoutSel');
+  sel.innerHTML = '<option value="">layouts…</option>' + Object.keys(ls).sort().map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if (selected && ls[selected]) sel.value = selected;
+}
+function currentLayout(name) { writeHash(); return { tfpp: 'layout', name, saved: new Date().toISOString(), hash: location.hash.slice(1) }; }
+function applyLayout(l) { if (!l || typeof l.hash !== 'string') return; history.replaceState(null, '', '#' + l.hash); readHash(); update(); }
+function saveLayoutAs(name) { if (!name) return; const ls = loadLayouts(); ls[name] = currentLayout(name); storeLayouts(ls); renderLayouts(name); }
+$('#layoutSave').onclick = () => { const box = $('#layoutbox'); box.hidden = false; const inp = $('#layoutName'); inp.value = $('#layoutSel').value || ''; inp.focus(); inp.select(); };
+$('#layoutCancel').onclick = () => { $('#layoutbox').hidden = true; };
+$('#layoutOk').onclick = () => { saveLayoutAs($('#layoutName').value.trim()); $('#layoutbox').hidden = true; };
+$('#layoutName').addEventListener('keydown', ev => { if (ev.key === 'Enter') $('#layoutOk').click(); if (ev.key === 'Escape') $('#layoutCancel').click(); });
+$('#layoutSel').onchange = () => { const l = loadLayouts()[$('#layoutSel').value]; if (l) applyLayout(l); };
+$('#layoutDel').onclick = () => { const n = $('#layoutSel').value; if (!n) return; const ls = loadLayouts(); delete ls[n]; storeLayouts(ls); renderLayouts(); };
+$('#layoutDown').onclick = () => {
+  const name = ($('#layoutSel').value || 'layout').replace(/[^a-z0-9._-]+/gi, '-').toLowerCase();
+  const l = currentLayout($('#layoutSel').value || name);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(l, null, 2)], { type: 'application/json' }));
+  a.download = `tfpp-${name}-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#layoutUp').addEventListener('change', async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  try {
+    const l = JSON.parse(await f.text());
+    if (l.tfpp !== 'layout' || typeof l.hash !== 'string') throw new Error('not a tfpp layout file');
+    const name = l.name || f.name.replace(/^tfpp-/, '').replace(/-\d{4}-\d{2}-\d{2}\.json$/, '').replace(/\.json$/, '');
+    const ls = loadLayouts(); ls[name] = { ...l, name, saved: new Date().toISOString() }; storeLayouts(ls); renderLayouts(name);
+    applyLayout(l);
+  } catch (e) { alert('could not load layout: ' + e.message); }
+  ev.target.value = '';
+});
+renderLayouts();
 let resizeTimer;
 addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderCharts(); }, 150); });
 })();
