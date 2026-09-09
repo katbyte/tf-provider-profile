@@ -882,7 +882,10 @@ function renderControls() {
   sel.value = state.p;
   const a = $('#rangeA'), b = $('#rangeB');
   if (a.dataset.p !== state.p) {
-    const opts = VIS.map(([r]) => `<option value="${multi() ? r.id : r.version}">${multi() ? r.provider + ' ' : ''}${r.version}</option>`).join('');
+    const opt = ([r]) => `<option value="${multi() ? r.id : r.version}">${multi() ? r.provider + ' ' : ''}${r.version}</option>`;
+    // majors pinned at the top, then every release
+    const majors = VIS.filter(([r]) => /\.0\.0$/.test(r.version));
+    const opts = (majors.length ? `<optgroup label="majors">${majors.map(opt).join('')}</optgroup>` : '') + `<optgroup label="all releases">${VIS.map(opt).join('')}</optgroup>`;
     a.innerHTML = opts; b.innerHTML = opts; a.dataset.p = state.p;
     a.onchange = () => { state.from = a.value; update(); };
     b.onchange = () => { state.to = b.value; update(); };
