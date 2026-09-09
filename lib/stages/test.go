@@ -13,9 +13,10 @@ import (
 	"github.com/katbyte/tf-provider-profile/lib/results"
 )
 
+// per-package result lines only: the bare FAIL/ok summary lines have no trailing tab
 var (
-	reTestOK   = regexp.MustCompile(`(?m)^ok\s`)
-	reTestFail = regexp.MustCompile(`(?m)^FAIL\s`)
+	reTestOK   = regexp.MustCompile(`(?m)^ok[ \t]`)
+	reTestFail = regexp.MustCompile(`(?m)^FAIL[ \t]`)
 )
 
 // testStage times the provider's unit tests at the tag: `make test` when the provider defines the target (its own
@@ -27,6 +28,15 @@ func (r *Runner) testStage(ctx context.Context, res *results.Result) (string, er
 	}
 	src := r.P.SrcDir()
 	env := r.buildEnv(src)
+	// tests built on helper/resource download a terraform CLI unless told where one is, which drags release-key
+	// expiry and network variance into the timing; hand them the pinned terraform instead
+	if r.Opts.Terraform != "" {
+		if tf, err := exec.LookPath(r.Opts.Terraform); err == nil {
+			if abs, err := filepath.Abs(tf); err == nil {
+				env = append(env, "TF_ACC_TERRAFORM_PATH="+abs)
+			}
+		}
+	}
 
 	name, args, tool := "go", []string{"test", "./..."}, "go test"
 	if makeTarget(src, "test") {
