@@ -10,9 +10,9 @@ everything that can be measured for free from a release zip, the provider's git 
 |------------|-------------------|-------------|---------|
 | `download` | releases.hashicorp.com | network | release zips for each `--platforms` entry, extracted into `.cache/<provider>/binaries/<version>/<platform>/` |
 | `binary`   | the zip + binary  | <1s         | compressed and uncompressed size, go version, linked modules and their versions, build settings, object-file sections (text, rodata, pclntab, ...), function and package counts, and text bytes attributed to every module, provider service package and large package (via the pclntab, which survives stripping) |
-| `startup`  | the native binary | ~1s         | time from exec to the go-plugin handshake line and peak RSS at that point, no terraform involved |
-| `schema`   | terraform         | ~2s         | wall time of `terraform providers schema -json`, the provider's own peak RSS while serving it (terraform launches the provider through a `tfpp _wrap` shim), schema json size, and counts of resources, data sources, ephemeral/list resources, actions, functions, attributes, blocks, deprecated attributes and nesting depth |
-| `source`   | git checkout of the tag | ~10s  | go lines/files (tests, vendor and code-only split), tree size, service packages, typed vs untyped resources and data sources, test functions, documented resources/data sources/ephemeral/list/actions/functions, go.mod direct/indirect deps, go.sum lines, go version, and since the previous release: commits, authors, files changed, lines added/removed, days elapsed, changelog entries by section |
+| `startup`  | the native binary | ~1s         | time from exec to the go-plugin handshake line and peak RSS at that point, no terraform involved; package init time, heap and allocations from `GODEBUG=inittrace=1` with the most expensive packages |
+| `schema`   | terraform         | ~2s         | wall time of `terraform providers schema -json`, the provider's own peak RSS while serving it (terraform launches the provider through a `tfpp _wrap` shim), schema json size, and counts of resources, data sources, ephemeral/list resources, actions, functions, attributes, blocks, deprecated attributes and nesting depth; required/optional/computed/sensitive/write-only/described attribute counts, resources with state migrations (schema version > 0), and the largest resources by attribute count |
+| `source`   | git checkout of the tag | ~10s  | go lines/files (tests, vendor and code-only split), tree size, service packages, typed vs untyped resources and data sources, test functions, deprecated resources, resource files without a test file, nolint and TODO counts, per-service typed and go-azure-sdk migration completion, tag-to-release lag, documented resources/data sources/ephemeral/list/actions/functions, go.mod direct/indirect deps, go.sum lines, go version, and since the previous release: commits, authors, files changed, lines added/removed, days elapsed, changelog entries by section |
 | `build`    | git checkout      | minutes     | **sampled** - clean build time with an isolated, emptied `GOCACHE`, warm rebuild time (link cost), stripped build time, and the local unstripped/stripped binary sizes, using the go toolchain pinned by the release's `.go-version` |
 | `lint`     | git checkout      | many minutes | **sampled** - cold `golangci-lint run ./...` time and issue count, using the provider's own custom golangci binary when it has one (azurerm's `make golangci-with-modules`), otherwise the one on PATH |
 
@@ -42,14 +42,16 @@ make build
 open reports/azurerm/index.html
 ```
 
-Flags can also be set through `TFPP_*` environment variables (e.g. `TFPP_TERRAFORM=...`) or a `.tfpp` env-format
-file in the working directory or home directory keyed by flag name, e.g. `terraform=.cache/tools/terraform/terraform`.
+The providers to profile are listed in `.tfpp.yml` (name and github repo); `tfpp run` without `--provider` loops
+over all of them, and so does the weekly pages workflow. The same file holds shared flag defaults keyed by flag name.
+Machine specific settings go in the gitignored `.tfpp.local.yml`, which is merged over it, e.g.
+`terraform: .cache/tools/terraform/terraform`; `TFPP_*` environment variables and flags override both.
 
 The schema stage uses whatever `terraform` is on PATH unless `--terraform` points elsewhere. Older terraform
 versions do not include ephemeral/list resources, actions or functions in `providers schema -json`, so for those
 counts use a current terraform; the version used is recorded with each result.
 
-Other providers work too: `tfpp -p aws run`. The source stage's typed/untyped resource patterns are azurerm's, and
+Other providers work too: `tfpp -p aws run`, or add them to `.tfpp.yml`. The source stage's typed/untyped resource patterns are azurerm's, and
 report as zero elsewhere.
 
 ## Report
@@ -82,6 +84,29 @@ of releases. Below the charts, **compare two releases** lists
 every metric side by side for any two releases, and the **binary composition** section shows where the text comes
 from by module, provider service package and object-file section, plus the modules that moved most. Everything is
 kept in the url hash so a view can be bookmarked or shared.
+
+## Refreshing all data on one machine
+
+Timing numbers (startup, schema, build, lint) only compare well when every release was measured on the same machine
+doing nothing else, so the reference data set is produced by one dedicated box rather than the weekly workflow. On
+that machine, after cloning or pulling:
+
+```sh
+make full          # every provider in .tfpp.yml, every release, every stage, no sampling, --force: many hours
+make update        # the same, but only releases that have no results yet (what to run after each new release)
+```
+
+Both download the pinned terraform into `.cache/tools`, use the pinned golangci-lint from `.tools/bin` for providers
+without a custom linter, keep macOS awake with `caffeinate`, and log to `.cache/full.log` / `.cache/update.log`.
+`ARGS` passes extra flags, e.g. `make full ARGS="-p azuread"` or `make update ARGS="--since 2026-01-01"`. Go
+toolchains for each release's `.go-version` are fetched automatically. Export a `GITHUB_TOKEN` (`gh auth token`)
+to avoid the unauthenticated releases API rate limit. When it finishes, commit `data/` and push; the next Pages
+run picks the new data up.
+
+For a rough budget on an M1 Ultra: download, binary, startup, schema and source take a few seconds per release;
+a clean build and a cold lint of azurerm take several minutes each, so a full run over ~100 releases is an
+overnight job. The run is resumable: rerunning `make update` continues with whatever has no results yet, and
+`--retry` redoes stages that failed.
 
 ## Hosting on GitHub Pages
 

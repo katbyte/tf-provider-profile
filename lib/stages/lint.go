@@ -39,6 +39,9 @@ func (r *Runner) lintStage(ctx context.Context, res *results.Result) (string, er
 		if name == "" {
 			name = "golangci-lint"
 		}
+		if strings.Contains(name, string(filepath.Separator)) {
+			name, _ = filepath.Abs(name) // the command runs with cmd.Dir set to the checkout
+		}
 		p, err := exec.LookPath(name)
 		if err != nil {
 			return "", fmt.Errorf("golangci-lint not found: %w", err)

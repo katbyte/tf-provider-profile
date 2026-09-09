@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/katbyte/tf-provider-profile/lib/results"
 )
@@ -33,9 +34,13 @@ var (
 	reImportKermit    = regexp.MustCompile(`"github\.com/[a-z0-9-]+/kermit/`)
 	reImportAutorest  = regexp.MustCompile(`"github\.com/Azure/go-autorest/`)
 	reImportGoAzure   = regexp.MustCompile(`"github\.com/hashicorp/go-azure-sdk/`)
-	reShortStat       = regexp.MustCompile(`(\d+) files? changed(?:, (\d+) insertions?\(\+\))?(?:, (\d+) deletions?\(-\))?`)
-	reChangelogHead   = regexp.MustCompile(`^## v?(\S+)`)
-	reChangelogSect   = regexp.MustCompile(`^([A-Z][A-Z /&]+):\s*$`)
+	// resource-level deprecation: the untyped DeprecationMessage field or a typed sdk.ResourceWithDeprecation* assertion
+	reDeprecation   = regexp.MustCompile(`(?m)^\s*DeprecationMessage:|^var _ sdk\.(Resource|DataSource)WithDeprecation`)
+	reNolint        = regexp.MustCompile(`//\s*nolint`)
+	reTodo          = regexp.MustCompile(`(?i)\b(TODO|FIXME)\b`)
+	reShortStat     = regexp.MustCompile(`(\d+) files? changed(?:, (\d+) insertions?\(\+\))?(?:, (\d+) deletions?\(-\))?`)
+	reChangelogHead = regexp.MustCompile(`^## v?(\S+)`)
+	reChangelogSect = regexp.MustCompile(`^([A-Z][A-Z /&]+):\s*$`)
 )
 
 // checkoutTag checks the source clone out at the release tag, fetching if the tag is unknown.
@@ -83,6 +88,12 @@ func (r *Runner) sourceStage(ctx context.Context, res *results.Result) (string, 
 		sr.GoVersionFile = strings.TrimSpace(string(b))
 	}
 	parseChangelog(src, res.Version, sr)
+	if out, err := runCmd(ctx, src, nil, "git", "log", "-1", "--format=%cI", res.Version); err == nil {
+		if t, err := time.Parse(time.RFC3339, strings.TrimSpace(out)); err == nil {
+			sr.TagDate = t.UTC()
+			sr.ReleaseLagHours = res.Date.Sub(t).Hours()
+		}
+	}
 
 	if prev, ok := r.prevRelease(res.Version); ok {
 		sr.PrevVersion = prev.Version
@@ -165,7 +176,11 @@ func countDocs(src string, sr *results.SourceResult) {
 // registration patterns.
 func walkTree(src string, sr *results.SourceResult) error {
 	typedRes, typedDS := map[string]bool{}, map[string]bool{}
-	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+	// per service package: whether any untyped or legacy-sdk resource file remains
+	type svcState struct{ files, untyped, legacy int }
+	services := map[string]*svcState{}
+	var resourceFiles []string
+	if err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -201,6 +216,8 @@ func walkTree(src string, sr *results.SourceResult) error {
 		sr.GoFiles++
 		sr.GoLines += lines
 		sr.GoCodeLines += code
+		sr.NolintDirectives += len(reNolint.FindAllIndex(b, -1))
+		sr.Todos += len(reTodo.FindAllIndex(b, -1))
 		if strings.HasSuffix(path, "_test.go") {
 			sr.GoTestFiles++
 			sr.GoTestLines += lines
@@ -234,6 +251,26 @@ func walkTree(src string, sr *results.SourceResult) error {
 				class = "go_azure_sdk"
 			}
 			if untyped > 0 || typedRes[path] || typedDS[path] {
+				resourceFiles = append(resourceFiles, path)
+				if reDeprecation.Match(b) {
+					sr.DeprecatedResourceFiles++
+				}
+				// the service is the directory right under internal/services (or internal/service)
+				parts := strings.Split(rel, string(filepath.Separator))
+				if len(parts) > 2 {
+					st := services[parts[2]]
+					if st == nil {
+						st = &svcState{}
+						services[parts[2]] = st
+					}
+					st.files++
+					if untyped > 0 {
+						st.untyped++
+					}
+					if legacy {
+						st.legacy++
+					}
+				}
 				switch class {
 				case "both":
 					sr.ResourceFilesBothSDK++
@@ -283,7 +320,25 @@ func walkTree(src string, sr *results.SourceResult) error {
 		sr.TypedResources = len(typedRes)
 		sr.TypedDataSources = len(typedDS)
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+	sr.ResourceFilesTotal = len(resourceFiles)
+	for _, f := range resourceFiles {
+		if _, err := os.Stat(strings.TrimSuffix(f, ".go") + "_test.go"); err != nil {
+			sr.ResourceFilesWithoutTests++
+		}
+	}
+	sr.ServicesWithResources = len(services)
+	for _, st := range services {
+		if st.untyped == 0 {
+			sr.ServicesFullyTyped++
+		}
+		if st.legacy == 0 {
+			sr.ServicesFullyGoAzureSDK++
+		}
+	}
+	return nil
 }
 
 func countLines(b []byte) (total, code int) {

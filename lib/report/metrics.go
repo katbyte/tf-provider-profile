@@ -232,6 +232,41 @@ func sdkKindDefs() []def {
 	return defs
 }
 
+// schemaInt / startupF / sourceInt build the common "one field of a stage result" getters; the ok flag lets fields that
+// were added later (zero in older result files) read as unknown rather than zero.
+func schemaInt(get func(*results.SchemaResult) int, ok func(*results.SchemaResult) bool) func(*results.Result) (float64, bool) {
+	return func(r *results.Result) (float64, bool) {
+		if x := r.Schema; x != nil && (ok == nil || ok(x)) {
+			return f(get(x))
+		}
+		return 0, false
+	}
+}
+
+func sourceInt(get func(*results.SourceResult) int, ok func(*results.SourceResult) bool) func(*results.Result) (float64, bool) {
+	return func(r *results.Result) (float64, bool) {
+		if x := r.Source; x != nil && (ok == nil || ok(x)) {
+			return f(get(x))
+		}
+		return 0, false
+	}
+}
+
+func sourcePct(num, den func(*results.SourceResult) int) func(*results.Result) (float64, bool) {
+	return func(r *results.Result) (float64, bool) {
+		if x := r.Source; x != nil && den(x) > 0 {
+			return 100 * float64(num(x)) / float64(den(x)), true
+		}
+		return 0, false
+	}
+}
+
+// flagsKnown: the attribute flag counters exist once any of them is non-zero (required is never zero for a real schema)
+func flagsKnown(x *results.SchemaResult) bool { return x.AttrsRequired > 0 || x.AttrsOptional > 0 }
+
+// debtKnown: the debt counters were added together with the per-service ones; a tree with resources always has services
+func debtKnown(x *results.SourceResult) bool { return x.ServicesWithResources > 0 }
+
 func fixedDefs() []def {
 	st := func(r *results.Result) *results.StartupResult { return r.Startup }
 	sc := func(r *results.Result) *results.SchemaResult { return r.Schema }
@@ -255,6 +290,31 @@ func fixedDefs() []def {
 		{"startup.max_rss_bytes", "RSS at handshake", "bytes", "startup", "peak resident memory of the provider at handshake", func(r *results.Result) (float64, bool) {
 			if x := st(r); x != nil && x.MaxRSSBytes > 0 {
 				return f64(x.MaxRSSBytes)
+			}
+			return 0, false
+		}},
+
+		{"startup.init_ms", "Package init time", "ms", "startup", "sum of every package init before main (GODEBUG=inittrace=1), cheapest of 3 runs", func(r *results.Result) (float64, bool) {
+			if x := st(r); x != nil && x.InitPackages > 0 {
+				return x.InitMs, true
+			}
+			return 0, false
+		}},
+		{"startup.init_heap_bytes", "Package init heap", "bytes", "startup", "bytes allocated during package init", func(r *results.Result) (float64, bool) {
+			if x := st(r); x != nil && x.InitPackages > 0 {
+				return f64(x.InitHeapBytes)
+			}
+			return 0, false
+		}},
+		{"startup.init_allocs", "Package init allocations", "allocs", "startup", "allocations during package init", func(r *results.Result) (float64, bool) {
+			if x := st(r); x != nil && x.InitPackages > 0 {
+				return f64(x.InitAllocs)
+			}
+			return 0, false
+		}},
+		{"startup.init_packages", "Packages with init work", "packages", "startup", "packages the runtime reported an init for", func(r *results.Result) (float64, bool) {
+			if x := st(r); x != nil && x.InitPackages > 0 {
+				return f(x.InitPackages)
 			}
 			return 0, false
 		}},
@@ -367,6 +427,33 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		{"schema.attrs_required", "Required attributes", "attributes", "schema", "", schemaInt(func(x *results.SchemaResult) int { return x.AttrsRequired }, flagsKnown)},
+		{"schema.attrs_optional", "Optional attributes", "attributes", "schema", "", schemaInt(func(x *results.SchemaResult) int { return x.AttrsOptional }, flagsKnown)},
+		{"schema.attrs_computed", "Computed attributes", "attributes", "schema", "", schemaInt(func(x *results.SchemaResult) int { return x.AttrsComputed }, flagsKnown)},
+		{"schema.attrs_sensitive", "Sensitive attributes", "attributes", "schema", "", schemaInt(func(x *results.SchemaResult) int { return x.AttrsSensitive }, flagsKnown)},
+		{"schema.attrs_write_only", "Write-only attributes", "attributes", "schema", "needs terraform >= 1.11 for the schema stage", schemaInt(func(x *results.SchemaResult) int { return x.AttrsWriteOnly }, func(x *results.SchemaResult) bool { return flagsKnown(x) && tfSupports(x, 11) })},
+		{"schema.attrs_described", "Described attributes", "attributes", "schema", "attributes carrying a description", schemaInt(func(x *results.SchemaResult) int { return x.AttrsDescribed }, flagsKnown)},
+		{"schema.attrs_described_pct", "Description coverage", "pct", "schema", "described attributes / all attributes", func(r *results.Result) (float64, bool) {
+			if x := sc(r); x != nil && flagsKnown(x) && x.Attributes > 0 {
+				return 100 * float64(x.AttrsDescribed) / float64(x.Attributes), true
+			}
+			return 0, false
+		}},
+		{"schema.resources_with_migrations", "Resources with state migrations", "resources", "resources", "resources whose schema version is above 0", schemaInt(func(x *results.SchemaResult) int { return x.ResourcesWithMigrations }, flagsKnown)},
+		{"schema.migration_pct", "State migration share", "pct", "resources", "resources with a schema version above 0 / all resources", func(r *results.Result) (float64, bool) {
+			if x := sc(r); x != nil && flagsKnown(x) && x.Resources > 0 {
+				return 100 * float64(x.ResourcesWithMigrations) / float64(x.Resources), true
+			}
+			return 0, false
+		}},
+		{"schema.resource_attrs_max", "Largest resource (attributes)", "attributes", "schema", "attributes of the biggest resource schema, nested included", schemaInt(func(x *results.SchemaResult) int { return x.ResourceAttrsMax }, flagsKnown)},
+		{"schema.resource_attrs_median", "Median resource size (attributes)", "attributes", "schema", "", schemaInt(func(x *results.SchemaResult) int { return x.ResourceAttrsMedian }, flagsKnown)},
+		{"schema.resource_attrs_mean", "Mean resource size (attributes)", "attributes", "schema", "resource attributes / resources", func(r *results.Result) (float64, bool) {
+			if x := sc(r); x != nil && flagsKnown(x) && x.Resources > 0 {
+				return float64(x.Attributes) / float64(x.Resources+x.DataSources), true
+			}
+			return 0, false
+		}},
 
 		{"source.go_lines", "Go lines", "lines", "source", "all .go files outside vendor", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil {
@@ -470,6 +557,16 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		{"source.deprecated_resource_files", "Deprecated resources", "files", "resources", "resource and data source files carrying a resource-level deprecation", sourceInt(func(x *results.SourceResult) int { return x.DeprecatedResourceFiles }, debtKnown)},
+		{"source.resource_files_without_tests", "Resources without a test file", "files", "resources", "resource and data source files with no sibling _test.go", sourceInt(func(x *results.SourceResult) int { return x.ResourceFilesWithoutTests }, debtKnown)},
+		{"source.resource_files_total", "Resource files", "files", "resources", "files defining a resource or data source", sourceInt(func(x *results.SourceResult) int { return x.ResourceFilesTotal }, debtKnown)},
+		{"source.nolint_directives", "nolint directives", "entries", "source", "//nolint comments in non-vendor go files", sourceInt(func(x *results.SourceResult) int { return x.NolintDirectives }, debtKnown)},
+		{"source.todos", "TODO / FIXME mentions", "entries", "source", "in non-vendor go files", sourceInt(func(x *results.SourceResult) int { return x.Todos }, debtKnown)},
+		{"source.services_with_resources", "Services with resources", "packages", "resources", "service packages holding at least one resource or data source file", sourceInt(func(x *results.SourceResult) int { return x.ServicesWithResources }, debtKnown)},
+		{"source.services_fully_typed", "Fully typed services", "packages", "resources", "services with no untyped resource or data source left", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyTyped }, debtKnown)},
+		{"source.services_fully_typed_pct", "Fully typed services share", "pct", "resources", "fully typed services / services with resources", sourcePct(func(x *results.SourceResult) int { return x.ServicesFullyTyped }, func(x *results.SourceResult) int { return x.ServicesWithResources })},
+		{"source.services_fully_go_azure_sdk", "Fully go-azure-sdk services", "packages", "resources", "services with no resource file importing a legacy sdk", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyGoAzureSDK }, debtKnown)},
+		{"source.services_fully_go_azure_sdk_pct", "Fully go-azure-sdk services share", "pct", "resources", "fully go-azure-sdk services / services with resources", sourcePct(func(x *results.SourceResult) int { return x.ServicesFullyGoAzureSDK }, func(x *results.SourceResult) int { return x.ServicesWithResources })},
 		{"source.files_importing_legacy_sdk", "Files importing azure-sdk-for-go (legacy)", "files", "deps", "non-test service files", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil && x.FilesImportingGoAzureSDK+x.FilesImportingLegacySDK > 0 {
 				return f(x.FilesImportingLegacySDK)
@@ -629,6 +726,12 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		{"source.release_lag_hours", "Tag to release lag", "hours", "churn", "github publish time minus the tagged commit's time", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && !x.TagDate.IsZero() {
+				return x.ReleaseLagHours, true
+			}
+			return 0, false
+		}},
 		{"source.days_since_prev", "Days since previous release", "days", "churn", "", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil && x.PrevVersion != "" {
 				return x.DaysSincePrev, true
@@ -716,11 +819,15 @@ func upIs(d def) string {
 	}
 	switch d.key {
 	case "schema.deprecated_attributes", "lint.issues", "source.untyped_resources", "source.untyped_data_sources",
+		"source.deprecated_resource_files", "source.resource_files_without_tests", "source.nolint_directives", "source.todos",
+		"startup.init_ms", "startup.init_heap_bytes", "startup.init_allocs",
 		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_autorest",
 		"source.resource_files_legacy_sdk", "source.resource_files_both_sdk":
 		return "bad"
 	case "source.typed_resource_pct", "source.typed_data_source_pct", "source.typed_pct", "source.typed_resources", "source.typed_data_sources",
-		"schema.identity_coverage_pct", "schema.list_coverage_pct", "schema.identity_resources", "schema.list_resources":
+		"schema.identity_coverage_pct", "schema.list_coverage_pct", "schema.identity_resources", "schema.list_resources",
+		"schema.attrs_described", "schema.attrs_described_pct", "source.services_fully_typed", "source.services_fully_typed_pct",
+		"source.services_fully_go_azure_sdk", "source.services_fully_go_azure_sdk_pct":
 		return "good"
 	}
 	return "neutral"

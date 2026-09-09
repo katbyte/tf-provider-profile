@@ -69,47 +69,18 @@ Complete documentation is available at https://github.com/katbyte/tf-provider-pr
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			f := GetFlags()
-			p, rels, all, err := f.selectReleases(cmd.Context())
+			ps, err := f.providers()
 			if err != nil {
 				return err
 			}
-			sampled := map[string]bool{}
-			for _, r := range provider.Sample(rels, f.Sample) {
-				sampled[r.Version] = true
-			}
-			store := results.NewStore(p)
-
-			cout.Printf("<white>%d</> releases of <cyan>%s</> since %s (%d known)\n\n", len(rels), p.Name, f.Since.Format("2006-01-02"), len(all))
-			cout.Printf("%-10s %-10s %-3s ", "version", "date", "smp")
-			for _, s := range results.AllStages {
-				cout.Printf("%-9s", s)
-			}
-			cout.Println()
-			for _, r := range rels {
-				res, err := store.Load(r)
-				if err != nil {
+			for i, p := range ps {
+				if i > 0 {
+					cout.Println()
+				}
+				if err := listReleases(cmd.Context(), f, p); err != nil {
 					return err
 				}
-				s := " "
-				if sampled[r.Version] {
-					s = "*"
-				}
-				cout.Printf("%-10s %-10s  %s  ", r.Version, r.Date.Format("2006-01-02"), s)
-				for _, st := range results.AllStages {
-					switch {
-					case st == results.StageDownload:
-						cout.Printf("%-9s", downloadStatus(p, f.Platforms, r.Version))
-					case res.Done(st):
-						cout.Printf("<green>%-9s</>", "ok")
-					case res.Failed(st):
-						cout.Printf("<red>%-9s</>", "failed")
-					default:
-						cout.Printf("<gray>%-9s</>", "-")
-					}
-				}
-				cout.Println()
 			}
-			cout.Printf("\n<gray>* = selected by --sample %d for the expensive stages (%s)</>\n", f.Sample, strings.Join(results.ExpensiveStages, ", "))
 			return nil
 		},
 	})
@@ -123,20 +94,25 @@ Complete documentation is available at https://github.com/katbyte/tf-provider-pr
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			f := GetFlags()
-			p, err := f.provider()
+			ps, err := f.providers()
 			if err != nil {
 				return err
 			}
-			return cloneSource(cmd.Context(), p, f.FullClone)
+			for _, p := range ps {
+				if err := cloneSource(cmd.Context(), p, f.FullClone); err != nil {
+					return err
+				}
+			}
+			return nil
 		},
 	})
 
 	root.AddCommand(&cobra.Command{
 		Use:   "run",
 		Short: "download releases and run the profiling stages",
-		Long: `Runs the selected stages against every release matching --since/--versions. Completed stages are skipped on
-rerun (use --force to redo them, --retry to redo failed ones), so the command is safe to run repeatedly as new
-releases appear. The expensive stages (` + strings.Join(results.ExpensiveStages, ", ") + `) only run for every --sample'th release.
+		Long: `Runs the selected stages against every release matching --since/--versions, for --provider or for every
+provider listed in .tfpp.yml. Completed stages are skipped on rerun (use --force to redo them, --retry to redo failed
+ones), so the command is safe to run repeatedly as new releases appear. The expensive stages (` + strings.Join(results.ExpensiveStages, ", ") + `) only run for every --sample'th release.
 
 Stages: ` + strings.Join(results.AllStages, ", "),
 		Args:          cobra.NoArgs,
@@ -149,70 +125,33 @@ Stages: ` + strings.Join(results.AllStages, ", "),
 					return fmt.Errorf("unknown stage %q (valid: %s)", s, strings.Join(results.AllStages, ", "))
 				}
 			}
-
-			p, rels, all, err := f.selectReleases(cmd.Context())
+			ps, err := f.providers()
 			if err != nil {
 				return err
 			}
-			if len(rels) == 0 {
-				return errors.New("no releases selected")
-			}
-
-			needsSrc := slices.ContainsFunc(f.Stages, func(s string) bool {
-				return s == results.StageSource || s == results.StageBuild || s == results.StageLint
-			})
-			if needsSrc {
-				if _, err := os.Stat(p.SrcDir()); err != nil {
-					if err := cloneSource(cmd.Context(), p, f.FullClone); err != nil {
-						return err
-					}
+			for i, p := range ps {
+				if i > 0 {
+					cout.Println()
+				}
+				if err := runProvider(cmd.Context(), f, p); err != nil {
+					return fmt.Errorf("%s: %w", p.Name, err)
 				}
 			}
-
-			sampled := provider.Sample(rels, f.Sample)
-			cout.Printf("profiling <cyan>%s</>: <yellow>%d</> releases (%s .. %s), stages %s, sampling every %d for %s (%d releases)\n",
-				p.Name, len(rels), rels[0].Version, rels[len(rels)-1].Version, strings.Join(f.Stages, ","), f.Sample, strings.Join(results.ExpensiveStages, ","), len(sampled))
-
-			runner := &stages.Runner{
-				P:     p,
-				Store: results.NewStore(p),
-				All:   all,
-				Opts: stages.Options{
-					Platforms:    f.Platforms,
-					Stages:       f.Stages,
-					Force:        f.Force,
-					Retry:        f.Retry,
-					Concurrency:  f.Concurrency,
-					Runs:         f.Runs,
-					Terraform:    f.Terraform,
-					GolangciLint: f.GolangciLint,
-					Timeout:      f.Timeout,
-				},
-			}
-			if err := runner.Run(cmd.Context(), rels, sampled); err != nil {
-				return err
-			}
-
 			if f.NoReport {
 				return nil
 			}
-			return writeReport(p, f)
+			return writeReport(f)
 		},
 	})
 
 	root.AddCommand(&cobra.Command{
 		Use:           "report",
-		Short:         "render reports/<provider>/ (index.html, data.json, data.csv) from the cached results",
+		Short:         "render reports/ (index.html per provider and combined, data.json, data.csv) from the collected results",
 		Args:          cobra.NoArgs,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
-			f := GetFlags()
-			p, err := f.provider()
-			if err != nil {
-				return err
-			}
-			return writeReport(p, f)
+			return writeReport(GetFlags())
 		},
 	})
 
@@ -224,21 +163,23 @@ Stages: ` + strings.Join(results.AllStages, ", "),
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			f := GetFlags()
-			p, err := f.provider()
+			ps, err := f.providers()
 			if err != nil {
 				return err
 			}
-			store := results.NewStore(p)
-			all, err := store.LoadAll()
-			if err != nil {
-				return err
+			for _, p := range ps {
+				store := results.NewStore(p)
+				all, err := store.LoadAll()
+				if err != nil {
+					return err
+				}
+				n, err := (&stages.Runner{P: p, Store: store}).ReparseSchema(all)
+				if err != nil {
+					return err
+				}
+				cout.Printf("<white>==></> re-parsed schema counts for <yellow>%d</> <cyan>%s</> releases\n", n, p.Name)
 			}
-			n, err := (&stages.Runner{P: p, Store: store}).ReparseSchema(all)
-			if err != nil {
-				return err
-			}
-			cout.Printf("<white>==></> re-parsed schema counts for <yellow>%d</> releases\n", n)
-			return writeReport(p, f)
+			return writeReport(f)
 		},
 	})
 
@@ -264,6 +205,96 @@ Stages: ` + strings.Join(results.AllStages, ", "),
 	cobra.OnFinalize(cancel)
 
 	return root, nil
+}
+
+// listReleases prints the release table for one provider.
+func listReleases(ctx context.Context, f *FlagData, p *provider.Provider) error {
+	rels, all, err := f.selectReleases(ctx, p)
+	if err != nil {
+		return err
+	}
+	sampled := map[string]bool{}
+	for _, r := range provider.Sample(rels, f.Sample) {
+		sampled[r.Version] = true
+	}
+	store := results.NewStore(p)
+
+	cout.Printf("<white>%d</> releases of <cyan>%s</> since %s (%d known)\n\n", len(rels), p.Name, f.Since.Format("2006-01-02"), len(all))
+	cout.Printf("%-10s %-10s %-3s ", "version", "date", "smp")
+	for _, s := range results.AllStages {
+		cout.Printf("%-9s", s)
+	}
+	cout.Println()
+	for _, r := range rels {
+		res, err := store.Load(r)
+		if err != nil {
+			return err
+		}
+		s := " "
+		if sampled[r.Version] {
+			s = "*"
+		}
+		cout.Printf("%-10s %-10s  %s  ", r.Version, r.Date.Format("2006-01-02"), s)
+		for _, st := range results.AllStages {
+			switch {
+			case st == results.StageDownload:
+				cout.Printf("%-9s", downloadStatus(p, f.Platforms, r.Version))
+			case res.Done(st):
+				cout.Printf("<green>%-9s</>", "ok")
+			case res.Failed(st):
+				cout.Printf("<red>%-9s</>", "failed")
+			default:
+				cout.Printf("<gray>%-9s</>", "-")
+			}
+		}
+		cout.Println()
+	}
+	cout.Printf("\n<gray>* = selected by --sample %d for the expensive stages (%s)</>\n", f.Sample, strings.Join(results.ExpensiveStages, ", "))
+	return nil
+}
+
+// runProvider downloads and profiles the selected releases of one provider.
+func runProvider(ctx context.Context, f *FlagData, p *provider.Provider) error {
+	rels, all, err := f.selectReleases(ctx, p)
+	if err != nil {
+		return err
+	}
+	if len(rels) == 0 {
+		return errors.New("no releases selected")
+	}
+
+	needsSrc := slices.ContainsFunc(f.Stages, func(s string) bool {
+		return s == results.StageSource || s == results.StageBuild || s == results.StageLint
+	})
+	if needsSrc {
+		if _, err := os.Stat(p.SrcDir()); err != nil {
+			if err := cloneSource(ctx, p, f.FullClone); err != nil {
+				return err
+			}
+		}
+	}
+
+	sampled := provider.Sample(rels, f.Sample)
+	cout.Printf("profiling <cyan>%s</>: <yellow>%d</> releases (%s .. %s), stages %s, sampling every %d for %s (%d releases)\n",
+		p.Name, len(rels), rels[0].Version, rels[len(rels)-1].Version, strings.Join(f.Stages, ","), f.Sample, strings.Join(results.ExpensiveStages, ","), len(sampled))
+
+	runner := &stages.Runner{
+		P:     p,
+		Store: results.NewStore(p),
+		All:   all,
+		Opts: stages.Options{
+			Platforms:    f.Platforms,
+			Stages:       f.Stages,
+			Force:        f.Force,
+			Retry:        f.Retry,
+			Concurrency:  f.Concurrency,
+			Runs:         f.Runs,
+			Terraform:    f.Terraform,
+			GolangciLint: f.GolangciLint,
+			Timeout:      f.Timeout,
+		},
+	}
+	return runner.Run(ctx, rels, sampled)
 }
 
 func downloadStatus(p *provider.Provider, platforms []string, ver string) string {
@@ -305,28 +336,36 @@ func cloneSource(ctx context.Context, p *provider.Provider, full bool) error {
 	return nil
 }
 
-// writeReport renders every provider with results under the data dir (the current one included) plus the combined
-// page, so the site always reflects all collected data.
-func writeReport(p *provider.Provider, f *FlagData) error {
-	names := []string{p.Name}
+// writeReport renders every provider listed in .tfpp.yml plus any other with results under the data dir, and the
+// combined page, so the site always reflects all collected data.
+func writeReport(f *FlagData) error {
+	var ps []*provider.Provider
+	seen := map[string]bool{}
+	for _, s := range f.Providers {
+		p, err := provider.New(s.Name, s.Repo, f.CacheDir, f.DataDir)
+		if err != nil {
+			return err
+		}
+		ps = append(ps, p)
+		seen[s.Name] = true
+	}
 	if entries, err := os.ReadDir(f.DataDir); err == nil {
 		for _, e := range entries {
-			if e.IsDir() && e.Name() != p.Name {
-				names = append(names, e.Name())
+			if !e.IsDir() || seen[e.Name()] {
+				continue
 			}
-		}
-	}
-	var pds []report.ProviderData
-	total := 0
-	for _, name := range names {
-		pp := p
-		if name != p.Name {
-			var err error
-			if pp, err = provider.New(name, "", f.CacheDir, f.DataDir); err != nil {
+			p, err := provider.New(e.Name(), "", f.CacheDir, f.DataDir)
+			if err != nil {
 				return err
 			}
+			ps = append(ps, p)
 		}
-		all, err := results.NewStore(pp).LoadAll()
+	}
+
+	var pds []report.ProviderData
+	total := 0
+	for _, p := range ps {
+		all, err := results.NewStore(p).LoadAll()
 		if err != nil {
 			return err
 		}
@@ -334,7 +373,7 @@ func writeReport(p *provider.Provider, f *FlagData) error {
 			continue
 		}
 		total += len(all)
-		pds = append(pds, report.ProviderData{P: pp, All: all})
+		pds = append(pds, report.ProviderData{P: p, All: all})
 	}
 	if err := report.WriteAll(pds, f.ReportsDir); err != nil {
 		return err

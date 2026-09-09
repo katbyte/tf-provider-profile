@@ -17,12 +17,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ProviderSpec is one entry of the providers list in .tfpp.yml.
+type ProviderSpec struct {
+	Name string `mapstructure:"name"`
+	Repo string `mapstructure:"repo"`
+}
+
 type FlagData struct {
-	Provider   string `mapstructure:"provider"`
-	Repo       string `mapstructure:"repo"`
-	CacheDir   string `mapstructure:"cache-dir"`
-	DataDir    string `mapstructure:"data-dir"`
-	ReportsDir string `mapstructure:"reports-dir"`
+	Provider   string         `mapstructure:"provider"`
+	Repo       string         `mapstructure:"repo"`
+	Providers  []ProviderSpec `mapstructure:"providers"`
+	CacheDir   string         `mapstructure:"cache-dir"`
+	DataDir    string         `mapstructure:"data-dir"`
+	ReportsDir string         `mapstructure:"reports-dir"`
 
 	Since     time.Time `mapstructure:"-"`
 	Versions  []string  `mapstructure:"versions"`
@@ -47,8 +54,8 @@ type FlagData struct {
 func configureFlags(root *cobra.Command) error {
 	pflags := root.PersistentFlags()
 
-	pflags.StringP("provider", "p", "azurerm", "provider short name (hashicorp/terraform-provider-<name>)")
-	pflags.String("repo", "", "github repo of the provider, if not hashicorp/terraform-provider-<provider>")
+	pflags.StringP("provider", "p", "", "provider short name (hashicorp/terraform-provider-<name>); default is every provider listed in .tfpp.yml")
+	pflags.String("repo", "", "github repo of --provider, if not hashicorp/terraform-provider-<provider> or the repo listed in .tfpp.yml")
 	pflags.String("cache-dir", ".cache", "root directory for everything regenerable: downloads, source, build caches (<cache-dir>/<provider>/)")
 	pflags.String("data-dir", "data", "root directory for the collected per-release results, one json per release, meant to be committed (<data-dir>/<provider>/)")
 	pflags.String("reports-dir", "reports", "root directory for rendered reports (<reports-dir>/<provider>/)")
@@ -118,16 +125,24 @@ func configureFlags(root *cobra.Command) error {
 		}
 	}
 
-	viper.SetConfigName(".tfpp")
-	viper.SetConfigType("env")
+	// .tfpp.yml (committed: providers, shared defaults) with .tfpp.local.yml (gitignored: machine specific paths) merged
+	// over it; both are looked up in the working directory then the home directory.
+	viper.SetConfigType("yaml")
 	if home, err := os.UserHomeDir(); err == nil {
 		viper.AddConfigPath(home)
 	}
 	viper.AddConfigPath(".")
 
+	viper.SetConfigName(".tfpp")
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
 			clog.Log.Errorf("Error reading config file: %v", err)
+		}
+	}
+	viper.SetConfigName(".tfpp.local")
+	if err := viper.MergeInConfig(); err != nil {
+		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
+			clog.Log.Errorf("Error reading local config file: %v", err)
 		}
 	}
 
@@ -141,11 +156,16 @@ func GetFlags() *FlagData {
 		clog.Log.Fatalf("failed to unmarshal configuration: %v", err)
 	}
 
-	since, err := time.Parse("2006-01-02", viper.GetString("since"))
-	if err != nil {
-		clog.Log.Fatalf("--since must be YYYY-MM-DD: %v", err)
+	// yaml decodes an unquoted 2024-07-01 as a timestamp, so accept either form
+	if t, ok := viper.Get("since").(time.Time); ok {
+		f.Since = t.UTC()
+	} else {
+		since, err := time.Parse("2006-01-02", viper.GetString("since"))
+		if err != nil {
+			clog.Log.Fatalf("--since must be YYYY-MM-DD: %v", err)
+		}
+		f.Since = since.UTC()
 	}
-	f.Since = since.UTC()
 
 	f.Platforms = dedupe(f.Platforms)
 	f.Stages = dedupe(f.Stages)
@@ -168,24 +188,48 @@ func dedupe(in []string) []string {
 	return out
 }
 
-func (f *FlagData) provider() (*provider.Provider, error) {
-	return provider.New(f.Provider, f.Repo, f.CacheDir, f.DataDir)
-}
-
-// selectReleases resolves the provider and the releases selected by the flags, returning also every known release.
-func (f *FlagData) selectReleases(ctx context.Context) (p *provider.Provider, selected, all []provider.Release, err error) {
-	p, err = f.provider()
-	if err != nil {
-		return nil, nil, nil, err
+// providers returns the providers a command acts on: the one named by --provider (its repo from --repo, else from the
+// providers list, else the hashicorp default), or every provider listed in .tfpp.yml when --provider is empty.
+func (f *FlagData) providers() ([]*provider.Provider, error) {
+	if f.Provider != "" {
+		repo := f.Repo
+		if repo == "" {
+			for _, s := range f.Providers {
+				if s.Name == f.Provider {
+					repo = s.Repo
+				}
+			}
+		}
+		p, err := provider.New(f.Provider, repo, f.CacheDir, f.DataDir)
+		if err != nil {
+			return nil, err
+		}
+		return []*provider.Provider{p}, nil
 	}
 
+	if len(f.Providers) == 0 {
+		return nil, errors.New("no provider given: pass --provider or list providers in .tfpp.yml")
+	}
+	ps := make([]*provider.Provider, 0, len(f.Providers))
+	for _, s := range f.Providers {
+		p, err := provider.New(s.Name, s.Repo, f.CacheDir, f.DataDir)
+		if err != nil {
+			return nil, fmt.Errorf("providers entry %q in .tfpp.yml: %w", s.Name, err)
+		}
+		ps = append(ps, p)
+	}
+	return ps, nil
+}
+
+// selectReleases fetches the provider's releases and returns those selected by the flags plus every known release.
+func (f *FlagData) selectReleases(ctx context.Context, p *provider.Provider) (selected, all []provider.Release, err error) {
 	since := f.Since
 	if len(f.Versions) > 0 {
 		since = time.Time{} // explicit versions may predate --since
 	}
 	rels, err := p.FetchReleases(ctx, f.GitHubAPIURL, f.GitHubToken, since)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	all, err = p.LoadCachedReleases()
 	if err != nil {
@@ -201,11 +245,11 @@ func (f *FlagData) selectReleases(ctx context.Context) (p *provider.Provider, se
 			}
 		}
 		if len(sel) != len(want) {
-			return nil, nil, nil, fmt.Errorf("%d of %d requested versions not found in releases: got %v", len(want)-len(sel), len(want), sel)
+			return nil, nil, fmt.Errorf("%d of %d requested versions not found in releases: got %v", len(want)-len(sel), len(want), sel)
 		}
 		rels = sel
 	}
-	return p, rels, all, nil
+	return rels, all, nil
 }
 
 func runGit(ctx context.Context, dir string, args ...string) error {

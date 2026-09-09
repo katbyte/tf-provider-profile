@@ -156,10 +156,31 @@ svg .endlbl { fill: var(--ink-2); font-size: 11px; }
 #info .meta code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
 #info .body p { margin: 0 0 6px; }
 #info .body p:last-child { margin: 0; }
+#status td.hostchange { color: var(--s8); font-weight: 600; }
+#info .colors { display: flex; align-items: center; gap: 5px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--grid); color: var(--muted); }
+#info .colors i { width: 16px; height: 16px; border-radius: 4px; cursor: pointer; border: 2px solid transparent; box-sizing: border-box; }
+#info .colors i.on { border-color: var(--ink); }
+#info .colors input[type=color] { width: 22px; height: 20px; padding: 0; border: 1px solid var(--axis); border-radius: 4px; background: none; cursor: pointer; }
+#info .colors button { border: 1px solid var(--axis); background: var(--surface); color: var(--ink-2); border-radius: 4px; padding: 1px 6px; font: inherit; font-size: 11px; cursor: pointer; margin-left: auto; }
 #ctx { position: fixed; z-index: 20; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; width: 560px; max-width: calc(100vw - 24px); font-size: 12px; }
 #ctx .v { font-weight: 600; margin-bottom: 6px; }
+#aibox { position: fixed; z-index: 21; top: 48px; right: 22px; width: 640px; max-width: calc(100vw - 24px); max-height: calc(100vh - 60px); overflow: auto; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.2); border-radius: 8px; padding: 10px 12px; font-size: 12px; }
+#aibox .v { font-weight: 600; margin-bottom: 6px; }
+#aibox .v span { color: var(--muted); font-weight: 400; }
+#aibox input { width: 100%; box-sizing: border-box; font: inherit; font-size: 13px; padding: 5px 8px; margin-bottom: 8px; border: 1px solid var(--axis); border-radius: 6px; background: var(--page); color: var(--ink); }
+#aibox .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
+#aibox .row button { border: 1px solid var(--axis); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+#aibox .row button:hover { background: var(--wash); }
+#aibox #aiMsg { color: var(--muted); }
+#aibox textarea { width: 100%; box-sizing: border-box; resize: vertical; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--page); color: var(--ink-2); border: 1px solid var(--grid); border-radius: 6px; padding: 6px; }
+#aibox #aiPrompt { height: 220px; }
+#aibox #aiPaste { height: 90px; margin-bottom: 8px; }
+#aibox.pasteonly .askpart { display: none; }
+#aibox.pasteonly #aiPasteTitle { margin-top: 0; }
+#aibox .askpart + .v { margin-top: 8px; }
 #ctx .v span { color: var(--muted); font-weight: 400; }
 #ctx .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+#ctx input { width: 100%; box-sizing: border-box; font: inherit; font-size: 12px; padding: 4px 8px; margin-bottom: 8px; border: 1px solid var(--axis); border-radius: 6px; background: var(--page); color: var(--ink); }
 #ctx table.sum { border-collapse: collapse; margin: 0 0 8px; width: 100%; }
 #ctx table.sum td { padding: 1px 8px 1px 0; white-space: nowrap; }
 #ctx table.sum td.n { text-align: right; font-variant-numeric: tabular-nums; }
@@ -193,6 +214,8 @@ details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
     <button class="plain" id="layoutDel" title="delete the selected layout">delete</button>
     <button class="plain" id="layoutDown" title="download the current layout as a file">download</button>
     <label class="plain" for="layoutUp" title="load a layout file and save it here">upload<input type="file" id="layoutUp" accept=".json,application/json" hidden></label>
+    <button class="plain" id="layoutAI" title="describe what you want to see and have an AI design a layout">ai</button>
+    <button class="plain" id="layoutPaste" title="paste a layout an AI answered with (or any layout json / hash) and load it">paste</button>
   </div>
   <div id="layoutbox" hidden><input id="layoutName" placeholder="layout name" autocomplete="off"><button class="plain" id="layoutOk">save</button><button class="plain" id="layoutCancel">cancel</button></div>
 </header>
@@ -232,9 +255,20 @@ details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
 </div>
 <div id="stage" hidden></div>
 <div id="pmenu" hidden><div class="v"></div><div class="list"></div><div class="row"></div></div>
-<div id="info" hidden><div class="v"></div><div class="meta"></div><div class="body"></div></div>
+<div id="info" hidden><div class="v"></div><div class="meta"></div><div class="body"></div><div class="colors"></div></div>
 <div id="tip"></div>
-<div id="ctx" hidden><div class="v"></div><table class="sum"></table><div class="row"></div><textarea readonly></textarea></div>
+<div id="ctx" hidden><div class="v"></div><table class="sum"></table><input id="ctxAsk" placeholder="your question (optional) - replaces the default &quot;what explains this change?&quot; ask" autocomplete="off"><div class="row"></div><textarea readonly></textarea></div>
+<div id="aibox" hidden>
+  <div class="askpart">
+    <div class="v">ask an AI for a layout <span>it answers with a layout json you paste back below</span></div>
+    <input id="aiAsk" placeholder="what do you want to see? e.g. everything about memory and startup cost, or the typed sdk migration story" autocomplete="off">
+    <div class="row" id="aiRow"></div>
+    <textarea id="aiPrompt" readonly></textarea>
+  </div>
+  <div class="v" id="aiPasteTitle">paste the answer <span>the json block, or just its hash; unknown metric keys are dropped</span></div>
+  <textarea id="aiPaste" placeholder='{"tfpp":"layout","name":"...","hash":"p=...&m=..."}'></textarea>
+  <div class="row"><button id="aiApply">apply & save</button><span id="aiMsg"></span></div>
+</div>
 <script id="data" type="application/json">/*__TFPP_DATA__*/</script>
 <script>
 (() => {
@@ -309,7 +343,7 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
     { keys: ['source.typed_resources', 'source.untyped_resources', 'source.typed_data_sources', 'source.untyped_data_sources'], stack: true },
   ].map(g => ({ keys: g.keys.map(k).filter(x => M[x]), hidden: (g.hidden || []).map(k).filter(x => M[x]), stack: !!g.stack, wide: false })).filter(g => g.keys.length);
 });
-const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['releases', 'majors'], tip: 'current', p: PROVIDERS.includes('__TFPP_PROVIDER__') ? '__TFPP_PROVIDER__' : (PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '')) };
+const state = { groups: [], sel: [], right: [], view: 'panels', x: 'date', zero: '0', table: '0', colors: {}, from: '', to: '', cols: '2', dots: 'auto', mk: ['releases', 'majors', 'machine'], tip: 'current', p: PROVIDERS.includes('__TFPP_PROVIDER__') ? '__TFPP_PROVIDER__' : (PROVIDERS.length > 1 ? 'all' : (PROVIDERS[0] || '')) };
 applyRange();
 // staging: a panel being built with modifier-clicks, shown floating until placed; never persisted
 let staging = null;
@@ -333,6 +367,8 @@ function readHash() {
   if (h.get('p') && (h.get('p') === 'all' || PROVIDERS.includes(h.get('p')))) state.p = h.get('p');
   for (const k of ['view','x','zero','table','from','to','cols','dots','tip']) if (h.get(k)) state[k] = h.get(k);
   if (h.has('mk')) state.mk = h.get('mk').split(',').filter(Boolean);
+  state.pinned = {};
+  for (const part of (h.get('c') || '').split(',').filter(Boolean)) { const i = part.lastIndexOf(';'); if (i < 0) continue; const k = part.slice(0, i), v = part.slice(i + 1); state.pinned[k] = /^#[0-9a-f]{6}$/i.test(v) ? v : (Number.isInteger(+v) ? +v : undefined); if (state.pinned[k] === undefined) delete state.pinned[k]; }
   applyRange();
   state.groups = h.has('m') ? parseGroups(h.get('m')) : DEFAULT_GROUPS();
   if (state.view === 'overlay') state.view = 'pct';
@@ -349,6 +385,8 @@ function writeHash() {
   if (state.dots !== 'auto') h.set('dots', state.dots);
   if (state.tip !== 'current') h.set('tip', state.tip);
   h.set('mk', state.mk.join(','));
+  const pins = Object.entries(state.pinned || {}).filter(([k]) => state.sel.includes(k)).map(([k, v]) => k + ';' + v);
+  if (pins.length) h.set('c', pins.join(','));
   if (state.from) h.set('from', state.from);
   if (state.to) h.set('to', state.to);
   history.replaceState(null, '', '#' + h.toString());
@@ -420,16 +458,20 @@ function moveGroup(from, to, after) {
 function splitGroup(i) { const g = state.groups[i]; if (!g) return; state.groups.splice(i, 1, ...g.keys.map(k => ({ keys: [k], stack: false }))); syncSel(); }
 const unitsOf = g => [...new Set(g.keys.filter(k => M[k]).map(k => M[k].unit))];
 // color follows the metric for as long as it stays selected; a new selection takes the lowest free slot
+// state.colors: key -> palette slot index (auto) or a hex string (custom); state.pinned holds the user's explicit picks
 function assignColors() {
+  state.pinned = state.pinned || {};
+  for (const [k, v] of Object.entries(state.pinned)) state.colors[k] = v;
   const used = new Set();
-  for (const k of state.sel) if (state.colors[k] !== undefined) used.add(state.colors[k]);
+  for (const k of state.sel) if (typeof state.colors[k] === 'number') used.add(state.colors[k]);
   for (const k of Object.keys(state.colors)) if (!state.sel.includes(k)) delete state.colors[k];
   for (const k of state.sel) if (state.colors[k] === undefined) {
     let i = 0; while (used.has(i)) i++;
     state.colors[k] = i; used.add(i);
   }
 }
-const colorOf = k => css(SLOTS[state.colors[k] % SLOTS.length]);
+const colorOf = k => { const c = state.colors[k]; return typeof c === 'string' ? c : css(SLOTS[c % SLOTS.length]); };
+function pinColor(k, v) { state.pinned = state.pinned || {}; if (v === null) delete state.pinned[k]; else state.pinned[k] = v; if (v === null) delete state.colors[k]; assignColors(); update(); }
 
 // ---------- formatting ----------
 function fmt(v, unit, short) {
@@ -449,6 +491,7 @@ function fmt(v, unit, short) {
     case 'pctchange': return (v > 0 ? '+' : '') + f(v, 1) + '%';
     case 'ratio': return f(v, 2) + '×';
     case 'days': return f(v, 1) + ' d';
+    case 'hours': return Math.abs(v) >= 48 ? f(v / 24, 1) + ' d' : f(v, 1) + ' h';
     case 'index': return f(v, 1);
     default: {
       const a = Math.abs(v);
@@ -459,7 +502,7 @@ function fmt(v, unit, short) {
   }
 }
 // delta colour = direction × whether up is good for this metric; neutral metrics stay in secondary ink
-const UNIT_LABEL = { bytes: 'size', ms: 'milliseconds', s: 'seconds', count: 'count', lines: 'lines', files: 'files', resources: 'resources', attributes: 'attributes', depth: 'depth', modules: 'modules', funcs: 'functions', packages: 'packages', commits: 'commits', authors: 'authors', entries: 'changelog entries', pct: 'percent', ratio: 'ratio', days: 'days', index: 'index' };
+const UNIT_LABEL = { bytes: 'size', ms: 'milliseconds', s: 'seconds', count: 'count', lines: 'lines', files: 'files', resources: 'resources', attributes: 'attributes', depth: 'depth', modules: 'modules', funcs: 'functions', packages: 'packages', commits: 'commits', authors: 'authors', entries: 'changelog entries', pct: 'percent', ratio: 'ratio', days: 'days', hours: 'hours', allocs: 'allocations', index: 'index' };
 function fmtDelta(a, b, unit, upIs) {
   if (a == null || b == null) return { text: '', cls: '' };
   const d = b - a;
@@ -685,6 +728,8 @@ const AI_TARGETS = [
   { id: 'perplexity', label: 'Perplexity', limit: 6000, url: q => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(q) },
 ];
 // the prompt is built as prioritised sections; the copy box gets everything, a url handoff drops the tail until it fits
+// the question typed into the ask-AI box; empty means the default "what explains this change?" ask
+let ctxQuestion = '';
 function buildPromptSections(i, keys, i0, stacked) {
   const r = R[i];
   const provider = keys.length ? provOf(keys[0]) : r.provider;
@@ -751,6 +796,8 @@ function buildPromptSections(i, keys, i0, stacked) {
   for (const f of [changed('built with', x => x?.go_version), changed('terraform-plugin-sdk/v2', x => x?.plugin_sdk), changed('terraform-plugin-framework', x => x?.framework), changed('schema measured with terraform', x => x?.terraform), changed('timing stages ran on', x => x?.host)]) if (f) facts.push(f);
   const after = span.slice(1);
   const added = [...new Set(after.flatMap(x => x.deps_added || []))], gone = [...new Set(after.flatMap(x => x.deps_removed || []))];
+  if (r.largest?.length) facts.push(`largest resource schemas (attributes): ${r.largest.join(', ')}`);
+  if (r.init_top?.length) facts.push(`most expensive package inits: ${r.init_top.join(', ')}`);
   if (added.length) facts.push(`modules newly linked: ${added.join(', ')}`);
   if (gone.length) facts.push(`modules no longer linked: ${gone.join(', ')}`);
   const sum = k => after.reduce((acc, x) => { const m = full(`${provider}:${k}`); const v = m ? m.values[ROW[x.id]] : null; return v == null ? acc : (acc || 0) + v; }, null);
@@ -789,7 +836,7 @@ function buildPromptSections(i, keys, i0, stacked) {
   if (isSpan) for (const x of after) links.push(`- release ${x.version}: https://github.com/${repo}/releases/tag/${x.version}`); else links.push(`- release: https://github.com/${repo}/releases/tag/${r.version}`);
   links.push(`- release zips: https://releases.hashicorp.com/terraform-provider-${provider}/${r.version.replace(/^v/, '')}/`);
   links.push(`- this chart: ${location.href}`);
-  const ask = isSpan
+  const ask = ctxQuestion ? ctxQuestion : isSpan
     ? `What across these releases most likely explains the change in the metrics on the chart? Work from the diff and the changelog: name the specific releases, commits, pull requests, dependency or toolchain changes responsible, say which release contributed most, separate real provider changes from measurement artefacts (toolchain, terraform version, machine), and say how confident you are.`
     : `What in this release most likely explains the change in the metrics on the chart? Work from the diff and the changelog: name the specific commits, pull requests, dependency or toolchain changes responsible, quantify how much of the change each one accounts for where you can, separate real provider changes from measurement artefacts (toolchain, terraform version, machine), and say how confident you are.`;
   sections.push({ pri: 0, text: `Links:\n${links.join('\n')}\n\n${ask} If you can run commands, \`git log --stat ${prev ? prev.version + '..' : ''}${r.version}\` on a clone of the repository is the fastest way to confirm.` });
@@ -811,6 +858,7 @@ function showCtx(i, ev, active, i0) {
   const ctx = $('#ctx'), r = R[i];
   const keys = active?.keys || [];
   const stacked = !!active?.stacked;
+  ctxQuestion = ''; $('#ctxAsk').value = '';
   const info = buildPromptSections(i, keys, i0, stacked);
   const prompt = buildPrompt(i, keys, undefined, i0, stacked);
   ctx.dataset.i = i; ctx.dataset.i0 = i0 === undefined ? '' : i0; ctx.dataset.keys = keys.join(','); ctx.dataset.stacked = stacked ? '1' : '';
@@ -836,7 +884,7 @@ function showCtx(i, ev, active, i0) {
 }
 $('#ctx').addEventListener('click', ev => {
   const b = ev.target.closest('button[data-ai]');
-  if (!b) { if (!ev.target.closest('textarea')) { $('#ctx').hidden = true; clearSel(); } return; } // anywhere else in the box closes it
+  if (!b) { if (!ev.target.closest('textarea, input')) { $('#ctx').hidden = true; clearSel(); } return; } // anywhere else in the box closes it
   const ctx = $('#ctx'), prompt = ctx.querySelector('textarea').value;
   if (b.dataset.ai === 'close') { ctx.hidden = true; clearSel(); return; }
   if (b.dataset.ai === 'copy') { navigator.clipboard?.writeText(prompt); b.textContent = 'copied'; return; }
@@ -845,6 +893,12 @@ $('#ctx').addEventListener('click', ev => {
   window.open(t.url(short), '_blank', 'noopener');
   ctx.hidden = true;
 });
+$('#ctxAsk').addEventListener('input', () => {
+  const ctx = $('#ctx');
+  ctxQuestion = $('#ctxAsk').value.trim();
+  ctx.querySelector('textarea').value = buildPrompt(+ctx.dataset.i, ctx.dataset.keys ? ctx.dataset.keys.split(',') : [], undefined, ctx.dataset.i0 === '' ? undefined : +ctx.dataset.i0, ctx.dataset.stacked === '1');
+});
+$('#ctxAsk').addEventListener('keydown', ev => { if (ev.key === 'Escape') { $('#ctx').hidden = true; clearSel(); } ev.stopPropagation(); });
 document.addEventListener('click', ev => { if (!ev.target.closest('#ctx') && !ev.target.closest('#charts svg')) { $('#ctx').hidden = true; clearSel(); } });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') { $('#ctx').hidden = true; clearSel(); } });
 function nearestIndex(c, ev) {
@@ -949,6 +1003,10 @@ function explain(m) {
     'binary.*.module.std': `Bytes of machine code attributed to the Go standard library${P}. Moves with the Go version, not with the provider.`,
     'startup.handshake_med_ms': 'Median wall time from exec to the go-plugin handshake line, with the provider run standalone under the magic cookie (no terraform). This is the fixed cost every terraform command pays per provider launch: Go runtime start plus every package init, which for azurerm includes registering all services and building the resource maps.',
     'startup.handshake_min_ms': 'Fastest of the 7 handshake runs. The least noise-sensitive statistic; compare this across releases measured on the same machine.',
+    'startup.init_ms': 'Sum of every package init function\'s clock time before main runs, from GODEBUG=inittrace=1, cheapest of 3 runs. This is pure fixed cost paid on every provider launch: map literals, regexp.MustCompile, registering thousands of SDK clients. The release info lists the most expensive packages.',
+    'startup.init_heap_bytes': 'Bytes allocated by package init functions before main. Memory every launch commits before doing any work; a large part of the RSS at handshake.',
+    'startup.init_allocs': 'Number of heap allocations during package init. Unlike init time this is deterministic, so it is the cleanest signal of init work growing.',
+    'startup.init_packages': 'Packages for which the runtime reported an init. Tracks how many linked packages have init-time work at all.',
     'startup.max_rss_bytes': 'Peak resident memory of the provider process at the moment it handshakes (median of 7 runs), before any schema or RPC work. Package-init allocations plus the runtime.',
     'schema.wall_med_ms': 'Median wall time of terraform providers schema -json end to end: terraform start, provider launch, GetProviderSchema, JSON encoding. Compare only across runs with the same terraform version and machine (see the terraform and machine markers).',
     'schema.wall_min_ms': 'Fastest of the 7 schema fetch runs.',
@@ -968,6 +1026,18 @@ function explain(m) {
     'schema.blocks': 'Total nested block types across resource and data source schemas.',
     'schema.deprecated_attributes': 'Attributes flagged deprecated in the schema. Rises before a major and drops at it.',
     'schema.max_depth': 'Deepest block nesting found in any resource schema.',
+    'schema.attrs_required': 'Attributes flagged required across resource and data source schemas, nested blocks included.',
+    'schema.attrs_optional': 'Attributes flagged optional across resource and data source schemas, nested blocks included.',
+    'schema.attrs_computed': 'Attributes flagged computed (set by the provider) across resource and data source schemas. Optional+computed attributes count in both.',
+    'schema.attrs_sensitive': 'Attributes flagged sensitive, which terraform redacts from plan output and state display.',
+    'schema.attrs_write_only': 'Write-only attributes (terraform 1.11+): values the provider accepts but never stores in state, used for secrets. Needs terraform 1.11+ for the schema stage.',
+    'schema.attrs_described': 'Attributes that carry a description string in the schema. Most azurerm schemas carry none, so this mostly tracks the framework-based and generated resources.',
+    'schema.attrs_described_pct': 'Described attributes as a share of all attributes.',
+    'schema.resources_with_migrations': 'Resources whose schema version is above zero, meaning they ship state upgraders. Each bump is a resource that changed its state layout in a compatible way; this count only rises.',
+    'schema.migration_pct': 'Resources with a schema version above zero as a share of all resources.',
+    'schema.resource_attrs_max': 'Attribute count of the largest single resource schema, nested blocks included. The release info names the top five.',
+    'schema.resource_attrs_median': 'Median attribute count across resource schemas: what a typical resource looks like.',
+    'schema.resource_attrs_mean': 'Attributes divided by resources plus data sources: schema attributes per entity.',
     'source.go_lines': 'Lines in every .go file outside vendor at the tag, tests included.',
     'source.go_code_lines': 'Non-blank, non-comment-only lines in .go files outside vendor. Closer to real code volume than raw lines.',
     'source.go_test_lines': 'Lines in *_test.go files outside vendor.',
@@ -1017,6 +1087,17 @@ function explain(m) {
     'source.sdk_count.track1': 'Resource and data source files importing azure-sdk-for-go (track 1) and not go-azure-sdk.',
     'source.sdk_count.none': 'Resource and data source files importing neither SDK family.',
     'source.identity_resource_files': 'Resource files declaring a resource identity in source (Identity: &schema.ResourceIdentity{ or sdk.ResourceWithIdentity). The schema-side count is the authoritative one.',
+    'source.deprecated_resource_files': 'Resource and data source files carrying a resource-level deprecation: the untyped DeprecationMessage field or a typed sdk.ResourceWithDeprecation… assertion. Deprecations pile up before a major and are removed at it.',
+    'source.resource_files_without_tests': 'Resource and data source files with no sibling _test.go file. Not a coverage measure, but a resource with no test file at all has no acceptance test.',
+    'source.resource_files_total': 'Files defining at least one resource or data source, typed or untyped.',
+    'source.nolint_directives': 'Occurrences of //nolint in non-vendor go files: places where a lint rule was suppressed instead of fixed.',
+    'source.todos': 'TODO and FIXME mentions in non-vendor go files, tests included.',
+    'source.services_with_resources': 'Service packages under internal/services that hold at least one resource or data source file.',
+    'source.services_fully_typed': 'Services with no untyped resource or data source left: the typed-SDK migration is done for the whole package.',
+    'source.services_fully_typed_pct': 'Fully typed services as a share of services with resources.',
+    'source.services_fully_go_azure_sdk': 'Services where no resource file imports a legacy SDK (azure-sdk-for-go or kermit): the go-azure-sdk migration is done for the whole package.',
+    'source.services_fully_go_azure_sdk_pct': 'Fully go-azure-sdk services as a share of services with resources.',
+    'source.release_lag_hours': 'Hours between the tagged commit and the GitHub release being published: how long the release pipeline took, or how long a tag waited.',
     'source.files_importing_legacy_sdk': 'Non-test service files importing github.com/Azure/azure-sdk-for-go.',
     'source.files_importing_kermit': 'Non-test service files importing a kermit fork.',
     'source.files_importing_autorest': 'Non-test service files importing github.com/Azure/go-autorest.',
@@ -1047,11 +1128,28 @@ function showInfo(m, ev) {
   el.querySelector('.v').textContent = lbl(m);
   el.querySelector('.meta').innerHTML = `unit: ${m.unit}${m.up_is && m.up_is !== 'neutral' ? ` · up is ${m.up_is}` : ''} · <code>${esc(bare(m.key))}</code>`;
   el.querySelector('.body').innerHTML = `<p>${esc(body)}</p>${stage ? `<p><b>How:</b> ${esc(stage)}.</p>` : ''}`;
+  el.dataset.k = m.key;
+  renderInfoColors();
   el.hidden = false;
   const w = el.offsetWidth, h = el.offsetHeight;
   el.style.left = Math.min(ev.clientX + 8, innerWidth - w - 8) + 'px';
   el.style.top = Math.min(ev.clientY + 8, innerHeight - h - 8) + 'px';
 }
+// colour row: the eight palette slots, a custom picker, and auto to drop the pin. Only for metrics on the page.
+function renderInfoColors() {
+  const el = $('#info'), k = el.dataset.k, row = el.querySelector('.colors');
+  if (!state.sel.includes(k)) { row.hidden = true; return; }
+  const cur = state.colors[k], pinned = (state.pinned || {})[k] !== undefined;
+  row.hidden = false;
+  row.innerHTML = 'colour ' + SLOTS.map((sl, i) => `<i data-slot="${i}" class="${cur === i ? 'on' : ''}" style="background:${css(sl)}" title="palette ${i + 1}"></i>`).join('')
+    + `<input type="color" value="${typeof cur === 'string' ? cur : getComputedStyle(document.documentElement).getPropertyValue(SLOTS[(cur || 0) % SLOTS.length]).trim()}" title="custom colour">` + (pinned ? '<button data-auto>auto</button>' : '');
+}
+$('#info').addEventListener('click', ev => {
+  const k = $('#info').dataset.k;
+  const sw = ev.target.closest('[data-slot]'); if (sw) { pinColor(k, +sw.dataset.slot); renderInfoColors(); return; }
+  if (ev.target.closest('[data-auto]')) { pinColor(k, null); renderInfoColors(); }
+});
+$('#info').addEventListener('input', ev => { const inp = ev.target.closest('input[type=color]'); if (inp) { pinColor($('#info').dataset.k, inp.value); renderInfoColors(); } });
 document.addEventListener('contextmenu', ev => {
   const row = ev.target.closest('aside label[title], .legend [data-toggle], .legend > span, #stage .legend > span, .panel h2 .sw, #ctx tr, #pmenu label');
   if (!row) return;
@@ -1060,7 +1158,7 @@ document.addEventListener('contextmenu', ev => {
   if (!key || !M[key]) return;
   ev.preventDefault(); showInfo(M[key], ev);
 });
-document.addEventListener('click', ev => { if (!ev.target.closest('#info')) $('#info').hidden = true; });
+document.addEventListener('click', ev => { if (!ev.composedPath().some(el => el.id === 'info')) $('#info').hidden = true; });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') $('#info').hidden = true; });
 
 // ---------- sidebar: enabled / presets / catalogue tree ----------
@@ -1182,7 +1280,7 @@ $('#groups').addEventListener('toggle', ev => {
 }, true);
 $('#search').addEventListener('input', renderSidebar);
 $('#clear').onclick = () => { state.groups = []; syncSel(); update(); };
-$('#defaults').onclick = () => { layoutName = 'default'; state.groups = DEFAULT_GROUPS(); state.colors = {}; syncSel(); update(); };
+$('#defaults').onclick = () => { layoutName = 'default'; state.groups = DEFAULT_GROUPS(); state.colors = {}; state.pinned = {}; syncSel(); update(); };
 
 // ---------- controls ----------
 function renderControls() {
@@ -1204,9 +1302,12 @@ function renderControls() {
   const a = $('#rangeA'), b = $('#rangeB');
   if (a.dataset.p !== state.p) {
     const opt = ([r]) => `<option value="${multi() ? r.id : r.version}">${multi() ? r.provider + ' ' : ''}${r.version}</option>`;
-    // majors pinned at the top, then every release
-    const majors = VIS.filter(([r]) => /\.0\.0$/.test(r.version));
-    const opts = (majors.length ? `<optgroup label="majors">${majors.map(opt).join('')}</optgroup>` : '') + `<optgroup label="all releases">${VIS.map(opt).join('')}</optgroup>`;
+    // majors pinned at the top: the first release of each major line present (the x.0.0 itself, or the earliest
+    // release of that major when the data starts later), then every release
+    const seen = new Set();
+    const majors = VIS.filter(([r]) => { const id = r.provider + ':' + r.version.replace(/^v/, '').split('.')[0]; if (seen.has(id)) return false; seen.add(id); return true; });
+    const mopt = ([r]) => { const mj = 'v' + r.version.replace(/^v/, '').split('.')[0]; const first = /\.0\.0$/.test(r.version); return `<option value="${multi() ? r.id : r.version}">${multi() ? r.provider + ' ' : ''}${first ? r.version : mj + ' · from ' + r.version}</option>`; };
+    const opts = (majors.length ? `<optgroup label="majors">${majors.map(mopt).join('')}</optgroup>` : '') + `<optgroup label="all releases">${VIS.map(opt).join('')}</optgroup>`;
     a.innerHTML = opts; b.innerHTML = opts; a.dataset.p = state.p;
     a.onchange = () => { state.from = a.value; update(); };
     b.onchange = () => { state.to = b.value; update(); };
@@ -1531,8 +1632,14 @@ function renderStatus() {
     return '<td><span class="stagefail" title="' + esc(v) + '">failed</span></td>';
   };
   let rows = '';
-  for (const [r] of VIS) rows += '<tr><td>' + (multi() ? r.provider + ' ' : '') + r.version + '</td><td>' + r.date + '</td><td>' + (r.go_version || '') + '</td><td>' + (r.terraform || '') + '</td>' + stages.map(s => cell(r.stages[s])).join('') + '</tr>';
-  $('#status').innerHTML = '<table class="data"><thead><tr><th>release</th><th>date</th><th>go</th><th>terraform</th>' + stages.map(s => '<th>' + s + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table>';
+  // the machine column is highlighted wherever it differs from the previous row, so a change of measuring host stands out
+  let prevHost = null;
+  for (const [r] of VIS) {
+    const changed = prevHost !== null && r.host && r.host !== prevHost;
+    rows += '<tr><td>' + (multi() ? r.provider + ' ' : '') + r.version + '</td><td>' + r.date + '</td><td>' + (r.go_version || '') + '</td><td>' + (r.terraform || '') + '</td><td' + (changed ? ' class="hostchange" title="timing stages measured on a different machine than the previous release"' : '') + '>' + esc(r.host || '') + '</td>' + stages.map(s => cell(r.stages[s])).join('') + '</tr>';
+    if (r.host) prevHost = r.host;
+  }
+  $('#status').innerHTML = '<table class="data"><thead><tr><th>release</th><th>date</th><th>go</th><th>terraform</th><th>machine</th>' + stages.map(s => '<th>' + s + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
 function update() {
@@ -1556,7 +1663,7 @@ function storeLayouts(ls) { try { localStorage.setItem(LAYOUT_KEY, JSON.stringif
 // which layout the page is showing; "default" is the built-in one. edited = current state differs from it
 let layoutName = 'default';
 function layoutEdited() {
-  if (layoutName === 'default') return serializeGroups(state.groups) !== serializeGroups(DEFAULT_GROUPS());
+  if (layoutName === 'default') return serializeGroups(state.groups) !== serializeGroups(DEFAULT_GROUPS()) || Object.keys(state.pinned || {}).length > 0;
   const l = loadLayouts()[layoutName]; if (!l) return true;
   writeHash();
   return location.hash.slice(1) !== l.hash;
@@ -1582,7 +1689,7 @@ $('#layoutOk').onclick = () => { saveLayoutAs($('#layoutName').value.trim()); $(
 $('#layoutName').addEventListener('keydown', ev => { if (ev.key === 'Enter') $('#layoutOk').click(); if (ev.key === 'Escape') $('#layoutCancel').click(); });
 $('#layoutSel').onchange = () => {
   const n = $('#layoutSel').value;
-  if (n === 'default') { layoutName = 'default'; state.groups = DEFAULT_GROUPS(); state.colors = {}; syncSel(); update(); return; }
+  if (n === 'default') { layoutName = 'default'; state.groups = DEFAULT_GROUPS(); state.colors = {}; state.pinned = {}; syncSel(); update(); return; }
   const l = loadLayouts()[n]; if (l) { layoutName = n; applyLayout(l); }
 };
 $('#layoutDel').onclick = () => { const n = layoutName; if (n === 'default') return; const ls = loadLayouts(); delete ls[n]; storeLayouts(ls); layoutName = 'default'; renderLayouts(); };
@@ -1594,17 +1701,125 @@ $('#layoutDown').onclick = () => {
   a.download = `tfpp-${name}-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
+// importLayout accepts a layout object, the json text of one (possibly inside a markdown code fence or prose), or a bare
+// hash; unknown metric keys are dropped and counted so an ai-written layout still loads
+function importLayout(text, fallbackName) {
+  let l = null;
+  if (typeof text === 'object') l = text;
+  else {
+    const t = String(text).trim();
+    const m = t.match(/\{[\s\S]*\}/);
+    if (m) { try { l = JSON.parse(m[0]); } catch (e) { throw new Error('not valid json: ' + e.message); } }
+    else if (/^#?[a-z]+=/.test(t)) l = { tfpp: 'layout', hash: t.replace(/^#/, '') };
+  }
+  if (!l || l.tfpp !== 'layout' || typeof l.hash !== 'string') throw new Error('not a tfpp layout (need {"tfpp":"layout","hash":"..."})');
+  const h = new URLSearchParams(l.hash);
+  const raw = (h.get('m') || '').split(/[|,]/).map(k => k.replace(/^[sw]+:/, '').replace(/^!/, '')).filter(Boolean);
+  const unknown = raw.filter(k => !CATALOGUE.some(c => c.key === k));
+  if (raw.length && unknown.length === raw.length) throw new Error('none of the metric keys exist: ' + unknown.slice(0, 5).join(', '));
+  if (!PROVIDERS.includes(h.get('p')) && h.get('p') !== 'all') h.set('p', PROVIDERS.length > 1 ? 'all' : PROVIDERS[0]);
+  l = { ...l, hash: h.toString() };
+  const name = (l.name || fallbackName || 'ai layout').trim();
+  applyLayout(l);
+  // store the normalised hash the page wrote back, so the imported layout does not show as edited straight away
+  const ls = loadLayouts(); ls[name] = { ...l, name, hash: location.hash.slice(1), saved: new Date().toISOString() }; storeLayouts(ls); renderLayouts(name);
+  return { name, unknown };
+}
 $('#layoutUp').addEventListener('change', async ev => {
   const f = ev.target.files[0]; if (!f) return;
   try {
-    const l = JSON.parse(await f.text());
-    if (l.tfpp !== 'layout' || typeof l.hash !== 'string') throw new Error('not a tfpp layout file');
-    const name = l.name || f.name.replace(/^tfpp-/, '').replace(/-\d{4}-\d{2}-\d{2}\.json$/, '').replace(/\.json$/, '');
-    const ls = loadLayouts(); ls[name] = { ...l, name, saved: new Date().toISOString() }; storeLayouts(ls); renderLayouts(name);
-    applyLayout(l);
+    importLayout(await f.text(), f.name.replace(/^tfpp-/, '').replace(/-\d{4}-\d{2}-\d{2}\.json$/, '').replace(/\.json$/, ''));
   } catch (e) { alert('could not load layout: ' + e.message); }
   ev.target.value = '';
 });
+// ---------- ai-designed layouts: a prompt describing the layout grammar and every available metric ----------
+const ASK_PLACEHOLDER = '<PUT YOUR ASK HERE>';
+function layoutPromptSections(ask, full) {
+  const provs = visible();
+  const rs = VIS.map(([r]) => r);
+  const head = `${ask || ASK_PLACEHOLDER}
+
+##########
+Design a set of chart panels for the ask above. Context: tfpp is a page that charts how terraform provider releases change over time. Loaded providers: ${provs.map(p => `${p} (${META[p].repo})`).join(', ')}; ${rs.length} releases from ${rs[0]?.version} (${rs[0]?.date}) to ${rs[rs.length - 1]?.version} (${rs[rs.length - 1]?.date}); the page currently shows p=${state.p}.
+
+Answer with ONE json code block and nothing else, in exactly this form:
+{"tfpp":"layout","name":"<short name for the layout>","hash":"p=${state.p}&m=<panels>&view=panels&x=date"}
+
+The hash is a url query string:
+- p: which providers' metrics are available: all${PROVIDERS.length > 1 ? ' | ' + PROVIDERS.join(' | ') : ''}. Metric keys are always written as <provider>:<key>, e.g. ${provs[0]}:schema.resources.
+- m: the panels, separated by |. Each panel is an optional flag prefix then a comma separated list of metric keys: "s:" stacks the series as areas (only for series of the same unit that add up, like resource kinds or line counts), "w:" makes the panel span two grid columns, "sw:" both. A key prefixed with ! is plotted but hidden until the user clicks its legend entry, useful for a dominant series that would flatten the others.
+- A panel may mix at most two units; the second unit gets a right-hand axis. Pairing a percentage with the counts behind it is a good pattern (e.g. a coverage pct on the left, the counts on the right). Put closely related series together; do not put everything in one panel. 3 to 8 panels is a good layout; order panels from the most important down.
+- view: panels (default) | unit (one chart per unit) | twoaxes | pct (% change since the first release) | delta (per-release change). x: date | release. Optional: cols=1..4 (grid columns, default 2), zero=1 (y axes from zero), from=<version>&to=<version> to narrow the range, mk=releases,majors,go,patch,modules,sdk,gap,machine,terraform (marker layers to draw).
+${multi() ? `- With p=all the same key exists per provider (e.g. azurerm:schema.resources and azuread:schema.resources) and can share a panel for a comparison.\n` : ''}
+Only use keys from the list below; anything else is dropped. The name should say what the layout is about.`;
+  const example = `The layout currently on the page, as an example of the format:
+${(() => { writeHash(); return location.hash.slice(1); })()}`;
+  const upIs = { good: 'up is good', bad: 'up is bad', neutral: '' };
+  const cat = [];
+  for (const p of provs) {
+    cat.push(`Metrics for ${p} (key | label | unit | note):`);
+    const byGroup = {};
+    // the compact form (url handoff) keeps one platform's binary metrics; the copied prompt has them all
+    for (const m of CATALOGUE) { if (m.provider !== p || (!full && platOf(m) && platOf(m) !== platFor(p))) continue; (byGroup[m.group] = byGroup[m.group] || []).push(m); }
+    for (const [g, ms] of Object.entries(byGroup)) {
+      const gl = GROUPS.find(x => x.id === g)?.label || g;
+      if (full) {
+        cat.push(`[${gl}]`);
+        for (const m of ms) cat.push(`${m.key} | ${m.label} | ${m.unit}${m.up_is && upIs[m.up_is] ? ' | ' + upIs[m.up_is] : ''}${m.desc ? ' | ' + m.desc : ''}`);
+      } else {
+        cat.push(`[${gl}] ` + ms.map(m => `${m.key} (${m.unit})`).join(', '));
+      }
+    }
+  }
+  return [head, example, cat.join('\n')].join('\n\n');
+}
+function layoutPrompt(ask, limit) {
+  const full = layoutPromptSections(ask, true);
+  if (!limit || full.length <= limit) return full;
+  const compact = layoutPromptSections(ask, false);
+  return compact.length <= limit ? compact + '\n\n(metric descriptions were left out to fit the url; the copied prompt has them)' : compact.slice(0, limit) + '\n\n(truncated to fit the url; use copy prompt for everything)';
+}
+function renderAIBox() {
+  const ask = $('#aiAsk').value.trim();
+  $('#aiPrompt').value = layoutPrompt(ask);
+  $('#aiRow').innerHTML = AI_TARGETS.map(t => `<button data-ai="${t.id}">${t.label}</button>`).join('') + `<button data-ai="copy">copy prompt</button><button data-ai="close">close</button>`;
+}
+function openAIBox(pasteOnly) {
+  const b = $('#aibox');
+  // open when hidden or when switching modes; a second click on the same button closes
+  b.hidden = !(b.hidden || b.classList.contains('pasteonly') !== pasteOnly);
+  b.classList.toggle('pasteonly', pasteOnly);
+  if (b.hidden) return;
+  $('#aiMsg').textContent = '';
+  renderAIBox();
+  if (!pasteOnly) { $('#aiAsk').focus(); return; }
+  const ta = $('#aiPaste');
+  ta.focus();
+  // prefill from the clipboard when the browser lets us; otherwise the user pastes by hand
+  navigator.clipboard?.readText?.().then(t => { if (t && /"tfpp"|^#?[a-z]+=/.test(t.trim())) { ta.value = t; $('#aiMsg').textContent = 'clipboard pasted, click apply'; } }).catch(() => {});
+}
+$('#layoutAI').onclick = () => openAIBox(false);
+$('#layoutPaste').onclick = () => openAIBox(true);
+$('#aiAsk').addEventListener('input', renderAIBox);
+$('#aiRow').addEventListener('click', ev => {
+  const b = ev.target.closest('button[data-ai]'); if (!b) return;
+  const ask = $('#aiAsk').value.trim();
+  if (b.dataset.ai === 'close') { $('#aibox').hidden = true; return; }
+  if (b.dataset.ai === 'copy') { navigator.clipboard?.writeText(layoutPrompt(ask)); b.textContent = 'copied'; return; }
+  const t = AI_TARGETS.find(x => x.id === b.dataset.ai);
+  window.open(t.url(layoutPrompt(ask, t.limit)), '_blank', 'noopener');
+});
+$('#aiApply').onclick = () => {
+  const msg = $('#aiMsg');
+  try {
+    const { name, unknown } = importLayout($('#aiPaste').value, 'ai layout');
+    msg.textContent = `loaded "${name}"` + (unknown.length ? `, dropped ${unknown.length} unknown key${unknown.length > 1 ? 's' : ''}: ${unknown.slice(0, 4).join(', ')}${unknown.length > 4 ? '…' : ''}` : '');
+    $('#aiPaste').value = '';
+  } catch (e) { msg.textContent = e.message; }
+};
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') $('#aibox').hidden = true; });
+// a click anywhere outside the box (and off the buttons that open it) closes it
+document.addEventListener('click', ev => { if (!ev.target.closest('#aibox') && !ev.target.closest('#layoutAI') && !ev.target.closest('#layoutPaste')) $('#aibox').hidden = true; });
 renderLayouts();
 update();
 addEventListener('hashchange', () => { readHash(); update(); });

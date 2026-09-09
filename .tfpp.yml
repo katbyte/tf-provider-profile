@@ -1,0 +1,14 @@
+# tfpp configuration, keyed by flag name (see `tfpp run --help`). Anything here can be overridden by a TFPP_* env
+# var or a flag; machine specific settings (e.g. terraform: .cache/tools/terraform/terraform) belong in the gitignored
+# .tfpp.local.yml, which is merged over this file.
+
+# providers profiled when no --provider is given: `tfpp run` loops over every entry, and so does the weekly pages
+# workflow. repo defaults to hashicorp/terraform-provider-<name>.
+providers:
+  - name: azurerm
+    repo: hashicorp/terraform-provider-azurerm
+  - name: azuread
+    repo: hashicorp/terraform-provider-azuread
+
+since: 2024-07-01
+runs: 7

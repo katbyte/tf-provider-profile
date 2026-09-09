@@ -6,5 +6,5 @@ tfpp
 .tools/bin/
 .tools/venv/
 .cache/
-.tfpp
+.tfpp.local.yml
 reports/

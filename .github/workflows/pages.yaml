@@ -1,20 +1,23 @@
 ---
 # Profiles new provider releases every week and publishes reports/ to GitHub Pages.
 #
-# The collected data lives in data/<provider>/*.json on the default branch, so each run only profiles releases
-# that have no results yet, downloads only those releases' zips, commits the new json files back, and deploys the
-# rendered reports/ as the Pages artifact. Enable Pages with "Source: GitHub Actions" in the repository settings.
+# The providers come from the providers list in .tfpp.yml. The collected data lives in data/<provider>/*.json on the
+# default branch, so each run only profiles releases that have no results yet, downloads only those releases' zips,
+# commits the new json files back, and deploys the rendered reports/ as the Pages artifact. Enable Pages with "Source: GitHub Actions" in the repository settings.
 #
 # Timing stages (startup, schema) run on shared runners, so treat their absolute numbers as noisier than a local run;
 # trends across releases measured on the same runner type are still meaningful.
 name: Pages
 on:
   schedule:
-    - cron: '0 6 * * 5' # friday morning utc, after the usual thursday provider release
+    # friday 07:00 pacific (america/vancouver), after the usual thursday provider release. cron is utc only, so both
+    # the pdt and pst candidates fire and the gate job keeps the one that is 07:00 local
+    - cron: '0 14 * * 5'
+    - cron: '0 15 * * 5'
   workflow_dispatch:
     inputs:
       provider:
-        description: provider short name, or "all" for every provider under data/
+        description: provider short name, or "all" for every provider listed in .tfpp.yml
         default: all
       since:
         description: profile releases published on or after (YYYY-MM-DD)
@@ -37,7 +40,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$(TZ=America/Vancouver date +%H)" != "07" ]; then
+            echo "not 07:00 pacific ($(TZ=America/Vancouver date)), skipping this candidate"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   profile:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     env:
       PROVIDER: ${{ inputs.provider || 'all' }}
@@ -57,12 +76,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          if [ "$PROVIDER" = all ]; then providers=$(ls data); else providers=$PROVIDER; fi
-          for p in $providers; do
-            ./tfpp run -p "$p" --since "$SINCE" --stages "$STAGES" --platforms linux_amd64 --no-report \
-              ${{ inputs.force && '--force' || '' }}
-          done
-          ./tfpp report
+          if [ "$PROVIDER" = all ]; then PROVIDER=""; fi
+          ./tfpp run --provider "$PROVIDER" --since "$SINCE" --stages "$STAGES" --platforms linux_amd64 \
+            ${{ inputs.force && '--force' || '' }}
           touch reports/.nojekyll
 
       - name: Commit new data

@@ -14,6 +14,15 @@ GOLANGCI_LINT=$(TOOLS_BIN)/golangci-lint
 YAMLLINT_VERSION=1.38.0
 YAMLLINT=$(TOOLS_BIN)/yamllint
 
+# terraform used by the schema stage, downloaded once into .cache/tools so every machine measures with the same version
+# (homebrew's terraform is stuck on an old release); the version is recorded with each result
+TERRAFORM_VERSION?=1.16.1
+TERRAFORM=.cache/tools/terraform/terraform
+HOST_OS=$(shell go env GOHOSTOS)
+HOST_ARCH=$(shell go env GOHOSTARCH)
+# keep the machine awake for the long runs on macOS
+CAFFEINATE=$(shell command -v caffeinate >/dev/null && echo "caffeinate -i")
+
 # golangci-lint with the azproviderlint module plugin compiled in (.tools/.custom-gcl.yml);
 # lint runs use this binary, the plain go.mod one exists to bootstrap `golangci-lint custom`
 GOLANGCI_LINT_MODULES=$(TOOLS_BIN)/golangci-with-modules
@@ -95,13 +104,32 @@ depscheck: ## Check that go.mod/go.sum and vendor/ are in sync
 test: build ## Run unit tests under the race detector
 	go test -race ./... -timeout ${TEST_TIMEOUT}
 
+$(TERRAFORM):
+	@echo "==> downloading terraform $(TERRAFORM_VERSION) ($(HOST_OS)/$(HOST_ARCH)) into $(dir $@)..."
+	@mkdir -p $(dir $@)
+	@curl -fsSL -o $(dir $@)terraform.zip "https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(HOST_OS)_$(HOST_ARCH).zip"
+	@cd $(dir $@) && unzip -qo terraform.zip terraform && rm -f terraform.zip
+	@$@ version | head -1
+
+terraform: $(TERRAFORM) ## Download the pinned terraform for the schema stage into .cache/tools
+
 ##@ Profiling
 run: build ## Profile every release since --since (see tfpp run --help); ARGS passes extra flags
 	./tfpp run $(ARGS)
+
+# every provider in .tfpp.yml, every stage, every release, no sampling, timing stages measured on this machine with the
+# pinned terraform and golangci-lint. ARGS passes extra flags (e.g. ARGS="-p azuread" or ARGS="--since 2025-01-01")
+update: build $(TERRAFORM) $(GOLANGCI_LINT) ## Profile releases that have no results yet: all stages, no sampling (log: .cache/update.log)
+	@mkdir -p .cache
+	$(CAFFEINATE) ./tfpp run --sample 1 --terraform $(TERRAFORM) --golangci-lint $(abspath $(GOLANGCI_LINT)) $(ARGS) 2>&1 | tee .cache/update.log
+
+full: build $(TERRAFORM) $(GOLANGCI_LINT) ## Re-profile EVERY release from scratch on this machine (--force, all stages, no sampling; many hours; log: .cache/full.log)
+	@mkdir -p .cache
+	$(CAFFEINATE) ./tfpp run --force --sample 1 --terraform $(TERRAFORM) --golangci-lint $(abspath $(GOLANGCI_LINT)) $(ARGS) 2>&1 | tee .cache/full.log
 
 report: build ## Regenerate reports/<provider>/ from cached results
 	./tfpp report $(ARGS)
 
 check-all: build test lint actionlint yamllint depscheck ## Run build + test + all linters + depscheck
 
-.PHONY: default all help fmt build lint lint-fix actionlint yamllint depscheck check-all install tools test run report
+.PHONY: default all help fmt build lint lint-fix actionlint yamllint depscheck check-all install tools test run report terraform update full

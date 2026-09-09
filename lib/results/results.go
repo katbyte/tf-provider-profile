@@ -69,6 +69,26 @@ type StartupResult struct {
 	HandshakeMedMs  float64 `json:"handshake_med_ms"`
 	MaxRSSBytes     int64   `json:"max_rss_bytes"` // median across runs
 	ProtocolVersion string  `json:"protocol_version"`
+
+	// package init cost from GODEBUG=inittrace=1: everything that runs before main, the fixed part of every launch
+	InitPackages  int         `json:"init_packages,omitempty"`   // packages with an init that took measurable time
+	InitMs        float64     `json:"init_ms,omitempty"`         // sum of per-package init clock time, min across runs
+	InitHeapBytes int64       `json:"init_heap_bytes,omitempty"` // bytes allocated during package init
+	InitAllocs    int64       `json:"init_allocs,omitempty"`     // allocations during package init
+	InitTop       []InitEntry `json:"init_top,omitempty"`        // the most expensive package inits
+}
+
+// InitEntry is one package's init cost.
+type InitEntry struct {
+	Package string  `json:"package"`
+	Ms      float64 `json:"ms"`
+	Bytes   int64   `json:"bytes"`
+}
+
+// NamedCount pairs a schema entity with a count, for top-n lists.
+type NamedCount struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }
 
 // SchemaResult measures `terraform providers schema -json` against the release.
@@ -93,6 +113,20 @@ type SchemaResult struct {
 	DeprecatedAttrs     int     `json:"deprecated_attributes"`
 	MaxDepth            int     `json:"max_depth"`
 	ProviderAttributes  int     `json:"provider_attributes"`
+
+	// attribute flags across resource and data source schemas, nested included
+	AttrsRequired  int `json:"attrs_required,omitempty"`
+	AttrsOptional  int `json:"attrs_optional,omitempty"`
+	AttrsComputed  int `json:"attrs_computed,omitempty"`
+	AttrsSensitive int `json:"attrs_sensitive,omitempty"`
+	AttrsWriteOnly int `json:"attrs_write_only,omitempty"`
+	AttrsDescribed int `json:"attrs_described,omitempty"` // attributes carrying a description
+	// resources whose schema version is above zero, i.e. shipping state upgraders
+	ResourcesWithMigrations int `json:"resources_with_migrations,omitempty"`
+	// attributes per resource (nested included): distribution and the largest resources
+	ResourceAttrsMax    int          `json:"resource_attrs_max,omitempty"`
+	ResourceAttrsMedian int          `json:"resource_attrs_median,omitempty"`
+	LargestResources    []NamedCount `json:"largest_resources,omitempty"`
 }
 
 // SourceResult is what the source stage counts at the release tag.
@@ -134,6 +168,18 @@ type SourceResult struct {
 	SDKByKind map[string]map[string]int `json:"sdk_by_kind,omitempty"`
 	// resource files declaring a resource identity (schema.ResourceIdentity or sdk.ResourceWithIdentity)
 	IdentityResourceFiles int `json:"identity_resource_files"`
+	// resource/data source files carrying a resource-level deprecation (DeprecationMessage: or sdk.ResourceWithDeprecation*)
+	DeprecatedResourceFiles int `json:"deprecated_resource_files,omitempty"`
+	// resource/data source files with no sibling _test.go
+	ResourceFilesWithoutTests int `json:"resource_files_without_tests,omitempty"`
+	ResourceFilesTotal        int `json:"resource_files_total,omitempty"` // every file defining a resource or data source
+	// lint and tech-debt markers in non-vendor go files
+	NolintDirectives int `json:"nolint_directives,omitempty"`
+	Todos            int `json:"todos,omitempty"` // TODO / FIXME mentions
+	// per-service migration progress: services with at least one resource file, and how many of them are done
+	ServicesWithResources   int `json:"services_with_resources,omitempty"`
+	ServicesFullyTyped      int `json:"services_fully_typed,omitempty"`        // no untyped resource or data source left
+	ServicesFullyGoAzureSDK int `json:"services_fully_go_azure_sdk,omitempty"` // every sdk-importing resource file is go-azure-sdk only
 
 	DocsResources     int `json:"docs_resources"`
 	DocsDataSources   int `json:"docs_data_sources"`
@@ -156,7 +202,9 @@ type SourceResult struct {
 	LinesAdded       int            `json:"lines_added"`
 	LinesRemoved     int            `json:"lines_removed"`
 	DaysSincePrev    float64        `json:"days_since_prev"`
-	ChangelogEntries map[string]int `json:"changelog_entries"` // section -> bullet count
+	TagDate          time.Time      `json:"tag_date,omitzero"`           // commit date of the tagged commit
+	ReleaseLagHours  float64        `json:"release_lag_hours,omitempty"` // github publish time minus tag commit time
+	ChangelogEntries map[string]int `json:"changelog_entries"`           // section -> bullet count
 }
 
 // BuildResult times a local build at the release tag.

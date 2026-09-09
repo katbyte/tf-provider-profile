@@ -2,6 +2,7 @@ package stages
 
 import (
 	"bytes"
+	"cmp"
 	"compress/gzip"
 	"context"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -210,32 +212,60 @@ type schemaJSON struct {
 }
 
 type schemaBlockWrap struct {
-	Block schemaBlock `json:"block"`
+	Version int         `json:"version"`
+	Block   schemaBlock `json:"block"`
 }
 
 type schemaBlock struct {
 	Attributes map[string]struct {
-		Deprecated bool `json:"deprecated"`
+		Deprecated  bool   `json:"deprecated"`
+		Required    bool   `json:"required"`
+		Optional    bool   `json:"optional"`
+		Computed    bool   `json:"computed"`
+		Sensitive   bool   `json:"sensitive"`
+		WriteOnly   bool   `json:"write_only"`
+		Description string `json:"description"`
 	} `json:"attributes"`
 	BlockTypes map[string]struct {
 		Block schemaBlock `json:"block"`
 	} `json:"block_types"`
 }
 
-func (b schemaBlock) walk(depth int, sr *results.SchemaResult) {
+// walk accumulates the block's attributes into sr and returns how many it found, nested blocks included.
+func (b schemaBlock) walk(depth int, sr *results.SchemaResult) int {
 	if depth > sr.MaxDepth {
 		sr.MaxDepth = depth
 	}
-	sr.Attributes += len(b.Attributes)
+	n := len(b.Attributes)
+	sr.Attributes += n
 	for _, a := range b.Attributes {
 		if a.Deprecated {
 			sr.DeprecatedAttrs++
 		}
+		if a.Required {
+			sr.AttrsRequired++
+		}
+		if a.Optional {
+			sr.AttrsOptional++
+		}
+		if a.Computed {
+			sr.AttrsComputed++
+		}
+		if a.Sensitive {
+			sr.AttrsSensitive++
+		}
+		if a.WriteOnly {
+			sr.AttrsWriteOnly++
+		}
+		if a.Description != "" {
+			sr.AttrsDescribed++
+		}
 	}
 	sr.Blocks += len(b.BlockTypes)
 	for _, bt := range b.BlockTypes {
-		bt.Block.walk(depth+1, sr)
+		n += bt.Block.walk(depth+1, sr)
 	}
+	return n
 }
 
 func parseSchema(out []byte, source string) (*results.SchemaResult, error) {
@@ -258,11 +288,22 @@ func parseSchema(out []byte, source string) (*results.SchemaResult, error) {
 		sr.Functions = len(ps.Functions)
 		sr.IdentityResources = len(ps.Identities)
 		sr.ProviderAttributes = len(ps.Provider.Block.Attributes)
-		for _, r := range ps.Resources {
-			r.Block.walk(1, sr)
+		sizes := make([]results.NamedCount, 0, len(ps.Resources))
+		for name, r := range ps.Resources {
+			n := r.Block.walk(1, sr)
+			sizes = append(sizes, results.NamedCount{Name: name, Count: n})
+			if r.Version > 0 {
+				sr.ResourcesWithMigrations++
+			}
 		}
 		for _, d := range ps.DataSources {
 			d.Block.walk(1, sr)
+		}
+		if len(sizes) > 0 {
+			slices.SortFunc(sizes, func(a, b results.NamedCount) int { return cmp.Or(b.Count-a.Count, strings.Compare(a.Name, b.Name)) })
+			sr.ResourceAttrsMax = sizes[0].Count
+			sr.ResourceAttrsMedian = sizes[len(sizes)/2].Count
+			sr.LargestResources = sizes[:min(5, len(sizes))]
 		}
 	}
 	if !found {

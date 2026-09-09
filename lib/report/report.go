@@ -31,6 +31,8 @@ type releaseInfo struct {
 	PluginSDK string            `json:"plugin_sdk,omitempty"` // terraform-plugin-sdk/v2 version linked
 	Framework string            `json:"framework,omitempty"`  // terraform-plugin-framework version linked
 	Host      string            `json:"host,omitempty"`       // machine the timing stages ran on
+	Largest   []string          `json:"largest,omitempty"`    // biggest resource schemas, "name (attributes)"
+	InitTop   []string          `json:"init_top,omitempty"`   // most expensive package inits, "pkg (ms)"
 	DepsAdded []string          `json:"deps_added,omitempty"` // modules linked that the previous release did not have
 	DepsGone  []string          `json:"deps_removed,omitempty"`
 	Stages    map[string]string `json:"stages"` // stage -> ok | failed: <err>
@@ -126,6 +128,18 @@ func build(p *provider.Provider, all []*results.Result) data {
 	var prevDeps map[string]string
 	for _, r := range all {
 		ri := releaseInfo{Version: r.Version, Date: r.Date.Format("2006-01-02"), TS: r.Date.Unix(), Stages: map[string]string{}}
+		if r.Schema != nil {
+			for _, l := range r.Schema.LargestResources {
+				ri.Largest = append(ri.Largest, fmt.Sprintf("%s (%d)", l.Name, l.Count))
+			}
+		}
+		if r.Startup != nil {
+			for _, e := range r.Startup.InitTop {
+				if len(ri.InitTop) < 5 {
+					ri.InitTop = append(ri.InitTop, fmt.Sprintf("%s (%.1f ms, %s)", strings.TrimPrefix(e.Package, "github.com/"), e.Ms, humanBytes(e.Bytes)))
+				}
+			}
+		}
 		for _, pl := range plats {
 			b := r.Binary[pl]
 			if b == nil || ri.GoVersion != "" {
@@ -241,4 +255,17 @@ func writeCSV(path string, d data) error {
 		return fmt.Errorf("writing csv: %w", err)
 	}
 	return nil
+}
+
+func humanBytes(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%dB", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f%cB", float64(b)/float64(div), "KMGTPE"[exp])
 }
