@@ -85,6 +85,7 @@ button.plain { border: 1px solid var(--axis); background: var(--surface); color:
 .panel.before { box-shadow: -5px 0 0 var(--s1); }
 .panel.after { box-shadow: 5px 0 0 var(--s1); }
 .panel.dragging { opacity: .5; }
+.panel.active { box-shadow: inset 0 0 0 1px var(--s1); }
 .panel h2 .handle { color: var(--muted); font-weight: 400; cursor: grab; }
 .panel h2 .pbtn { border: 1px solid var(--axis); background: var(--surface); color: var(--ink-2); border-radius: 4px; padding: 0 6px; font: inherit; font-size: 11px; line-height: 18px; cursor: pointer; }
 .panel h2 .pbtn.on { background: var(--ink-2); color: var(--surface); }
@@ -890,14 +891,11 @@ function renderSidebar() {
     if (!ms.length) continue;
     const plats = [...new Set(ms.map(platOf))];
     let body = '';
-    if (plats.length === 1 && plats[0] === '') {
-      body = ms.map(m => metricRow(m)).join('');
-    } else {
-      for (const pl of plats) {
-        const pm = ms.filter(m => platOf(m) === pl);
-        const id = g.id + '/' + (pl || '-');
-        body += node(id, pl || 'other', pm.length, pm.map(m => metricRow(m)).join(''), q ? true : undefined);
-      }
+    // metrics without a platform sit directly in the group; platform-specific ones get a sub-node per platform
+    body = ms.filter(m => platOf(m) === '').map(m => metricRow(m)).join('');
+    for (const pl of plats.filter(Boolean)) {
+      const pm = ms.filter(m => platOf(m) === pl);
+      body += node(g.id + '/' + pl, pl, pm.length, pm.map(m => metricRow(m)).join(''), q ? true : undefined);
     }
     const nOn = ms.filter(m => state.sel.includes(m.key)).length;
     pOn += nOn; pAll += ms.length;
@@ -907,6 +905,10 @@ function renderSidebar() {
   }
   $('#groups').innerHTML = html;
 }
+// cmd/ctrl/shift-click on a tree metric combines it into the active panel (last added to or clicked) instead of a new one
+let activeKey = null, lastMods = false;
+const activeGroup = () => state.groups.findIndex(g => g.keys.includes(activeKey));
+$('#groups').addEventListener('click', ev => { lastMods = ev.metaKey || ev.ctrlKey || ev.shiftKey; }, true);
 $('#groups').addEventListener('change', ev => {
   const t = ev.target;
   if (t.dataset.preset) {
@@ -918,9 +920,19 @@ $('#groups').addEventListener('change', ev => {
     return;
   }
   const k = t.dataset.k; if (!k) return;
-  if (t.checked) addKeys([k], false); else removeKeys([k]);
+  if (t.checked) {
+    const gi = activeGroup();
+    if (lastMods && gi >= 0 && !isComp(k) && !isComp(state.groups[gi].keys[0])) {
+      state.groups.push({ keys: [k], stack: false }); syncSel();
+      mergeGroups(state.groups.length - 1, gi);
+    } else addKeys([k], false);
+    activeKey = k;
+  } else removeKeys([k]);
+  lastMods = false;
   update();
 });
+// clicking a panel makes it the active one for combining
+$('#charts').addEventListener('mousedown', ev => { const p = ev.target.closest('.panel[data-g]'); if (!p) return; const g = state.groups[+p.dataset.g]; if (g && g.keys.length) { activeKey = g.keys[0]; for (const x of document.querySelectorAll('.panel.active')) x.classList.remove('active'); p.classList.add('active'); } });
 $('#groups').addEventListener('click', ev => {
   const b = ev.target.closest('button[data-lr]'); if (!b) return;
   ev.preventDefault(); ev.stopPropagation();
@@ -1059,6 +1071,7 @@ function renderCharts() {
   }).join('')}</div>`;
   for (const p of el.querySelectorAll('.panel[data-g]')) {
     const g = visibleGroups().find(x => x.gi === +p.dataset.g), units = unitsOf(g);
+    if (g.keys.includes(activeKey)) p.classList.add('active');
     if (isComp(g.keys[0])) { renderComp(p.querySelector('.c'), M[g.keys[0]]); continue; }
     const series = g.keys.map(k => ({ label: M[k].label, color: colorOf(k), values: M[k].values, right: M[k].unit !== units[0] }));
     lineChart(p.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: g.stack && units.length === 1, h: series.length > 1 ? 240 : 190, keys: g.keys });
