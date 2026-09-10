@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/katbyte/tf-provider-profile/lib/clog"
@@ -31,8 +32,13 @@ func (r *Runner) prcheckStage(ctx context.Context, res *results.Result) (string,
 	// auto-vendoring keep the actual builds on the vendor dir
 	env = append(env, "GOFLAGS=")
 	env = append(env, r.tfEnv()...)
-	gobin := filepath.Join(r.P.CacheDir, "gobin")
-	env = append(env, "GOBIN="+gobin, "PATH="+gobin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	// tool installs (`go install` and `curl ... | sh -b $(go env GOPATH)/bin` alike) land in an isolated GOPATH so
+	// per-release versions never touch the user's; the real module cache is shared so nothing re-downloads
+	gopath := filepath.Join(r.P.CacheDir, "gopath")
+	if mc, err := runCmd(ctx, src, nil, "go", "env", "GOMODCACHE"); err == nil && strings.TrimSpace(mc) != "" {
+		env = append(env, "GOMODCACHE="+strings.TrimSpace(mc))
+	}
+	env = append(env, "GOPATH="+gopath, "PATH="+filepath.Join(gopath, "bin")+string(os.PathListSeparator)+os.Getenv("PATH"))
 	if makeTarget(src, "tools") {
 		if _, err := runCmd(ctx, src, env, "make", "tools"); err != nil {
 			return "", fmt.Errorf("installing tools: %w", err)
@@ -46,7 +52,9 @@ func (r *Runner) prcheckStage(ctx context.Context, res *results.Result) (string,
 	pctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(pctx, "make", "pr-check")
+	// -k keeps the remaining sub-targets running past a failure, so the duration is the full gate cost even when a
+	// release has genuine findings at its tag (exit code and fail tail still record that it failed)
+	cmd := exec.CommandContext(pctx, "make", "-k", "pr-check")
 	cmd.Dir = src
 	cmd.Env = append(os.Environ(), env...)
 	start := time.Now()
