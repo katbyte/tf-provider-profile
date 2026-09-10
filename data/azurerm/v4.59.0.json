@@ -24,8 +24,8 @@
       "os": "darwin/arm64"
     },
     "prcheck": {
-      "ran_at": "2026-09-09T22:10:49.500869Z",
-      "duration_s": 285.083693542,
+      "ran_at": "2026-09-10T12:36:32.741062Z",
+      "duration_s": 2721.78926075,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1317,7 +1317,7 @@
   },
   "prcheck": {
     "target": "pr-check",
-    "duration_s": 272.49694175,
-    "exit_code": 2
+    "duration_s": 2715.757629292,
+    "exit_code": 0
   }
 }
