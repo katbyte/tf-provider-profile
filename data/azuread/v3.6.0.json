@@ -17,11 +17,17 @@
       "os": "darwin/arm64"
     },
     "lint": {
-      "ran_at": "2026-09-09T03:11:28.783339Z",
-      "duration_s": 0.34318575,
-      "error": "golangci-lint exit 3 after 0s: Error: can't load config: unsupported version of the configuration: \"\" See https://golangci-lint.run/docs/product/migration-guide for migration instructions | The command is terminated due to an error: can't load config: unsupported version of the configuration: \"\" See https://golangci-lint.run/docs/product/migration-guide for migration instructions",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T17:05:46.12057Z",
+      "duration_s": 41.187214833,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-09T17:06:27.308478Z",
+      "duration_s": 0.077442417,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "schema": {
@@ -41,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-09T16:14:10.884293Z",
       "duration_s": 1.34311575,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-09T17:23:30.124963Z",
+      "duration_s": 18.804686917,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -648,5 +661,18 @@
     "stripped_build_s": 2.385954,
     "local_binary_bytes": 81881346,
     "stripped_binary_bytes": 58977762
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 18.717445625,
+    "exit_code": 0,
+    "packages": 20
+  },
+  "lint": {
+    "tool": "golangci-lint",
+    "tool_version": "2.13.2",
+    "duration_s": 40.682032792,
+    "exit_code": 1,
+    "issues": 109
   }
 }

@@ -23,6 +23,13 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "prcheck": {
+      "ran_at": "2026-09-09T17:43:31.75335Z",
+      "duration_s": 473.878684291,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-09T16:04:28.301822Z",
       "duration_s": 1.7135095420000002,
@@ -40,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-09T16:04:27.370665Z",
       "duration_s": 0.930303959,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-09T17:36:09.324776Z",
+      "duration_s": 442.424332708,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1288,11 +1302,22 @@
     "local_binary_bytes": 340210002,
     "stripped_binary_bytes": 273980370
   },
+  "test": {
+    "tool": "make test",
+    "duration_s": 441.866463916,
+    "exit_code": 0,
+    "packages": 309
+  },
   "lint": {
     "tool": "golangci-lint",
     "tool_version": "2.13.2",
     "duration_s": 2958.944998583,
     "exit_code": 1,
     "issues": 117
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 469.961487042,
+    "exit_code": 2
   }
 }

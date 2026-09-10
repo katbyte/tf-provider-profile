@@ -17,10 +17,18 @@
       "os": "darwin/arm64"
     },
     "lint": {
-      "ran_at": "2026-09-09T01:51:15.47396Z",
-      "duration_s": 2381.76631875,
-      "error": "golangci-lint exit -1 after 2381s: ",
-      "host": "katbook"
+      "ran_at": "2026-09-09T21:57:58.711358Z",
+      "duration_s": 0.21124,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-09T21:57:58.923402Z",
+      "duration_s": 289.819643375,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     },
     "schema": {
       "ran_at": "2026-09-09T16:10:45.913052Z",
@@ -39,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-09T16:10:41.545642Z",
       "duration_s": 4.36666275,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-09T21:51:13.359405Z",
+      "duration_s": 405.36683175,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1295,5 +1310,16 @@
     "stripped_build_s": 10.57692175,
     "local_binary_bytes": 334082754,
     "stripped_binary_bytes": 222979362
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 403.898212834,
+    "exit_code": 0,
+    "packages": 312
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 285.766605125,
+    "exit_code": 2
   }
 }

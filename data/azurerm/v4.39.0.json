@@ -10,19 +10,24 @@
       "os": "darwin/arm64"
     },
     "build": {
-      "ran_at": "2026-09-09T03:09:31.768536Z",
-      "duration_s": 0.02310875,
-      "error": "git checkout --quiet --force v4.39.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T20:45:51.803719Z",
+      "duration_s": 88.483052416,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "lint": {
-      "ran_at": "2026-09-09T03:09:31.792798Z",
-      "duration_s": 0.024124792,
-      "error": "git checkout --quiet --force v4.39.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T20:54:05.221779Z",
+      "duration_s": 0.155062042,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-09T20:54:05.377522Z",
+      "duration_s": 287.503736084,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "schema": {
@@ -42,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-09T16:08:36.923614Z",
       "duration_s": 3.682193916,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-09T20:47:20.288817Z",
+      "duration_s": 404.927747,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1285,5 +1297,24 @@
       "features": 3,
       "total": 17
     }
+  },
+  "build": {
+    "go_toolchain": "go: downloading go1.24.5 (darwin/arm64)\ngo version go1.24.5 darwin/arm64",
+    "clean_build_s": 55.737925875,
+    "warm_build_s": 12.983337125,
+    "stripped_build_s": 10.410593875,
+    "local_binary_bytes": 331437570,
+    "stripped_binary_bytes": 222897698
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 404.606157375,
+    "exit_code": 0,
+    "packages": 307
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 275.985974709,
+    "exit_code": 2
   }
 }

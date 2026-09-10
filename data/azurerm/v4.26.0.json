@@ -9,6 +9,27 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "build": {
+      "ran_at": "2026-09-09T19:55:35.993472Z",
+      "duration_s": 81.51491125,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "lint": {
+      "ran_at": "2026-09-09T20:03:36.624262Z",
+      "duration_s": 0.15085975,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-09T20:03:36.775839Z",
+      "duration_s": 272.827546083,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-09T16:07:19.56977Z",
       "duration_s": 2.004270709,
@@ -26,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-09T16:07:15.865202Z",
       "duration_s": 3.702978625,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-09T19:56:57.509201Z",
+      "duration_s": 399.115192083,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1262,5 +1290,24 @@
       "features": 1,
       "total": 20
     }
+  },
+  "build": {
+    "go_toolchain": "go1.24.1 darwin/arm64",
+    "clean_build_s": 55.435195458,
+    "warm_build_s": 12.685212625,
+    "stripped_build_s": 10.288557875,
+    "local_binary_bytes": 326788722,
+    "stripped_binary_bytes": 219870258
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 398.797415292,
+    "exit_code": 0,
+    "packages": 304
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 261.34865275,
+    "exit_code": 2
   }
 }

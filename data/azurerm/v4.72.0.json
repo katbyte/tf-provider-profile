@@ -9,6 +9,27 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "build": {
+      "ran_at": "2026-09-09T22:41:04.168477Z",
+      "duration_s": 91.236569875,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "lint": {
+      "ran_at": "2026-09-09T22:49:09.548743Z",
+      "duration_s": 0.158857334,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-09T22:49:09.708262Z",
+      "duration_s": 281.788602875,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-09T16:12:17.476551Z",
       "duration_s": 2.150446791,
@@ -26,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-09T16:12:13.744535Z",
       "duration_s": 3.731227333,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-09T22:42:35.405158Z",
+      "duration_s": 394.153017917,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1298,5 +1326,24 @@
       "features": 1,
       "total": 11
     }
+  },
+  "build": {
+    "go_toolchain": "go: downloading go1.25.10 (darwin/arm64)\ngo version go1.25.10 darwin/arm64",
+    "clean_build_s": 58.963624792,
+    "warm_build_s": 13.470216333,
+    "stripped_build_s": 10.899262917,
+    "local_binary_bytes": 336624786,
+    "stripped_binary_bytes": 224573010
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 393.794497958,
+    "exit_code": 0,
+    "packages": 313
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 268.863776834,
+    "exit_code": 2
   }
 }

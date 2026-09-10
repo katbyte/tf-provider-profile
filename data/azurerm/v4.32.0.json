@@ -10,19 +10,24 @@
       "os": "darwin/arm64"
     },
     "build": {
-      "ran_at": "2026-09-09T03:09:31.659651Z",
-      "duration_s": 0.024420417,
-      "error": "git checkout --quiet --force v4.32.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T20:20:39.351629Z",
+      "duration_s": 81.401507625,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "lint": {
-      "ran_at": "2026-09-09T03:09:31.687479Z",
-      "duration_s": 0.023688791,
-      "error": "git checkout --quiet --force v4.32.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-09T20:28:45.118066Z",
+      "duration_s": 0.155380667,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-09T20:28:45.274173Z",
+      "duration_s": 261.193974542,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "schema": {
@@ -42,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-09T16:07:50.222246Z",
       "duration_s": 3.863547958,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-09T20:22:00.754688Z",
+      "duration_s": 404.36070575,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1286,5 +1298,24 @@
       "features": 3,
       "total": 15
     }
+  },
+  "build": {
+    "go_toolchain": "go1.24.1 darwin/arm64",
+    "clean_build_s": 55.018758125,
+    "warm_build_s": 12.818279083,
+    "stripped_build_s": 10.400222375,
+    "local_binary_bytes": 328310642,
+    "stripped_binary_bytes": 220783682
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 404.041857541,
+    "exit_code": 0,
+    "packages": 307
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 248.610882083,
+    "exit_code": 2
   }
 }
