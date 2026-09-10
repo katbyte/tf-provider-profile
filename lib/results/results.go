@@ -243,6 +243,7 @@ type PRCheckResult struct {
 	Target    string  `json:"target"`
 	DurationS float64 `json:"duration_s"`
 	ExitCode  int     `json:"exit_code"`
+	FailTail  string  `json:"fail_tail,omitempty"` // last output lines when the target failed, for diagnosing
 }
 
 // Result is everything recorded for one release.

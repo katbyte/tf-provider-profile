@@ -61,7 +61,8 @@ func (r *Runner) prcheckStage(ctx context.Context, res *results.Result) (string,
 		}
 		// a failing pr-check is how long CI takes to say no, which is still the number being measured
 		pr.ExitCode = ee.ExitCode()
-		clog.Log.Debugf("%s: make pr-check exit %d: %s", res.Version, pr.ExitCode, lastLines(string(out), 6))
+		pr.FailTail = lastLines(string(out), 6)
+		clog.Log.Debugf("%s: make pr-check exit %d: %s", res.Version, pr.ExitCode, pr.FailTail)
 	}
 
 	res.PRCheck = pr
