@@ -30,6 +30,7 @@ func (r *Runner) prcheckStage(ctx context.Context, res *results.Result) (string,
 	// `go install tool@version` in make tools refuses to run with -mod=vendor forced; drop the flag and let go's
 	// auto-vendoring keep the actual builds on the vendor dir
 	env = append(env, "GOFLAGS=")
+	env = append(env, r.tfEnv()...)
 	gobin := filepath.Join(r.P.CacheDir, "gobin")
 	env = append(env, "GOBIN="+gobin, "PATH="+gobin+string(os.PathListSeparator)+os.Getenv("PATH"))
 	if makeTarget(src, "tools") {

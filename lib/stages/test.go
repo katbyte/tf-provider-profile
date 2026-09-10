@@ -27,16 +27,7 @@ func (r *Runner) testStage(ctx context.Context, res *results.Result) (string, er
 		return "", err
 	}
 	src := r.P.SrcDir()
-	env := r.buildEnv(src)
-	// tests built on helper/resource download a terraform CLI unless told where one is, which drags release-key
-	// expiry and network variance into the timing; hand them the pinned terraform instead
-	if r.Opts.Terraform != "" {
-		if tf, err := exec.LookPath(r.Opts.Terraform); err == nil {
-			if abs, err := filepath.Abs(tf); err == nil {
-				env = append(env, "TF_ACC_TERRAFORM_PATH="+abs)
-			}
-		}
-	}
+	env := append(r.buildEnv(src), r.tfEnv()...)
 
 	name, args, tool := "go", []string{"test", "./..."}, "go test"
 	if makeTarget(src, "test") {
@@ -77,6 +68,23 @@ func (r *Runner) testStage(ctx context.Context, res *results.Result) (string, er
 
 	res.Test = tr
 	return fmt.Sprintf("%.0fs pkgs %d failures %d exit %d (%s)", tr.DurationS, tr.Packages, tr.Failures, tr.ExitCode, tool), nil
+}
+
+// tfEnv points tests built on helper/resource at the pinned terraform via TF_ACC_TERRAFORM_PATH, so they never
+// download a CLI mid-run (which drags release-key expiry and network variance into the timing).
+func (r *Runner) tfEnv() []string {
+	if r.Opts.Terraform == "" {
+		return nil
+	}
+	tf, err := exec.LookPath(r.Opts.Terraform)
+	if err != nil {
+		return nil
+	}
+	abs, err := filepath.Abs(tf)
+	if err != nil {
+		return nil
+	}
+	return []string{"TF_ACC_TERRAFORM_PATH=" + abs}
 }
 
 // makeTarget reports whether the checkout's makefile defines the given target.
