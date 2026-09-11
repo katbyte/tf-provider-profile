@@ -819,7 +819,38 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+
+		// a release that broke mid-stage leaves a hole in the timing series that looks identical to one never
+		// profiled, so the breakage gets its own series; the reason is in stages.<name>.error of each result
+		{"build.stage_failed", "Build stage broke", "count", "build", "1 where the build stage errored out instead of producing a timing (reason in stages.build.error)", stageBroke(results.StageBuild)},
+		{"test.stage_failed", "Test stage broke", "count", "build", "1 where the test run never produced package results, as opposed to tests reporting failures (reason in stages.test.error)", stageBroke(results.StageTest)},
+		{"lint.stage_failed", "Lint stage broke", "count", "build", "1 where the lint run itself broke rather than reporting issues (reason in stages.lint.error)", stageBroke(results.StageLint)},
+		{"prcheck.gate_failed", "PR checks failed", "count", "build", "1 where make pr-check exited non-zero: the gate does not pass at that tag (output tail in prcheck.fail_tail)", func(r *results.Result) (float64, bool) {
+			if x := pc(r); x != nil {
+				return b2f(x.ExitCode != 0)
+			}
+			return 0, false
+		}},
 	}
+}
+
+// stageBroke reports 1 for releases where the stage ran and errored and 0 where it ran cleanly, and nothing at all
+// where it never ran, so a broken stage plots as a point rather than vanishing into the gaps.
+func stageBroke(stage string) func(r *results.Result) (float64, bool) {
+	return func(r *results.Result) (float64, bool) {
+		m, ok := r.Stages[stage]
+		if !ok {
+			return 0, false
+		}
+		return b2f(m.Error != "")
+	}
+}
+
+func b2f(b bool) (float64, bool) {
+	if b {
+		return 1, true
+	}
+	return 0, true
 }
 
 // upIs says whether growth in a metric is bad (size, time, memory, issues), good, or just a fact.
@@ -839,6 +870,7 @@ func upIs(d def) string {
 	}
 	switch d.key {
 	case "schema.deprecated_attributes", "lint.issues", "test.failures", "source.untyped_resources", "source.untyped_data_sources",
+		"build.stage_failed", "test.stage_failed", "lint.stage_failed", "prcheck.gate_failed",
 		"source.deprecated_resource_files", "source.resource_files_without_tests", "source.nolint_directives", "source.todos",
 		"startup.init_ms", "startup.init_heap_bytes", "startup.init_allocs",
 		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_autorest",
