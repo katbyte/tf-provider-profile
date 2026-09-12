@@ -43,6 +43,13 @@
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-12T01:31:56.611296Z",
+      "duration_s": 455.189960792,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     }
   },
   "binary": {
@@ -1285,6 +1292,12 @@
     "stripped_build_s": 12.721468375,
     "local_binary_bytes": 340284738,
     "stripped_binary_bytes": 274038594
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 454.513381167,
+    "exit_code": 0,
+    "packages": 309
   },
   "lint": {
     "tool": "golangci-lint",
