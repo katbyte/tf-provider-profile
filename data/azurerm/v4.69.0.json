@@ -10,11 +10,10 @@
       "os": "darwin/arm64"
     },
     "build": {
-      "ran_at": "2026-09-09T03:09:32.13481Z",
-      "duration_s": 0.025048833,
-      "error": "git checkout --quiet --force v4.69.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
+      "ran_at": "2026-09-12T00:55:56.57118Z",
+      "duration_s": 90.417162375,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
     "lint": {
@@ -1314,5 +1313,13 @@
       "features": 4,
       "total": 21
     }
+  },
+  "build": {
+    "go_toolchain": "go: downloading go1.25.9 (darwin/arm64)\ngo version go1.25.9 darwin/arm64",
+    "clean_build_s": 59.552297875,
+    "warm_build_s": 13.497538833,
+    "stripped_build_s": 10.730907625,
+    "local_binary_bytes": 338695058,
+    "stripped_binary_bytes": 226135970
   }
 }

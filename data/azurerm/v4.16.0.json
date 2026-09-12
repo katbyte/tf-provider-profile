@@ -9,6 +9,13 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "build": {
+      "ran_at": "2026-09-11T23:57:45.374319Z",
+      "duration_s": 89.362103541,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-09T16:06:15.877051Z",
       "duration_s": 2.006564375,
@@ -1263,5 +1270,13 @@
       "features": 3,
       "total": 20
     }
+  },
+  "build": {
+    "go_toolchain": "go1.22.7 darwin/arm64",
+    "clean_build_s": 59.38348825,
+    "warm_build_s": 16.076408084,
+    "stripped_build_s": 12.09615475,
+    "local_binary_bytes": 341796946,
+    "stripped_binary_bytes": 230480162
   }
 }

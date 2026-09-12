@@ -10,10 +10,11 @@
       "os": "darwin/arm64"
     },
     "build": {
-      "ran_at": "2026-09-09T02:49:28.666658Z",
-      "duration_s": 114.778050625,
-      "error": "warm build: go build -o /Users/kt/kt/tf-provider-profiler/.cache/azurerm/build/v4.19.0/terraform-provider-azurerm .: exit -1: ",
-      "host": "katbook"
+      "ran_at": "2026-09-12T00:00:44.625976Z",
+      "duration_s": 90.440238542,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     },
     "lint": {
       "ran_at": "2026-09-09T02:51:23.44605Z",
@@ -1274,5 +1275,13 @@
       "features": 6,
       "total": 25
     }
+  },
+  "build": {
+    "go_toolchain": "go1.22.7 darwin/arm64",
+    "clean_build_s": 60.585667375,
+    "warm_build_s": 16.1006725,
+    "stripped_build_s": 12.014238417,
+    "local_binary_bytes": 343053666,
+    "stripped_binary_bytes": 231348946
   }
 }
