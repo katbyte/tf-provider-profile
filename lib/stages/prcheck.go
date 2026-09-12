@@ -45,6 +45,12 @@ func (r *Runner) prcheckStage(ctx context.Context, res *results.Result) (string,
 		}
 	}
 
+	// the gate is timed from cold for the same reasons as the test stage: its own test and lint sub-targets compile
+	// this release's tree, and the shared cache would otherwise grow release after release
+	if _, err := runCmd(ctx, src, env, "go", "clean", "-cache"); err != nil {
+		return "", err
+	}
+
 	timeout := r.Opts.Timeout
 	if timeout <= 0 {
 		timeout = 3 * time.Hour

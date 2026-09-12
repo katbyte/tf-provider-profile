@@ -34,6 +34,16 @@ func (r *Runner) testStage(ctx context.Context, res *results.Result) (string, er
 		name, args, tool = "make", []string{"test"}, "make test"
 	}
 
+	// resolve (and if needed download) the toolchain before the clock starts, then empty the build cache so every
+	// release is timed from cold like the build stage does: compiling this release's tree is part of what a test run
+	// costs, and a cache shared across a sweep otherwise grows without bound (300GB of it filled a disk)
+	if _, err := runCmd(ctx, src, env, "go", "version"); err != nil {
+		return "", err
+	}
+	if _, err := runCmd(ctx, src, env, "go", "clean", "-cache"); err != nil {
+		return "", err
+	}
+
 	timeout := r.Opts.Timeout
 	if timeout <= 0 {
 		timeout = 90 * time.Minute
