@@ -57,6 +57,11 @@ func (r *Runner) checkoutTag(ctx context.Context, version string) (string, error
 	if _, err := runCmd(ctx, src, nil, "git", "checkout", "--quiet", "--force", version); err != nil {
 		return "", err
 	}
+	// --force only restores tracked files: whatever an interrupted checkout left behind (a full disk, a kill) stays
+	// untracked and is then built and counted as if it belonged to this tag, so sweep the tree as well
+	if _, err := runCmd(ctx, src, nil, "git", "clean", "--quiet", "-xfd"); err != nil {
+		return "", err
+	}
 	out, err := runCmd(ctx, src, nil, "git", "rev-parse", "HEAD")
 	if err != nil {
 		return "", err
