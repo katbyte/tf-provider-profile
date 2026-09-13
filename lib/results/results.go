@@ -231,11 +231,12 @@ type LintResult struct {
 
 // TestResult times the provider's unit tests at the release tag.
 type TestResult struct {
-	Tool      string  `json:"tool"` // "make test" or "go test"
-	DurationS float64 `json:"duration_s"`
-	ExitCode  int     `json:"exit_code"`
-	Packages  int     `json:"packages,omitempty"` // packages reported ok or FAIL
-	Failures  int     `json:"failures,omitempty"` // packages reported FAIL
+	Tool      string   `json:"tool"` // "make test" or "go test"
+	DurationS float64  `json:"duration_s"`
+	ExitCode  int      `json:"exit_code"`
+	Packages  int      `json:"packages,omitempty"`        // packages reported ok or FAIL
+	Failures  int      `json:"failures,omitempty"`        // packages reported FAIL
+	FailedPkg []string `json:"failed_packages,omitempty"` // which ones, for the releases that ship a broken test
 }
 
 // PRCheckResult times the provider's aggregate pr-check make target, where one exists.

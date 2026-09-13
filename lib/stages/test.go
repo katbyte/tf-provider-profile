@@ -16,7 +16,7 @@ import (
 // per-package result lines only: the bare FAIL/ok summary lines have no trailing tab
 var (
 	reTestOK   = regexp.MustCompile(`(?m)^ok[ \t]`)
-	reTestFail = regexp.MustCompile(`(?m)^FAIL[ \t]`)
+	reTestFail = regexp.MustCompile(`(?m)^FAIL[ \t]+(\S+)`)
 )
 
 // testStage times the provider's unit tests at the tag: `make test` when the provider defines the target (its own
@@ -58,11 +58,15 @@ func (r *Runner) testStage(ctx context.Context, res *results.Result) (string, er
 	out, err := cmd.CombinedOutput()
 	elapsed := time.Since(start).Seconds()
 
+	failed := reTestFail.FindAllSubmatch(out, -1)
 	tr := &results.TestResult{
 		Tool:      tool,
 		DurationS: elapsed,
-		Packages:  len(reTestOK.FindAll(out, -1)) + len(reTestFail.FindAll(out, -1)),
-		Failures:  len(reTestFail.FindAll(out, -1)),
+		Packages:  len(reTestOK.FindAll(out, -1)) + len(failed),
+		Failures:  len(failed),
+	}
+	for _, m := range failed {
+		tr.FailedPkg = append(tr.FailedPkg, string(m[1]))
 	}
 	if err != nil {
 		var ee *exec.ExitError
