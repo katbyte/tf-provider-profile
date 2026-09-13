@@ -52,8 +52,8 @@
       "os": "darwin/arm64"
     },
     "test": {
-      "ran_at": "2026-09-10T00:26:43.931255Z",
-      "duration_s": 386.404662959,
+      "ran_at": "2026-09-13T04:47:29.724977Z",
+      "duration_s": 426.916367458,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1340,7 +1340,7 @@
   },
   "test": {
     "tool": "make test",
-    "duration_s": 386.076878916,
+    "duration_s": 423.229474875,
     "exit_code": 0,
     "packages": 310
   },

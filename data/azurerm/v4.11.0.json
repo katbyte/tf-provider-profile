@@ -38,8 +38,8 @@
       "os": "darwin/arm64"
     },
     "test": {
-      "ran_at": "2026-09-12T02:39:16.00802Z",
-      "duration_s": 394.502010584,
+      "ran_at": "2026-09-13T05:24:25.89736Z",
+      "duration_s": 449.859597125,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1288,9 +1288,12 @@
   },
   "test": {
     "tool": "make test",
-    "duration_s": 393.977493875,
+    "duration_s": 441.178122917,
     "exit_code": 2,
     "packages": 302,
-    "failures": 1
+    "failures": 1,
+    "failed_packages": [
+      "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault"
+    ]
   }
 }

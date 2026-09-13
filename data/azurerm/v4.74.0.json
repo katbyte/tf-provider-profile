@@ -36,6 +36,13 @@
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-13T03:35:38.287466Z",
+      "duration_s": 433.061342459,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     }
   },
   "binary": {
@@ -1312,5 +1319,11 @@
     "stripped_build_s": 11.943540625,
     "local_binary_bytes": 337120034,
     "stripped_binary_bytes": 224861570
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 429.638631083,
+    "exit_code": 0,
+    "packages": 312
   }
 }
