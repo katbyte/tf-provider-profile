@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/katbyte/tf-provider-profile/lib/cout"
+	"github.com/katbyte/go-kt/cout"
 	"github.com/katbyte/tf-provider-profile/lib/provider"
 )
 

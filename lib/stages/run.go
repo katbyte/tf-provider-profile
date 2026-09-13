@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/katbyte/tf-provider-profile/lib/clog"
-	"github.com/katbyte/tf-provider-profile/lib/cout"
+	"github.com/katbyte/go-kt/clog"
+	"github.com/katbyte/go-kt/cout"
 	"github.com/katbyte/tf-provider-profile/lib/provider"
 	"github.com/katbyte/tf-provider-profile/lib/results"
 )

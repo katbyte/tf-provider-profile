@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/katbyte/tf-provider-profile/lib/clog"
+	"github.com/katbyte/go-kt/clog"
 )
 
 // Provider identifies a terraform provider and where tfpp keeps its data.

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/katbyte/tf-provider-profile/lib/clog"
+	"github.com/katbyte/go-kt/clog"
 	"github.com/katbyte/tf-provider-profile/lib/provider"
 	"github.com/katbyte/tf-provider-profile/lib/results"
 	"github.com/spf13/cobra"

@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/katbyte/go-kt/version"
 	"github.com/katbyte/tf-provider-profile/lib/provider"
 	"github.com/katbyte/tf-provider-profile/lib/results"
-	"github.com/katbyte/tf-provider-profile/lib/version"
 )
 
 //go:embed template.html

@@ -54,8 +54,8 @@ builds:
         goarch: riscv64
     ldflags:
       - -s -w
-      - -X github.com/katbyte/tf-provider-profile/lib/version.Version={{ .Tag }}
-      - -X github.com/katbyte/tf-provider-profile/lib/version.GitCommit={{ .ShortCommit }}
+      - -X github.com/katbyte/go-kt/version.Version={{ .Tag }}
+      - -X github.com/katbyte/go-kt/version.GitCommit={{ .ShortCommit }}
 
 universal_binaries:
   - replace: false # also ship a single fat darwin binary alongside amd64/arm64

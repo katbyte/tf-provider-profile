@@ -13,12 +13,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/katbyte/tf-provider-profile/lib/cout"
+	"github.com/katbyte/go-kt/cout"
+	"github.com/katbyte/go-kt/version"
 	"github.com/katbyte/tf-provider-profile/lib/provider"
 	"github.com/katbyte/tf-provider-profile/lib/report"
 	"github.com/katbyte/tf-provider-profile/lib/results"
 	"github.com/katbyte/tf-provider-profile/lib/stages"
-	"github.com/katbyte/tf-provider-profile/lib/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

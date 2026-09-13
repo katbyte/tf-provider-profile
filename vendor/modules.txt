@@ -12,6 +12,11 @@ github.com/gookit/color
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
+# github.com/katbyte/go-kt v0.1.0
+## explicit; go 1.26
+github.com/katbyte/go-kt/clog
+github.com/katbyte/go-kt/cout
+github.com/katbyte/go-kt/version
 # github.com/pelletier/go-toml/v2 v2.2.4
 ## explicit; go 1.21.0
 github.com/pelletier/go-toml/v2
