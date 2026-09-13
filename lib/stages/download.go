@@ -156,6 +156,11 @@ func extractZip(zp, dest string) error {
 			continue
 		}
 		out := filepath.Join(dest, name)
+		// Base already strips any directory part, but check the joined path stays
+		// under dest as well so the containment is explicit at the point of use
+		if !strings.HasPrefix(out, filepath.Clean(dest)+string(os.PathSeparator)) {
+			return fmt.Errorf("zip entry %q would land outside %s", f.Name, dest)
+		}
 		rc, err := f.Open()
 		if err != nil {
 			return err
