@@ -16,13 +16,6 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
-    "lint": {
-      "ran_at": "2026-09-09T22:23:35.430663Z",
-      "duration_s": 0.167588792,
-      "host": "studiokat",
-      "cpu": "Apple M1 Ultra",
-      "os": "darwin/arm64"
-    },
     "prcheck": {
       "ran_at": "2026-09-10T13:21:54.568467Z",
       "duration_s": 2525.004161416,

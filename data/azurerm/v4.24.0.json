@@ -16,14 +16,6 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
-    "lint": {
-      "ran_at": "2026-09-09T03:09:31.58082Z",
-      "duration_s": 0.024014708,
-      "error": "git checkout --quiet --force v4.24.0: exit 128: fatal: Unable to create '/Users/kt/kt/tf-provider-profiler/.cache/azurerm/src/.git/index.lock': File exists. |  | Another git process seems to be running in this repository, or the lock file may be stale",
-      "host": "katbook",
-      "cpu": "Apple M1 Max",
-      "os": "darwin/arm64"
-    },
     "schema": {
       "ran_at": "2026-09-09T16:07:08.155972Z",
       "duration_s": 2.013180125,

@@ -16,13 +16,6 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
-    "lint": {
-      "ran_at": "2026-09-09T09:24:59.825557Z",
-      "duration_s": 2904.582362209,
-      "host": "studiokat",
-      "cpu": "Apple M1 Ultra",
-      "os": "darwin/arm64"
-    },
     "schema": {
       "ran_at": "2026-09-09T16:04:22.985212Z",
       "duration_s": 1.7244288330000002,
@@ -1278,12 +1271,5 @@
     "duration_s": 504.73291075,
     "exit_code": 0,
     "packages": 307
-  },
-  "lint": {
-    "tool": "golangci-lint",
-    "tool_version": "2.13.2",
-    "duration_s": 2902.560835375,
-    "exit_code": 1,
-    "issues": 117
   }
 }

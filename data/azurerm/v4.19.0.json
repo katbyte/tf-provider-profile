@@ -16,12 +16,6 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
-    "lint": {
-      "ran_at": "2026-09-09T02:51:23.44605Z",
-      "duration_s": 0.00007675,
-      "error": "git fetch --quiet --tags origin: context canceled",
-      "host": "katbook"
-    },
     "schema": {
       "ran_at": "2026-09-09T16:06:33.59783Z",
       "duration_s": 2.032613875,
