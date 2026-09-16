@@ -16,6 +16,13 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "prcheck": {
+      "ran_at": "2026-09-15T07:52:51.499948Z",
+      "duration_s": 1049.998683375,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-09T16:05:22.858842Z",
       "duration_s": 1.986489416,
@@ -1278,5 +1285,10 @@
     "duration_s": 428.340423542,
     "exit_code": 0,
     "packages": 298
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 1034.613404375,
+    "exit_code": 0
   }
 }

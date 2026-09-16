@@ -16,6 +16,13 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "prcheck": {
+      "ran_at": "2026-09-16T13:39:10.768104Z",
+      "duration_s": 3870.963622833,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-09T16:12:48.733406Z",
       "duration_s": 2.137280292,
@@ -1341,5 +1348,11 @@
     "duration_s": 430.599370417,
     "exit_code": 0,
     "packages": 309
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 3852.245105958,
+    "exit_code": 2,
+    "fail_tail": "All functionality has been superseded by swissshepherd: |     https://github.com/YakDriver/swissshepherd | Please migrate. This tool will receive no further releases. | ============================================================ | ==\u003e Checking documentation terraform blocks are formatted... | make: Target `pr-check' not remade because of errors."
   }
 }

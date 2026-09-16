@@ -16,6 +16,13 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "prcheck": {
+      "ran_at": "2026-09-15T09:07:02.881897Z",
+      "duration_s": 1049.048591208,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-09T16:05:52.226766Z",
       "duration_s": 2.005556792,
@@ -1294,5 +1301,11 @@
     "failed_packages": [
       "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault"
     ]
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 1034.184544666,
+    "exit_code": 2,
+    "fail_tail": "All functionality has been superseded by swissshepherd: |     https://github.com/YakDriver/swissshepherd | Please migrate. This tool will receive no further releases. | ============================================================ | ==\u003e Checking documentation terraform blocks are formatted... | make: Target `pr-check' not remade because of errors."
   }
 }
