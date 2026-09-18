@@ -11,8 +11,14 @@ TOOLS_BIN=.tools/bin
 ACTIONLINT=$(TOOLS_BIN)/actionlint
 GOFUMPT=$(TOOLS_BIN)/gofumpt
 GOLANGCI_LINT=$(TOOLS_BIN)/golangci-lint
+SHELLCHECK_VERSION=v0.11.0
+TYPOS_VERSION=v1.50.1
 YAMLLINT_VERSION=1.38.0
+ZIZMOR_VERSION=v1.30.1
+SHELLCHECK=$(TOOLS_BIN)/shellcheck
+TYPOS=$(TOOLS_BIN)/typos
 YAMLLINT=$(TOOLS_BIN)/yamllint
+ZIZMOR=$(TOOLS_BIN)/zizmor
 
 # terraform used by the schema stage, downloaded once into .cache/tools so every machine measures with the same version
 # (homebrew's terraform is stuck on an old release); the version is recorded with each result
@@ -42,6 +48,29 @@ $(YAMLLINT): makefile
 	@mkdir -p $(TOOLS_BIN)
 	@python3 -m venv .tools/venv && .tools/venv/bin/pip install -q yamllint==$(YAMLLINT_VERSION) && ln -sf ../venv/bin/yamllint $@
 
+$(SHELLCHECK): makefile
+	@echo "==> downloading shellcheck $(SHELLCHECK_VERSION)..."
+	@mkdir -p $(TOOLS_BIN)
+	@os=$$(uname | tr 'A-Z' 'a-z'); arch=$$(uname -m); [ "$$arch" = "arm64" ] && arch=aarch64; \
+		curl -sSfL "https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$$os.$$arch.tar.xz" \
+		| tar -xJ -O shellcheck-$(SHELLCHECK_VERSION)/shellcheck > $@ && chmod +x $@
+
+$(TYPOS): makefile
+	@echo "==> downloading typos $(TYPOS_VERSION)..."
+	@mkdir -p $(TOOLS_BIN)
+	@case "$$(uname)" in Darwin) target=apple-darwin;; *) target=unknown-linux-musl;; esac; \
+		arch=$$(uname -m); [ "$$arch" = "arm64" ] && arch=aarch64; \
+		curl -sSfL "https://github.com/crate-ci/typos/releases/download/$(TYPOS_VERSION)/typos-$(TYPOS_VERSION)-$$arch-$$target.tar.gz" \
+		| tar -xz -O ./typos > $@ && chmod +x $@
+
+$(ZIZMOR): makefile
+	@echo "==> downloading zizmor $(ZIZMOR_VERSION)..."
+	@mkdir -p $(TOOLS_BIN)
+	@case "$$(uname)" in Darwin) target=apple-darwin;; *) target=unknown-linux-gnu;; esac; \
+		arch=$$(uname -m); [ "$$arch" = "arm64" ] && arch=aarch64; \
+		curl -sSfL "https://github.com/zizmorcore/zizmor/releases/download/$(ZIZMOR_VERSION)/zizmor-$$arch-$$target.tar.gz" \
+		| tar -xz -O zizmor > $@ && chmod +x $@
+
 default: fmt build
 
 all: fmt build
@@ -58,7 +87,7 @@ install: ## Install tfpp into GOPATH/bin with version info from git
 	@echo "==> installing..."
 	go build -o "$$(go env GOPATH)/bin/tfpp" -ldflags "-X github.com/katbyte/go-kt/version.GitCommit=${GIT_COMMIT} -X github.com/katbyte/go-kt/version.Version=${GIT_VERSION}" .
 
-tools: $(ACTIONLINT) $(GOFUMPT) $(GOLANGCI_LINT) $(GOLANGCI_LINT_MODULES) $(YAMLLINT) ## Install all pinned dev tools into .tools/bin
+tools: $(ACTIONLINT) $(GOFUMPT) $(GOLANGCI_LINT) $(GOLANGCI_LINT_MODULES) $(YAMLLINT) $(SHELLCHECK) $(TYPOS) $(ZIZMOR) ## Install all pinned dev tools into .tools/bin
 
 ##@ Formatting
 fmt: $(GOFUMPT) $(GOLANGCI_LINT) ## Fix Go formatting (gofmt, gofumpt, goimports)
@@ -78,13 +107,30 @@ lint-fix: $(GOLANGCI_LINT_MODULES) ## Fix source code with all golangci linters
 	@echo "==> Checking source code against linters (applying autofixes)..."
 	$(GOLANGCI_LINT_MODULES) run --fix ./...
 
-actionlint: $(ACTIONLINT) ## Check GitHub workflows with actionlint
+actionlint: $(ACTIONLINT) $(SHELLCHECK) ## Check GitHub workflows with actionlint (incl. shellcheck on run blocks)
 	@echo "==> Checking workflows with actionlint..."
-	@$(ACTIONLINT)
+	@$(ACTIONLINT) -shellcheck=$(SHELLCHECK)
 
 yamllint: $(YAMLLINT) ## Check YAML files with yamllint (config in .yamllint.yml)
 	@echo "==> Checking YAML files with yamllint..."
 	@$(YAMLLINT) -s .
+
+shellcheck: $(SHELLCHECK) ## Check shell scripts with shellcheck
+	@echo "==> Checking shell scripts with shellcheck..."
+	@files=$$(find . -name '*.sh' -not -path './vendor/*' -not -path './.tools/*'); \
+		if [ -z "$$files" ]; then echo "no shell scripts"; else $(SHELLCHECK) $$files; fi
+
+typos: $(TYPOS) ## Check all files for spelling mistakes with typos (config in .typos.toml)
+	@echo "==> Checking for typos..."
+	@$(TYPOS)
+
+typos-fix: $(TYPOS) ## Fix spelling mistakes found by typos
+	@echo "==> Fixing typos..."
+	@$(TYPOS) --write-changes
+
+zizmor: $(ZIZMOR) ## Audit GitHub workflows for security issues with zizmor
+	@echo "==> Auditing workflows with zizmor..."
+	@$(ZIZMOR) .
 
 depscheck: ## Check that go.mod/go.sum and vendor/ are in sync
 	@echo "==> Checking source code with go mod tidy..."
@@ -132,4 +178,4 @@ report: build ## Regenerate reports/<provider>/ from cached results
 
 check-all: build test lint actionlint yamllint depscheck ## Run build + test + all linters + depscheck
 
-.PHONY: default all help fmt build lint lint-fix actionlint yamllint depscheck check-all install tools test run report terraform update full
+.PHONY: default all help fmt build lint lint-fix actionlint yamllint shellcheck typos typos-fix zizmor depscheck check-all install tools test run report terraform update full
