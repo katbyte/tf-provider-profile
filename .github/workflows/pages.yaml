@@ -10,10 +10,9 @@
 name: Pages
 on:
   schedule:
-    # friday 07:00 pacific (america/vancouver), after the usual thursday provider release. cron is utc only, so both
-    # the pdt and pst candidates fire and the gate job keeps the one that is 07:00 local
+    # friday after the usual thursday provider release: 07:00 pacific in summer, 06:00 in winter. github routinely
+    # delivers scheduled runs hours late, so the hour is deliberately not pinned any tighter than this
     - cron: '0 14 * * 5'
-    - cron: '0 15 * * 5'
   workflow_dispatch:
     inputs:
       provider:
@@ -38,23 +37,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  gate:
-    runs-on: ubuntu-latest
-    outputs:
-      run: ${{ steps.check.outputs.run }}
-    steps:
-      - id: check
-        run: |
-          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$(TZ=America/Vancouver date +%H)" != "07" ]; then
-            echo "not 07:00 pacific ($(TZ=America/Vancouver date)), skipping this candidate"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
-
   profile:
-    needs: gate
-    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write # commit the captured profile data
