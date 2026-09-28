@@ -358,10 +358,10 @@ function parseGroups(str) {
     const raw = body.split(',').filter(Boolean);
     const keys = raw.map(k => k.replace(/^!/, '')).filter(k => CATALOGUE.some(c => c.key === k));
     const hidden = raw.filter(k => k.startsWith('!')).map(k => k.slice(1)).filter(k => keys.includes(k));
-    return { keys, hidden, stack: flags.includes('s'), wide: flags.includes('w') };
+    return { keys, hidden, stack: flags.includes('s'), wide: flags.includes('w'), dash: flags.includes('d') ? 1 : flags.includes('D') ? 2 : 0 };
   }).filter(g => g.keys.length);
 }
-const serializeGroups = gs => gs.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : ''); return (f ? f + ':' : '') + g.keys.map(k => ((g.hidden || []).includes(k) ? '!' : '') + k).join(','); }).join('|');
+const serializeGroups = gs => gs.map(g => { const f = (g.stack ? 's' : '') + (g.wide ? 'w' : '') + (g.dash === 1 ? 'd' : g.dash === 2 ? 'D' : ''); return (f ? f + ':' : '') + g.keys.map(k => ((g.hidden || []).includes(k) ? '!' : '') + k).join(','); }).join('|');
 function readHash() {
   const h = new URLSearchParams(location.hash.slice(1));
   if (h.get('p') && (h.get('p') === 'all' || PROVIDERS.includes(h.get('p')))) state.p = h.get('p');
@@ -515,6 +515,10 @@ function fmt(v, unit, short) {
   }
 }
 // delta colour = direction × whether up is good for this metric; neutral metrics stay in secondary ink
+// dash modes for a two-axis panel: 0 both solid, 1 left dashed, 2 right dashed. the label draws the two sides in
+// order, so "d•s" is a dashed left and a solid right
+const DASH_LABEL = ['solid', 'd•s', 's•d'];
+const DASH_TITLE = ['both axes solid · click to dash the left', 'left axis dashed · click to dash the right instead', 'right axis dashed · click for both solid'];
 const UNIT_LABEL = { bytes: 'size', ms: 'milliseconds', s: 'seconds', count: 'count', lines: 'lines', files: 'files', resources: 'resources', attributes: 'attributes', depth: 'depth', modules: 'modules', funcs: 'functions', packages: 'packages', commits: 'commits', authors: 'authors', entries: 'changelog entries', pct: 'percent', ratio: 'ratio', days: 'days', hours: 'hours', allocs: 'allocations', index: 'index' };
 function fmtDelta(a, b, unit, upIs) {
   if (a == null || b == null) return { text: '', cls: '' };
@@ -663,7 +667,9 @@ function lineChart(el, series, opts) {
       const basePts = pts.map(p => [p[0], sy(s.base[p[2]])]);
       g += `<path fill="${s.color}" opacity=".8" stroke="var(--surface)" stroke-width="1.5" d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} ${basePts.slice().reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} Z"/>`;
     }
-    g += `<path class="line" stroke="${s.color}" d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')}"/>`;
+    // dash whichever axis the panel asked for, so a glance tells left-axis series from right-axis ones
+    const dashed = opts.dash === 1 ? !s.right : opts.dash === 2 ? !!s.right : false;
+    g += `<path class="line" stroke="${s.color}"${dashed ? ' stroke-dasharray="4 3"' : ''} d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')}"/>`;
     if (opts.wash) g += `<path fill="${s.color}" opacity=".08" d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${pts[pts.length - 1][0].toFixed(1)} ${h - pad.b} L${pts[0][0].toFixed(1)} ${h - pad.b} Z"/>`;
     if (dotsAlways) for (const p of pts) g += `<circle class="dot" cx="${p[0]}" cy="${p[1]}" r="4" fill="${s.color}"/>`;
     const last = pts[pts.length - 1];
@@ -1382,8 +1388,8 @@ function renderCharts() {
     const lu = left[0]?.unit || right[0]?.unit, ru = right[0]?.unit || '';
     const mixed = side => [...new Set(side.map(m => m.unit))].length > 1;
     const series = shown.map(m => ({ label: m.label, color: colorOf(m.key), values: m.values, right: state.right.includes(m.key) }));
-    el.innerHTML = `<div class="panel wide"><h2>left: ${UNIT_LABEL[lu] || lu || '–'} · right: ${UNIT_LABEL[ru] || ru || '–'}</h2><p class="desc">use the L/R toggles under "enabled" to move a metric between axes${mixed(left) || mixed(right) ? ' · <b>an axis is mixing units; its ticks use the first metric\'s unit</b>' : ''}${cap}</p><div class="c"></div>${legend(shown)}</div>`;
-    lineChart(el.querySelector('.c'), series, { unit: lu, rightUnit: ru, h: 340, keys: shown.map(m => m.key) });
+    el.innerHTML = `<div class="panel wide"><h2>left: ${UNIT_LABEL[lu] || lu || '–'} · right: ${UNIT_LABEL[ru] || ru || '–'}<span class="val">${right.length ? `<button class="pbtn ${state.dash ? 'on' : ''}" data-act="cdash" title="${DASH_TITLE[state.dash || 0]}">${DASH_LABEL[state.dash || 0]}</button>` : ''}</span></h2><p class="desc">use the L/R toggles under "enabled" to move a metric between axes${mixed(left) || mixed(right) ? ' · <b>an axis is mixing units; its ticks use the first metric\'s unit</b>' : ''}${cap}</p><div class="c"></div>${legend(shown)}</div>`;
+    lineChart(el.querySelector('.c'), series, { unit: lu, rightUnit: ru, h: 340, keys: shown.map(m => m.key), dash: right.length ? (state.dash || 0) : 0 });
     return;
   }
 
@@ -1418,14 +1424,16 @@ function renderCharts() {
     const provs = [...new Set(ms.map(m => m.provider))];
     const title = `${multi() ? provs.join(' + ') + ' · ' : ''}${ms.length} metrics · ${units.map(u => UNIT_LABEL[u] || u).join(' × ')}`;
     const stackBtn = units.length === 1 ? `<button class="pbtn ${g.stack ? 'on' : ''}" data-act="stack" data-g="${gi}" title="stack the metrics on top of each other">${g.stack ? 'stacked' : 'stack'}</button>` : '';
-    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${title}</span><span class="val">${stackBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button> ${rmBtn(gi)}</span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is), off = (g.hidden || []).includes(m.key); return `<span class="${off ? 'off' : ''}" data-toggle="${m.key}" title="click to ${off ? 'show' : 'hide'}"><i style="background:${colorOf(m.key)}"></i><span class="lbl">${esc(lbl(m))}</span>${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
+    // two axes are easy to mix up by colour alone, so offer dashing one side's lines
+    const dashBtn = units.length > 1 ? `<button class="pbtn ${g.dash ? 'on' : ''}" data-act="dash" data-g="${gi}" title="${DASH_TITLE[g.dash || 0]}">${DASH_LABEL[g.dash || 0]}</button>` : '';
+    return `<div class="panel ${g.wide ? 'wide' : ''}" data-g="${gi}" draggable="true"><h2><span class="handle" title="drag: middle of another panel combines, its left/right edge reorders">⠿</span><span class="ttl" data-menu="${gi}" title="click for this panel's metrics">${title}</span><span class="val">${stackBtn} ${dashBtn} ${wideBtn(g, gi)} <button class="pbtn" data-act="split" data-g="${gi}" title="one panel per metric">split</button> ${rmBtn(gi)}</span></h2><div class="c"></div><div class="legend">${ms.map(m => { const { f, l } = firstLast(m.values), d = fmtDelta(f, l, m.unit, m.up_is), off = (g.hidden || []).includes(m.key); const dsh = units.length > 1 && g.dash && ((m.unit === units[0]) === (g.dash === 1)); return `<span class="${off ? 'off' : ''}" data-toggle="${m.key}" title="click to ${off ? 'show' : 'hide'}"><i style="background:${dsh ? `repeating-linear-gradient(90deg, ${colorOf(m.key)} 0 4px, transparent 4px 7px)` : colorOf(m.key)}"></i><span class="lbl">${esc(lbl(m))}</span>${units.length > 1 ? `<span class="unit"> (${m.unit === units[0] ? 'left' : 'right'})</span>` : ''} <b>${fmt(l, m.unit)}</b> <span class="${d.cls}">${d.text}</span><span class="rm" data-rm="${m.key}" title="remove from this chart">✕</span></span>`; }).join('')}</div></div>`;
   }).join('')}</div>`;
   for (const p of el.querySelectorAll('.panel[data-g]')) {
     const g = visibleGroups().find(x => x.gi === +p.dataset.g), units = unitsOf(g);
     if (isComp(g.keys[0])) { renderComp(p.querySelector('.c'), M[g.keys[0]]); continue; }
     const shownKeys = g.keys.filter(k => !(g.hidden || []).includes(k));
     const series = shownKeys.map(k => ({ label: M[k].label, color: colorOf(k), values: M[k].values, right: M[k].unit !== units[0] }));
-    lineChart(p.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: g.stack && units.length === 1, h: g.keys.length > 1 ? 240 : 190, keys: shownKeys });
+    lineChart(p.querySelector('.c'), series, { unit: units[0], rightUnit: units[1] || '', wash: series.length === 1, stacked: g.stack && units.length === 1, h: g.keys.length > 1 ? 240 : 190, keys: shownKeys, dash: units.length > 1 ? (g.dash || 0) : 0 });
   }
 }
 function renderStage() {
@@ -1500,6 +1508,8 @@ $('#charts').addEventListener('click', ev => {
   if (b.dataset.act === 'split') splitGroup(gi);
   else if (b.dataset.act === 'rm') removeGroup(gi);
   else if (b.dataset.act === 'stack') state.groups[gi].stack = !state.groups[gi].stack;
+  else if (b.dataset.act === 'dash') state.groups[gi].dash = ((state.groups[gi].dash || 0) + 1) % 3;
+  else if (b.dataset.act === 'cdash') state.dash = ((state.dash || 0) + 1) % 3;
   else if (b.dataset.act === 'wide') state.groups[gi].wide = !state.groups[gi].wide;
   update();
 });
