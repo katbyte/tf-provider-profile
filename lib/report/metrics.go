@@ -185,7 +185,8 @@ func sdkKindDefs() []def {
 		{"resource", "Resources"}, {"data_source", "Data sources"}, {"list", "List resources"}, {"action", "Actions"}, {"ephemeral", "Ephemeral resources"},
 	}
 	classes := []struct{ id, label, upIs string }{
-		{"go_azure_sdk", "go-azure-sdk", "good"}, {"both", "both SDKs", "bad"}, {"kermit", "kermit", "bad"}, {"giovanni", "giovanni", "bad"}, {"track1", "azure-sdk-for-go (track1)", "bad"}, {"none", "neither SDK", "neutral"},
+		// the "both" id stays as it is: it keys the collected data and every saved layout that charts it
+		{"go_azure_sdk", "go-azure-sdk", "good"}, {"both", "modern + legacy SDKs", "bad"}, {"kermit", "kermit", "bad"}, {"giovanni", "giovanni", "bad"}, {"track1", "azure-sdk-for-go (track1)", "bad"}, {"none", "neither SDK", "neutral"},
 	}
 	defs := make([]def, 0, len(kinds)*len(classes)+8)
 	// share of resource + data source files on each sdk family, of those importing any family
@@ -531,13 +532,13 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
-		{"source.resource_files_legacy_sdk", "Resource files on legacy SDK", "files", "deps", "resource/data source files importing azure-sdk-for-go or kermit only", func(r *results.Result) (float64, bool) {
+		{"source.resource_files_legacy_sdk", "Resource files on legacy SDK", "files", "deps", "resource/data source files importing azure-sdk-for-go, kermit or giovanni only", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil && x.ResourceFilesLegacySDK+x.ResourceFilesGoAzureSDK+x.ResourceFilesBothSDK > 0 {
 				return f(x.ResourceFilesLegacySDK)
 			}
 			return 0, false
 		}},
-		{"source.resource_files_both_sdk", "Resource files on both SDKs", "files", "deps", "resource/data source files importing legacy and go-azure-sdk", func(r *results.Result) (float64, bool) {
+		{"source.resource_files_both_sdk", "Resource files on modern + legacy SDKs", "files", "deps", "resource/data source files importing go-azure-sdk and at least one of azure-sdk-for-go, kermit or giovanni", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil && x.ResourceFilesLegacySDK+x.ResourceFilesGoAzureSDK+x.ResourceFilesBothSDK > 0 {
 				return f(x.ResourceFilesBothSDK)
 			}
