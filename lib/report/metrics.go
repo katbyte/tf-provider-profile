@@ -474,21 +474,47 @@ func fixedDefs() []def {
 			return 0, false
 		}},
 
-		{"source.go_lines", "Go lines", "lines", "source", "all .go files outside vendor", func(r *results.Result) (float64, bool) {
+		{"source.go_lines", "Go lines", "lines", "source", "all .go files outside vendor, test files included; go test lines and go code lines are both subsets of this, so stacking them double counts", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil {
 				return f(x.GoLines)
 			}
 			return 0, false
 		}},
-		{"source.go_code_lines", "Go code lines", "lines", "source", "non-blank, non-comment lines outside vendor", func(r *results.Result) (float64, bool) {
+		{"source.go_code_lines", "Go code lines", "lines", "source", "non-blank, non-comment lines outside vendor, test files included", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil {
 				return f(x.GoCodeLines)
 			}
 			return 0, false
 		}},
-		{"source.go_test_lines", "Go test lines", "lines", "source", "", func(r *results.Result) (float64, bool) {
+		{"source.go_test_lines", "Go test lines", "lines", "source", "lines in _test.go files outside vendor", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil {
 				return f(x.GoTestLines)
+			}
+			return 0, false
+		}},
+		// go lines splits two independent ways, and only a matched pair stacks into the whole: by file
+		// (non-test + test) or by line kind (code + blank/comment). the 2x2 cross is below
+		{"source.go_nontest_lines", "Go non-test lines", "lines", "source", "go lines outside vendor not in a _test.go file; stacks with go test lines to make go lines", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil {
+				return f(x.GoLines - x.GoTestLines)
+			}
+			return 0, false
+		}},
+		{"source.go_blank_comment_lines", "Go blank/comment lines", "lines", "source", "go lines outside vendor that are blank or comment-only; stacks with go code lines to make go lines", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil {
+				return f(x.GoLines - x.GoCodeLines)
+			}
+			return 0, false
+		}},
+		{"source.go_test_code_lines", "Go test code lines", "lines", "source", "non-blank, non-comment lines inside _test.go files", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && x.GoTestCodeLines > 0 {
+				return f(x.GoTestCodeLines)
+			}
+			return 0, false
+		}},
+		{"source.go_nontest_code_lines", "Go non-test code lines", "lines", "source", "non-blank, non-comment lines outside _test.go files; stacks with go test code lines to make go code lines", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && x.GoTestCodeLines > 0 {
+				return f(x.GoCodeLines - x.GoTestCodeLines)
 			}
 			return 0, false
 		}},

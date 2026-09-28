@@ -135,15 +135,18 @@ type SchemaResult struct {
 type SourceResult struct {
 	Commit string `json:"commit"`
 
-	GoFiles       int   `json:"go_files"`
-	GoLines       int   `json:"go_lines"`
-	GoCodeLines   int   `json:"go_code_lines"` // non-blank, non-comment-only lines
-	GoTestFiles   int   `json:"go_test_files"`
-	GoTestLines   int   `json:"go_test_lines"`
-	VendorGoFiles int   `json:"vendor_go_files"`
-	VendorGoLines int   `json:"vendor_go_lines"`
-	TotalFiles    int   `json:"total_files"`
-	TreeBytes     int64 `json:"tree_bytes"` // working tree size excluding .git
+	GoFiles     int `json:"go_files"`
+	GoLines     int `json:"go_lines"`
+	GoCodeLines int `json:"go_code_lines"` // non-blank, non-comment-only lines
+	GoTestFiles int `json:"go_test_files"`
+	GoTestLines int `json:"go_test_lines"`
+	// code lines inside _test.go files: the cross of the two splits, without which neither test/non-test nor
+	// code/comment can be completed into a partition
+	GoTestCodeLines int   `json:"go_test_code_lines,omitempty"`
+	VendorGoFiles   int   `json:"vendor_go_files"`
+	VendorGoLines   int   `json:"vendor_go_lines"`
+	TotalFiles      int   `json:"total_files"`
+	TreeBytes       int64 `json:"tree_bytes"` // working tree size excluding .git
 
 	Services           int `json:"services"`
 	TypedResources     int `json:"typed_resources"`

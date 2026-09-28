@@ -252,6 +252,7 @@ func walkTree(src string, sr *results.SourceResult) error {
 		if strings.HasSuffix(path, "_test.go") {
 			sr.GoTestFiles++
 			sr.GoTestLines += lines
+			sr.GoTestCodeLines += code
 			sr.TestFuncs += len(reTestFunc.FindAllIndex(b, -1))
 			sr.AccTestFuncs += len(reAccTestFunc.FindAllIndex(b, -1))
 			return nil
