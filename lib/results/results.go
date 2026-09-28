@@ -156,6 +156,7 @@ type SourceResult struct {
 	// sdk migration: non-test files under the service packages importing each sdk family
 	FilesImportingLegacySDK  int `json:"files_importing_legacy_sdk"`   // github.com/Azure/azure-sdk-for-go
 	FilesImportingKermit     int `json:"files_importing_kermit"`       // */kermit (hand-maintained legacy clients)
+	FilesImportingGiovanni   int `json:"files_importing_giovanni"`     // */giovanni (hand-maintained storage clients)
 	FilesImportingAutorest   int `json:"files_importing_autorest"`     // github.com/Azure/go-autorest
 	FilesImportingGoAzureSDK int `json:"files_importing_go_azure_sdk"` // github.com/hashicorp/go-azure-sdk
 

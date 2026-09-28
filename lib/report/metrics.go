@@ -104,6 +104,8 @@ func binaryDefs(platform string) []def {
 		{"github.com/Azure/go-autorest/autorest", "Azure/go-autorest (legacy)"},
 		{"github.com/jackofallops/kermit", "jackofallops/kermit (legacy)"},
 		{"github.com/tombuildsstuff/kermit", "tombuildsstuff/kermit (legacy)"},
+		{"github.com/jackofallops/giovanni", "jackofallops/giovanni (legacy)"},
+		{"github.com/tombuildsstuff/giovanni", "tombuildsstuff/giovanni (legacy)"},
 		{"github.com/hashicorp/go-azure-sdk/resource-manager", "go-azure-sdk/resource-manager"},
 		{"github.com/hashicorp/go-azure-sdk/sdk", "go-azure-sdk/sdk"},
 		{"github.com/hashicorp/go-azure-sdk/data-plane", "go-azure-sdk/data-plane"},
@@ -183,14 +185,14 @@ func sdkKindDefs() []def {
 		{"resource", "Resources"}, {"data_source", "Data sources"}, {"list", "List resources"}, {"action", "Actions"}, {"ephemeral", "Ephemeral resources"},
 	}
 	classes := []struct{ id, label, upIs string }{
-		{"go_azure_sdk", "go-azure-sdk", "good"}, {"both", "both SDKs", "bad"}, {"kermit", "kermit", "bad"}, {"track1", "azure-sdk-for-go (track1)", "bad"}, {"none", "neither SDK", "neutral"},
+		{"go_azure_sdk", "go-azure-sdk", "good"}, {"both", "both SDKs", "bad"}, {"kermit", "kermit", "bad"}, {"giovanni", "giovanni", "bad"}, {"track1", "azure-sdk-for-go (track1)", "bad"}, {"none", "neither SDK", "neutral"},
 	}
 	defs := make([]def, 0, len(kinds)*len(classes)+8)
 	// share of resource + data source files on each sdk family, of those importing any family
 	total := func(x *results.SourceResult) int {
 		n := 0
 		for _, k := range []string{"resource", "data_source"} {
-			for _, c := range []string{"go_azure_sdk", "both", "kermit", "track1"} {
+			for _, c := range []string{"go_azure_sdk", "both", "kermit", "giovanni", "track1"} {
 				n += x.SDKByKind[k][c]
 			}
 		}
@@ -581,6 +583,12 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		{"source.files_importing_giovanni", "Files importing giovanni (legacy)", "files", "deps", "non-test service files", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && x.FilesImportingGoAzureSDK+x.FilesImportingLegacySDK > 0 {
+				return f(x.FilesImportingGiovanni)
+			}
+			return 0, false
+		}},
 		{"source.files_importing_autorest", "Files importing go-autorest (legacy)", "files", "deps", "non-test service files", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil && x.FilesImportingGoAzureSDK+x.FilesImportingLegacySDK > 0 {
 				return f(x.FilesImportingAutorest)
@@ -873,7 +881,7 @@ func upIs(d def) string {
 		"build.stage_failed", "test.stage_failed", "lint.stage_failed", "prcheck.gate_failed",
 		"source.deprecated_resource_files", "source.resource_files_without_tests", "source.nolint_directives", "source.todos",
 		"startup.init_ms", "startup.init_heap_bytes", "startup.init_allocs",
-		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_autorest",
+		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_giovanni", "source.files_importing_autorest",
 		"source.resource_files_legacy_sdk", "source.resource_files_both_sdk":
 		return "bad"
 	case "source.typed_resource_pct", "source.typed_data_source_pct", "source.typed_pct", "source.typed_resources", "source.typed_data_sources",

@@ -18,30 +18,44 @@ import (
 )
 
 var (
-	reTypedResource   = regexp.MustCompile(`(?m)^var _ sdk\.Resource(With[A-Za-z]+)? = `)
-	reTypedDataSource = regexp.MustCompile(`(?m)^var _ sdk\.DataSource(With[A-Za-z]+)? = `)
+	reTypedResource   = typedAssertion("Resource")
+	reTypedDataSource = typedAssertion("DataSource")
 	// azurerm names untyped constructors resourceFoo()/dataSourceFoo(), azuread fooResource()/fooDataSource(); the
 	// lowercase first letter keeps exported state-migration helpers (ResourceFooV0) out
 	reUntypedResource = regexp.MustCompile(`(?m)^func (resource[A-Za-z0-9]*|[a-z][A-Za-z0-9]*Resource)\(\) \*(pluginsdk|schema)\.Resource \{`)
 	reUntypedDataSrc  = regexp.MustCompile(`(?m)^func (dataSource[A-Za-z0-9]*|[a-z][A-Za-z0-9]*DataSource)\(\) \*(pluginsdk|schema)\.Resource \{`)
 	reTestFunc        = regexp.MustCompile(`(?m)^func Test[A-Za-z0-9_]*\(`)
 	reAccTestFunc     = regexp.MustCompile(`(?m)^func TestAcc[A-Za-z0-9_]*\(`)
-	reTypedList       = regexp.MustCompile(`(?m)^var _ sdk\.FrameworkListWrappedResource(With[A-Za-z]+)? = `)
-	reTypedAction     = regexp.MustCompile(`(?m)^var _ sdk\.Action(With[A-Za-z]+)? = `)
-	reTypedEphemeral  = regexp.MustCompile(`(?m)^var _ sdk\.EphemeralResource(With[A-Za-z]+)? = `)
-	reIdentity        = regexp.MustCompile(`Identity:\s*&(schema|pluginsdk)\.ResourceIdentity\{|(?m)^var _ sdk\.ResourceWithIdentity = `)
+	reTypedList       = typedAssertion("FrameworkListWrappedResource")
+	reTypedAction     = typedAssertion("Action")
+	reTypedEphemeral  = typedAssertion("EphemeralResource")
+	reIdentity        = regexp.MustCompile(`Identity:\s*&(schema|pluginsdk)\.ResourceIdentity\{|` + assertionPattern("ResourceWithIdentity"))
 	reImportLegacySDK = regexp.MustCompile(`"github\.com/Azure/azure-sdk-for-go/`)
 	reImportKermit    = regexp.MustCompile(`"github\.com/[a-z0-9-]+/kermit/`)
+	reImportGiovanni  = regexp.MustCompile(`"github\.com/[a-z0-9-]+/giovanni/`)
 	reImportAutorest  = regexp.MustCompile(`"github\.com/Azure/go-autorest/`)
-	reImportGoAzure   = regexp.MustCompile(`"github\.com/hashicorp/go-azure-sdk/`)
+	// only the generated service packages count as migrated: the sdk/ subtree is base helpers (pollers, auth,
+	// odata) that a file still calling a legacy client for every operation can import on its own
+	reImportGoAzure = regexp.MustCompile(`"github\.com/hashicorp/go-azure-sdk/(resource-manager|data-plane|microsoft-graph)/`)
 	// resource-level deprecation: the untyped DeprecationMessage field or a typed sdk.ResourceWithDeprecation* assertion
-	reDeprecation   = regexp.MustCompile(`(?m)^\s*DeprecationMessage:|^var _ sdk\.(Resource|DataSource)WithDeprecation`)
+	reDeprecation   = regexp.MustCompile(`(?m)^\s*DeprecationMessage:|` + assertionPattern("(?:Resource|DataSource)WithDeprecation"))
 	reNolint        = regexp.MustCompile(`//\s*nolint`)
 	reTodo          = regexp.MustCompile(`(?i)\b(TODO|FIXME)\b`)
 	reShortStat     = regexp.MustCompile(`(\d+) files? changed(?:, (\d+) insertions?\(\+\))?(?:, (\d+) deletions?\(-\))?`)
 	reChangelogHead = regexp.MustCompile(`^## v?(\S+)`)
 	reChangelogSect = regexp.MustCompile(`^([A-Z][A-Z /&]+):\s*$`)
 )
+
+// assertionPattern matches the interface assertion that marks a typed resource, data source, list, action or
+// ephemeral. Both forms count: standalone (`var _ sdk.Resource = X{}`) and an entry in a grouped var block, where
+// gofmt indents each line and aligns the equals signs, which an anchored `^var _` misses entirely.
+func assertionPattern(iface string) string {
+	return `(?m)^[ \t]*(?:var[ \t]+)?_[ \t]+sdk\.` + iface + `[ \t]*= `
+}
+
+func typedAssertion(iface string) *regexp.Regexp {
+	return regexp.MustCompile(assertionPattern(iface + `(?:With[A-Za-z]+)?`))
+}
 
 // checkoutTag checks the source clone out at the release tag, fetching if the tag is unknown.
 func (r *Runner) checkoutTag(ctx context.Context, version string) (string, error) {
@@ -242,14 +256,18 @@ func walkTree(src string, sr *results.SourceResult) error {
 			sr.UntypedResources += len(reUntypedResource.FindAllIndex(b, -1))
 			sr.UntypedDataSources += len(reUntypedDataSrc.FindAllIndex(b, -1))
 			track1, kermit, modern := reImportLegacySDK.Match(b), reImportKermit.Match(b), reImportGoAzure.Match(b)
-			legacy := track1 || kermit
-			// classes: go_azure_sdk | both (legacy and go-azure-sdk) | kermit | track1 (azure-sdk-for-go) | none
+			giovanni := reImportGiovanni.Match(b)
+			legacy := track1 || kermit || giovanni
+			// classes: go_azure_sdk | both (a legacy client and go-azure-sdk) | kermit | giovanni | track1 | none.
+			// a file on more than one legacy client is rare and lands in the first case that matches
 			class := "none"
 			switch {
 			case legacy && modern:
 				class = "both"
 			case kermit:
 				class = "kermit"
+			case giovanni:
+				class = "giovanni"
 			case track1:
 				class = "track1"
 			case modern:
@@ -279,7 +297,7 @@ func walkTree(src string, sr *results.SourceResult) error {
 				switch class {
 				case "both":
 					sr.ResourceFilesBothSDK++
-				case "kermit", "track1":
+				case "kermit", "giovanni", "track1":
 					sr.ResourceFilesLegacySDK++
 				case "go_azure_sdk":
 					sr.ResourceFilesGoAzureSDK++
@@ -314,6 +332,9 @@ func walkTree(src string, sr *results.SourceResult) error {
 			}
 			if reImportKermit.Match(b) {
 				sr.FilesImportingKermit++
+			}
+			if giovanni {
+				sr.FilesImportingGiovanni++
 			}
 			if reImportAutorest.Match(b) {
 				sr.FilesImportingAutorest++
