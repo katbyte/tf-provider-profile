@@ -562,6 +562,12 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		{"source.preflight_resource_files", "Resource files with preflight", "files", "resources", "resource files wired into the preflight validation helper, which validates a deployment against arm during plan (opt-in via the enhanced_validation features block)", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && x.SDKByKind != nil {
+				return f(x.PreflightResourceFiles)
+			}
+			return 0, false
+		}},
 		{"source.deprecated_resource_files", "Deprecated resources", "files", "resources", "resource and data source files carrying a resource-level deprecation", sourceInt(func(x *results.SourceResult) int { return x.DeprecatedResourceFiles }, debtKnown)},
 		{"source.resource_files_without_tests", "Resources without a test file", "files", "resources", "resource and data source files with no sibling _test.go", sourceInt(func(x *results.SourceResult) int { return x.ResourceFilesWithoutTests }, debtKnown)},
 		{"source.resource_files_total", "Resource files", "files", "resources", "files defining a resource or data source", sourceInt(func(x *results.SourceResult) int { return x.ResourceFilesTotal }, debtKnown)},
@@ -887,6 +893,7 @@ func upIs(d def) string {
 		return "bad"
 	case "source.typed_resource_pct", "source.typed_data_source_pct", "source.typed_pct", "source.typed_resources", "source.typed_data_sources",
 		"schema.identity_coverage_pct", "schema.list_coverage_pct", "schema.identity_resources", "schema.list_resources",
+		"source.identity_resource_files", "source.preflight_resource_files",
 		"schema.attrs_described", "schema.attrs_described_pct", "source.services_fully_typed", "source.services_fully_typed_pct",
 		"source.services_fully_go_azure_sdk", "source.services_fully_go_azure_sdk_pct":
 		return "good"

@@ -170,7 +170,8 @@ type SourceResult struct {
 	// (go_azure_sdk, both, kermit, track1 = azure-sdk-for-go, none)
 	SDKByKind map[string]map[string]int `json:"sdk_by_kind,omitempty"`
 	// resource files declaring a resource identity (schema.ResourceIdentity or sdk.ResourceWithIdentity)
-	IdentityResourceFiles int `json:"identity_resource_files"`
+	IdentityResourceFiles  int `json:"identity_resource_files"`
+	PreflightResourceFiles int `json:"preflight_resource_files,omitempty"` // resource files wired into internal/preflight
 	// resource/data source files carrying a resource-level deprecation (DeprecationMessage: or sdk.ResourceWithDeprecation*)
 	DeprecatedResourceFiles int `json:"deprecated_resource_files,omitempty"`
 	// resource/data source files with no sibling _test.go

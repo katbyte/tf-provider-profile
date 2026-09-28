@@ -30,6 +30,8 @@ var (
 	reTypedAction     = typedAssertion("Action")
 	reTypedEphemeral  = typedAssertion("EphemeralResource")
 	reIdentity        = regexp.MustCompile(`Identity:\s*&(schema|pluginsdk)\.ResourceIdentity\{|` + assertionPattern("ResourceWithIdentity"))
+	// resources wired into the preflight validation helper, which checks a deployment with ARM during plan
+	rePreflight       = regexp.MustCompile(`"[^"]+/internal/preflight"`)
 	reImportLegacySDK = regexp.MustCompile(`"github\.com/Azure/azure-sdk-for-go/`)
 	reImportKermit    = regexp.MustCompile(`"github\.com/[a-z0-9-]+/kermit/`)
 	reImportGiovanni  = regexp.MustCompile(`"github\.com/[a-z0-9-]+/giovanni/`)
@@ -326,6 +328,9 @@ func walkTree(src string, sr *results.SourceResult) error {
 			}
 			if kinds["resource"] && reIdentity.Match(b) {
 				sr.IdentityResourceFiles++
+			}
+			if kinds["resource"] && rePreflight.Match(b) {
+				sr.PreflightResourceFiles++
 			}
 			if reImportLegacySDK.Match(b) {
 				sr.FilesImportingLegacySDK++
