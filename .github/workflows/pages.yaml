@@ -70,6 +70,8 @@ jobs:
           touch reports/.nojekyll
 
       - name: Commit new data
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -78,7 +80,9 @@ jobs:
             echo "nothing new"
           else
             git commit -q -m "data: profile $(date -u +%Y-%m-%d)"
-            git push -q
+            # the checkout keeps no credentials on disk (persist-credentials: false), so the token goes on this one
+            # push instead of into the repo config where every later step could read it
+            git push -q "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git" "HEAD:$GITHUB_REF_NAME"
           fi
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
