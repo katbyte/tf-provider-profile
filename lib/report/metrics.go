@@ -208,7 +208,7 @@ func sdkKindDefs() []def {
 			return f(x.SDKByKind["resource"][c.id] + x.SDKByKind["data_source"][c.id])
 		}})
 	}
-	for _, c := range classes[:4] {
+	for _, c := range classes[:len(classes)-1] { // every class but "none", which is not part of the migration
 		defs = append(defs, def{"source.sdk_pct." + c.id, "Resources on " + c.label + " share", "pct", "deps", "share of resource and data source files importing an sdk family", func(r *results.Result) (float64, bool) {
 			x := r.Source
 			if x == nil || x.SDKByKind == nil {
@@ -219,6 +219,20 @@ func sdkKindDefs() []def {
 				return 0, false
 			}
 			return 100 * float64(x.SDKByKind["resource"][c.id]+x.SDKByKind["data_source"][c.id]) / float64(t), true
+		}})
+	}
+	// per-family totals: unlike the classes above these are not exclusive, so a file importing both a legacy client
+	// and go-azure-sdk counts under each, and they answer "what still uses kermit" rather than "what is mixed"
+	for _, c := range classes {
+		if c.id == "both" || c.id == "none" {
+			continue
+		}
+		defs = append(defs, def{"source.sdk_usage." + c.id, "Resources using " + c.label, "files", "deps", "resource and data source files importing this sdk family, including files that also import another", func(r *results.Result) (float64, bool) {
+			x := r.Source
+			if x == nil || x.SDKUsage == nil {
+				return 0, false
+			}
+			return f(x.SDKUsage[c.id])
 		}})
 	}
 	for _, k := range kinds {
@@ -874,9 +888,9 @@ func upIs(d def) string {
 	case "bytes", "ms", "s":
 		return "bad"
 	}
-	if strings.HasPrefix(d.key, "source.sdk.") || strings.HasPrefix(d.key, "source.sdk_pct.") || strings.HasPrefix(d.key, "source.sdk_count.") {
+	if strings.HasPrefix(d.key, "source.sdk.") || strings.HasPrefix(d.key, "source.sdk_pct.") || strings.HasPrefix(d.key, "source.sdk_count.") || strings.HasPrefix(d.key, "source.sdk_usage.") {
 		switch {
-		case strings.HasSuffix(d.key, ".kermit"), strings.HasSuffix(d.key, ".track1"), strings.HasSuffix(d.key, ".both"):
+		case strings.HasSuffix(d.key, ".kermit"), strings.HasSuffix(d.key, ".giovanni"), strings.HasSuffix(d.key, ".track1"), strings.HasSuffix(d.key, ".both"):
 			return "bad"
 		case strings.HasSuffix(d.key, ".go_azure_sdk"):
 			return "good"

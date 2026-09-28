@@ -48,6 +48,16 @@ var (
 	reChangelogSect = regexp.MustCompile(`^([A-Z][A-Z /&]+):\s*$`)
 )
 
+// sdk family ids: the per-file class picks exactly one of these, while sdk_usage tallies each family a file imports
+const (
+	sdkGoAzure  = "go_azure_sdk"
+	sdkKermit   = "kermit"
+	sdkGiovanni = "giovanni"
+	sdkTrack1   = "track1"
+	sdkBoth     = "both"
+	sdkNone     = "none"
+)
+
 // assertionPattern matches the interface assertion that marks a typed resource, data source, list, action or
 // ephemeral. Both forms count: standalone (`var _ sdk.Resource = X{}`) and an entry in a grouped var block, where
 // gofmt indents each line and aligns the equals signs, which an anchored `^var _` misses entirely.
@@ -262,18 +272,18 @@ func walkTree(src string, sr *results.SourceResult) error {
 			legacy := track1 || kermit || giovanni
 			// classes: go_azure_sdk | both (a legacy client and go-azure-sdk) | kermit | giovanni | track1 | none.
 			// a file on more than one legacy client is rare and lands in the first case that matches
-			class := "none"
+			class := sdkNone
 			switch {
 			case legacy && modern:
-				class = "both"
+				class = sdkBoth
 			case kermit:
-				class = "kermit"
+				class = sdkKermit
 			case giovanni:
-				class = "giovanni"
+				class = sdkGiovanni
 			case track1:
-				class = "track1"
+				class = sdkTrack1
 			case modern:
-				class = "go_azure_sdk"
+				class = sdkGoAzure
 			}
 			if untyped > 0 || typedRes[path] || typedDS[path] {
 				resourceFiles = append(resourceFiles, path)
@@ -297,14 +307,25 @@ func walkTree(src string, sr *results.SourceResult) error {
 					}
 				}
 				switch class {
-				case "both":
+				case sdkBoth:
 					sr.ResourceFilesBothSDK++
-				case "kermit", "giovanni", "track1":
+				case sdkKermit, sdkGiovanni, sdkTrack1:
 					sr.ResourceFilesLegacySDK++
-				case "go_azure_sdk":
+				case sdkGoAzure:
 					sr.ResourceFilesGoAzureSDK++
 				default:
 					sr.ResourceFilesNoSDK++
+				}
+				// the class above is one label per file, so a file part way through a migration lands in "both" and
+				// disappears from the kermit and track1 counts. these tally each family separately, counting a mixed
+				// file under every family it imports, which is what "still using kermit" has to mean
+				if sr.SDKUsage == nil {
+					sr.SDKUsage = map[string]int{}
+				}
+				for fam, used := range map[string]bool{sdkGoAzure: modern, sdkKermit: kermit, sdkGiovanni: giovanni, sdkTrack1: track1} {
+					if used {
+						sr.SDKUsage[fam]++
+					}
 				}
 			}
 			kinds := map[string]bool{

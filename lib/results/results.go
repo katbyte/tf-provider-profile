@@ -169,6 +169,9 @@ type SourceResult struct {
 	// per kind (resource, data_source, list, action, ephemeral): files defining one, by sdk family
 	// (go_azure_sdk, both, kermit, track1 = azure-sdk-for-go, none)
 	SDKByKind map[string]map[string]int `json:"sdk_by_kind,omitempty"`
+	// resource and data source files importing each sdk family, counted per family rather than per class: a file
+	// importing two families is counted under each, so these do not sum to the file total the way SDKByKind does
+	SDKUsage map[string]int `json:"sdk_usage,omitempty"`
 	// resource files declaring a resource identity (schema.ResourceIdentity or sdk.ResourceWithIdentity)
 	IdentityResourceFiles  int `json:"identity_resource_files"`
 	PreflightResourceFiles int `json:"preflight_resource_files,omitempty"` // resource files wired into internal/preflight
