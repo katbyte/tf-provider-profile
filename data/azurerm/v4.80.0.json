@@ -31,8 +31,8 @@
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-28T18:48:01.411624Z",
-      "duration_s": 10.471303209,
+      "ran_at": "2026-09-29T04:50:13.570053Z",
+      "duration_s": 8.779378042,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1318,6 +1318,13 @@
     "services_with_resources": 130,
     "services_fully_typed": 38,
     "services_fully_go_azure_sdk": 109,
+    "services_fully_untyped": 37,
+    "services_fully_identity": 8,
+    "services_fully_list": 2,
+    "services_using_framework": 23,
+    "services_using_kermit": 11,
+    "services_using_giovanni": 4,
+    "services_using_track1": 8,
     "docs_resources": 1128,
     "docs_data_sources": 399,
     "docs_ephemeral": 2,

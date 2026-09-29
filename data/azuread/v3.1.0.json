@@ -38,8 +38,8 @@
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-28T18:50:48.450693Z",
-      "duration_s": 1.5537725,
+      "ran_at": "2026-09-29T04:52:01.998344Z",
+      "duration_s": 1.219611542,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -626,6 +626,7 @@
     "services_with_resources": 15,
     "services_fully_typed": 1,
     "services_fully_go_azure_sdk": 15,
+    "services_fully_untyped": 9,
     "docs_resources": 52,
     "docs_data_sources": 20,
     "docs_ephemeral": 0,
