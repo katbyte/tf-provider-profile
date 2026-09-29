@@ -9,6 +9,27 @@
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
     },
+    "build": {
+      "ran_at": "2026-09-28T17:32:33.862764Z",
+      "duration_s": 135.514246167,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "lint": {
+      "ran_at": "2026-09-28T17:42:10.999875Z",
+      "duration_s": 0.314907292,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-28T17:42:11.315655Z",
+      "duration_s": 3062.925393042,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
     "schema": {
       "ran_at": "2026-09-28T17:32:09.671006Z",
       "duration_s": 2.831014042,
@@ -17,8 +38,8 @@
       "os": "darwin/arm64"
     },
     "source": {
-      "ran_at": "2026-09-28T17:32:12.504048Z",
-      "duration_s": 21.356397666,
+      "ran_at": "2026-09-28T18:50:00.291592Z",
+      "duration_s": 18.280698917,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -26,6 +47,13 @@
     "startup": {
       "ran_at": "2026-09-28T17:32:06.002934Z",
       "duration_s": 3.665098459,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-28T17:34:49.377828Z",
+      "duration_s": 441.623855375,
       "host": "studiokat",
       "cpu": "Apple M1 Ultra",
       "os": "darwin/arm64"
@@ -1217,12 +1245,13 @@
     "go_code_lines": 1212446,
     "go_test_files": 2629,
     "go_test_lines": 713087,
+    "go_test_code_lines": 601875,
     "vendor_go_files": 32553,
     "vendor_go_lines": 3392021,
     "total_files": 42978,
     "tree_bytes": 189035559,
     "services": 128,
-    "typed_resources": 250,
+    "typed_resources": 421,
     "typed_data_sources": 114,
     "untyped_resources": 685,
     "untyped_data_sources": 258,
@@ -1230,21 +1259,23 @@
     "acc_test_funcs": 9255,
     "files_importing_legacy_sdk": 79,
     "files_importing_kermit": 135,
+    "files_importing_giovanni": 40,
     "files_importing_autorest": 43,
-    "files_importing_go_azure_sdk": 2032,
-    "resource_files_legacy_sdk": 56,
-    "resource_files_go_azure_sdk": 1097,
-    "resource_files_both_sdk": 100,
-    "resource_files_no_sdk": 48,
+    "files_importing_go_azure_sdk": 2019,
+    "resource_files_legacy_sdk": 67,
+    "resource_files_go_azure_sdk": 1247,
+    "resource_files_both_sdk": 117,
+    "resource_files_no_sdk": 40,
     "sdk_by_kind": {
       "action": {
         "go_azure_sdk": 6
       },
       "data_source": {
-        "both": 5,
-        "go_azure_sdk": 319,
+        "both": 9,
+        "giovanni": 3,
+        "go_azure_sdk": 315,
         "kermit": 6,
-        "none": 39,
+        "none": 36,
         "track1": 3
       },
       "ephemeral": {
@@ -1255,22 +1286,30 @@
         "none": 3
       },
       "resource": {
-        "both": 95,
-        "go_azure_sdk": 781,
-        "kermit": 30,
-        "none": 9,
+        "both": 108,
+        "giovanni": 5,
+        "go_azure_sdk": 935,
+        "kermit": 33,
+        "none": 4,
         "track1": 17
       }
     },
-    "identity_resource_files": 108,
+    "sdk_usage": {
+      "giovanni": 23,
+      "go_azure_sdk": 1364,
+      "kermit": 115,
+      "track1": 46
+    },
+    "identity_resource_files": 180,
+    "preflight_resource_files": 6,
     "deprecated_resource_files": 20,
-    "resource_files_without_tests": 13,
-    "resource_files_total": 1301,
+    "resource_files_without_tests": 14,
+    "resource_files_total": 1471,
     "nolint_directives": 258,
     "todos": 528,
-    "services_with_resources": 123,
-    "services_fully_typed": 33,
-    "services_fully_go_azure_sdk": 108,
+    "services_with_resources": 128,
+    "services_fully_typed": 38,
+    "services_fully_go_azure_sdk": 109,
     "docs_resources": 1105,
     "docs_data_sources": 396,
     "docs_ephemeral": 2,
@@ -1298,5 +1337,24 @@
       "features": 2,
       "total": 15
     }
+  },
+  "build": {
+    "go_toolchain": "go1.26.6 darwin/arm64",
+    "clean_build_s": 102.063380792,
+    "warm_build_s": 18.291728375,
+    "stripped_build_s": 9.8006435,
+    "local_binary_bytes": 324030050,
+    "stripped_binary_bytes": 213785730
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 439.5889805,
+    "exit_code": 0,
+    "packages": 298
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 3005.836258375,
+    "exit_code": 0
   }
 }
