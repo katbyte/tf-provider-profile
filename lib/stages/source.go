@@ -208,7 +208,7 @@ func countDocs(src string, sr *results.SourceResult) {
 func walkTree(src string, sr *results.SourceResult) error {
 	typedRes, typedDS := map[string]bool{}, map[string]bool{}
 	// per service package: whether any untyped or legacy-sdk resource file remains
-	type svcState struct{ files, untyped, legacy int }
+	type svcState struct{ files, untyped, legacy, kermit, giovanni, track1 int }
 	services := map[string]*svcState{}
 	var resourceFiles []string
 	if err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
@@ -306,6 +306,17 @@ func walkTree(src string, sr *results.SourceResult) error {
 					if legacy {
 						st.legacy++
 					}
+					// per family and not exclusive, the same way the resource tallies work: a service counts as
+					// using kermit even where the file has already been half moved onto go-azure-sdk
+					if kermit {
+						st.kermit++
+					}
+					if giovanni {
+						st.giovanni++
+					}
+					if track1 {
+						st.track1++
+					}
 				}
 				switch class {
 				case sdkBoth:
@@ -386,6 +397,15 @@ func walkTree(src string, sr *results.SourceResult) error {
 	for _, st := range services {
 		if st.untyped == 0 {
 			sr.ServicesFullyTyped++
+		}
+		if st.kermit > 0 {
+			sr.ServicesUsingKermit++
+		}
+		if st.giovanni > 0 {
+			sr.ServicesUsingGiovanni++
+		}
+		if st.track1 > 0 {
+			sr.ServicesUsingTrack1++
 		}
 		if st.legacy == 0 {
 			sr.ServicesFullyGoAzureSDK++

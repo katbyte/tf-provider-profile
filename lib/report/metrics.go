@@ -637,6 +637,11 @@ func fixedDefs() []def {
 		{"source.services_fully_typed", "Fully typed services", "packages", "resources", "services with no untyped resource or data source left", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyTyped }, debtKnown)},
 		{"source.services_fully_typed_pct", "Fully typed services share", "pct", "resources", "fully typed services / services with resources", sourcePct(func(x *results.SourceResult) int { return x.ServicesFullyTyped }, func(x *results.SourceResult) int { return x.ServicesWithResources })},
 		{"source.services_fully_go_azure_sdk", "Fully go-azure-sdk services", "packages", "resources", "services with no resource file importing a legacy sdk", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyGoAzureSDK }, debtKnown)},
+		// the countdown at service granularity: how many service packages still have to be touched at all
+		{"source.services_using_legacy", "Services left on a legacy SDK", "packages", "deps", "services with at least one resource file still importing kermit, giovanni or azure-sdk-for-go", sourceInt(func(x *results.SourceResult) int { return x.ServicesWithResources - x.ServicesFullyGoAzureSDK }, debtKnown)},
+		{"source.services_using_kermit", "Services using kermit", "packages", "deps", "services with at least one resource file importing kermit, mixed files included", sourceInt(func(x *results.SourceResult) int { return x.ServicesUsingKermit }, debtKnown)},
+		{"source.services_using_giovanni", "Services using giovanni", "packages", "deps", "services with at least one resource file importing giovanni, mixed files included", sourceInt(func(x *results.SourceResult) int { return x.ServicesUsingGiovanni }, debtKnown)},
+		{"source.services_using_track1", "Services using azure-sdk-for-go (track1)", "packages", "deps", "services with at least one resource file importing azure-sdk-for-go, mixed files included", sourceInt(func(x *results.SourceResult) int { return x.ServicesUsingTrack1 }, debtKnown)},
 		{"source.services_fully_go_azure_sdk_pct", "Fully go-azure-sdk services share", "pct", "resources", "fully go-azure-sdk services / services with resources", sourcePct(func(x *results.SourceResult) int { return x.ServicesFullyGoAzureSDK }, func(x *results.SourceResult) int { return x.ServicesWithResources })},
 		{"source.files_importing_legacy_sdk", "Files importing azure-sdk-for-go (legacy)", "files", "deps", "non-test service files", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil && x.FilesImportingGoAzureSDK+x.FilesImportingLegacySDK > 0 {
@@ -949,7 +954,8 @@ func upIs(d def) string {
 		"source.deprecated_resource_files", "source.resource_files_without_tests", "source.nolint_directives", "source.todos",
 		"startup.init_ms", "startup.init_heap_bytes", "startup.init_allocs",
 		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_giovanni", "source.files_importing_autorest",
-		"source.resource_files_legacy_sdk", "source.resource_files_both_sdk", "source.sdk_remaining", "source.sdk_remaining_pct":
+		"source.resource_files_legacy_sdk", "source.resource_files_both_sdk", "source.sdk_remaining", "source.sdk_remaining_pct",
+		"source.services_using_legacy", "source.services_using_kermit", "source.services_using_giovanni", "source.services_using_track1":
 		return "bad"
 	case "source.typed_resource_pct", "source.typed_data_source_pct", "source.typed_pct", "source.typed_resources", "source.typed_data_sources",
 		"schema.identity_coverage_pct", "schema.list_coverage_pct", "schema.identity_resources", "schema.list_resources",

@@ -190,6 +190,11 @@ type SourceResult struct {
 	ServicesWithResources   int `json:"services_with_resources,omitempty"`
 	ServicesFullyTyped      int `json:"services_fully_typed,omitempty"`        // no untyped resource or data source left
 	ServicesFullyGoAzureSDK int `json:"services_fully_go_azure_sdk,omitempty"` // every sdk-importing resource file is go-azure-sdk only
+	// services with at least one resource file importing each legacy client, counted per family and not exclusive,
+	// so a service part way through a migration still counts under the client it has not finished leaving
+	ServicesUsingKermit   int `json:"services_using_kermit,omitempty"`
+	ServicesUsingGiovanni int `json:"services_using_giovanni,omitempty"`
+	ServicesUsingTrack1   int `json:"services_using_track1,omitempty"`
 
 	DocsResources     int `json:"docs_resources"`
 	DocsDataSources   int `json:"docs_data_sources"`
