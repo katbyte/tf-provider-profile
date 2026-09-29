@@ -1226,9 +1226,20 @@ function metricRow(m, opts = {}) {
   }
   return `<label class="${on ? 'on' : ''}" style="--c:${on ? colorOf(m.key) : 'transparent'}" title="${esc(m.desc || m.key)}" draggable="true"><input type="checkbox" data-k="${m.key}" ${on ? 'checked' : ''} hidden><span class="sw"></span>${esc(opts.full ? lbl(m) : shortLabel(m))}${lr}<span class="unit">${m.unit}</span></label>`;
 }
+// "p:" nodes are the per-panel groups under enabled: they start open, so it is their closed state that is remembered
+const defaultOpen = id => id.startsWith('p:');
 function node(id, title, count, body, force) {
-  const open = force !== undefined ? force : openNodes.has(id);
+  const open = force !== undefined ? force : (defaultOpen(id) ? !openNodes.has(id) : openNodes.has(id));
   return `<details data-id="${id}" ${open ? 'open' : ''}><summary>${esc(title)}<span class="n">${count}</span></summary>${body}</details>`;
+}
+
+// the heading a panel shows for itself, so the tree reads the same way the grid does
+function panelTitle(g) {
+  const ms = g.keys.map(k => M[k]).filter(Boolean);
+  if (!ms.length) return 'panel';
+  if (isComp(g.keys[0])) return ms[0].label;
+  if (ms.length === 1) return lbl(ms[0]);
+  return `${ms.length} metrics · ${unitsOf(g).map(u => UNIT_LABEL[u] || u).join(' × ')}`;
 }
 
 function renderSidebar() {
@@ -1236,9 +1247,25 @@ function renderSidebar() {
   const match = m => !q || (m.label + ' ' + m.key + ' ' + m.group).toLowerCase().includes(q);
   let html = '';
 
-  // enabled
+  // enabled, split by the panel each metric is charted in: one flat list of everything gets unwieldy fast
   const enabled = vsel().map(k => M[k]);
-  html += node('enabled', 'enabled', enabled.length, enabled.length ? enabled.map(m => metricRow(m, { full: true })).join('') : '<div class="none">nothing selected</div>');
+  const rows = ms => ms.map(m => metricRow(m, { full: true })).join('');
+  let body;
+  if (!enabled.length) {
+    body = '<div class="none">nothing selected</div>';
+  } else if (state.view === 'panels') {
+    const placed = new Set();
+    body = visibleGroups().map(g => {
+      const ms = g.keys.map(k => M[k]).filter(Boolean);
+      ms.forEach(m => placed.add(m.key));
+      return ms.length ? node('p:' + g.keys[0], panelTitle(g), ms.length, rows(ms)) : '';
+    }).join('');
+    const loose = enabled.filter(m => !placed.has(m.key)); // staged, or mid-drag between panels
+    if (loose.length) body += node('p:loose', 'not in a panel', loose.length, rows(loose));
+  } else {
+    body = rows(enabled); // the compare view has no panels, and its L/R toggles need one list
+  }
+  html += node('enabled', 'enabled', enabled.length, body);
 
   // presets
   const presets = PRESETS.map(p => ({ ...p, ks: presetKeys(p) })).filter(p => p.ks.length);
@@ -1300,7 +1327,7 @@ $('#groups').addEventListener('click', ev => {
 });
 $('#groups').addEventListener('toggle', ev => {
   const d = ev.target; if (!d.dataset || !d.dataset.id || $('#search').value) return;
-  if (d.open) openNodes.add(d.dataset.id); else openNodes.delete(d.dataset.id);
+  if (d.open !== defaultOpen(d.dataset.id)) openNodes.add(d.dataset.id); else openNodes.delete(d.dataset.id);
   saveOpen();
 }, true);
 $('#search').addEventListener('input', renderSidebar);
