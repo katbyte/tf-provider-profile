@@ -572,6 +572,26 @@ func fixedDefs() []def {
 			}
 			return 0, false
 		}},
+		// the migration countdown: every file still importing a legacy client, whether or not it also imports
+		// go-azure-sdk. the per-class counts hide the mixed ones, and this is the number that has to reach zero
+		{"source.sdk_remaining", "Resources left on a legacy SDK", "files", "deps", "resource and data source files still importing kermit, giovanni or azure-sdk-for-go, mixed files included; reaches zero when the migration is done", func(r *results.Result) (float64, bool) {
+			if x := so(r); x != nil && debtKnown(x) {
+				return f(x.ResourceFilesLegacySDK + x.ResourceFilesBothSDK)
+			}
+			return 0, false
+		}},
+		{"source.sdk_remaining_pct", "Resources left on a legacy SDK share", "pct", "deps", "share of the resource and data source files importing any sdk that still import a legacy one", func(r *results.Result) (float64, bool) {
+			x := so(r)
+			if x == nil || !debtKnown(x) {
+				return 0, false
+			}
+			left := x.ResourceFilesLegacySDK + x.ResourceFilesBothSDK
+			total := left + x.ResourceFilesGoAzureSDK
+			if total == 0 {
+				return 0, false
+			}
+			return 100 * float64(left) / float64(total), true
+		}},
 		{"source.resource_files_legacy_sdk", "Resource files on legacy SDK", "files", "deps", "resource/data source files importing azure-sdk-for-go, kermit or giovanni only", func(r *results.Result) (float64, bool) {
 			if x := so(r); x != nil && x.ResourceFilesLegacySDK+x.ResourceFilesGoAzureSDK+x.ResourceFilesBothSDK > 0 {
 				return f(x.ResourceFilesLegacySDK)
@@ -929,7 +949,7 @@ func upIs(d def) string {
 		"source.deprecated_resource_files", "source.resource_files_without_tests", "source.nolint_directives", "source.todos",
 		"startup.init_ms", "startup.init_heap_bytes", "startup.init_allocs",
 		"source.files_importing_legacy_sdk", "source.files_importing_kermit", "source.files_importing_giovanni", "source.files_importing_autorest",
-		"source.resource_files_legacy_sdk", "source.resource_files_both_sdk":
+		"source.resource_files_legacy_sdk", "source.resource_files_both_sdk", "source.sdk_remaining", "source.sdk_remaining_pct":
 		return "bad"
 	case "source.typed_resource_pct", "source.typed_data_source_pct", "source.typed_pct", "source.typed_resources", "source.typed_data_sources",
 		"schema.identity_coverage_pct", "schema.list_coverage_pct", "schema.identity_resources", "schema.list_resources",

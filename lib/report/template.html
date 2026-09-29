@@ -337,8 +337,9 @@ const DEFAULT_GROUPS = () => visible().flatMap(prov => {
     { keys: ['schema.list_coverage_pct', 'schema.identity_coverage_pct', 'schema.list_resources', 'schema.identity_resources'] }, // percent left, counts right
     // preflight validation, opt-in via the enhanced_validation features block, so far wired into a handful of resources
     { keys: ['source.preflight_resource_files'] },
-    // sdk migration: the legacy shares left, their counts right. go-azure-sdk dwarfs them and is charted by share above
-    { keys: ['source.sdk_pct.both', 'source.sdk_pct.kermit', 'source.sdk_pct.giovanni', 'source.sdk_pct.track1', 'source.sdk_count.both', 'source.sdk_count.kermit', 'source.sdk_count.giovanni', 'source.sdk_count.track1'] },
+    // sdk migration as a countdown: the share still on a legacy client left, what is left to migrate right, per
+    // family and in total. the per-family counts include mixed files, so they are what is actually outstanding
+    { keys: ['source.sdk_remaining_pct', 'source.sdk_remaining', 'source.sdk_usage.kermit', 'source.sdk_usage.giovanni', 'source.sdk_usage.track1'] },
     // typed migration progress: shares left, typed counts right (untyped counts there too, hidden until clicked)
     { keys: ['source.typed_pct', 'source.typed_resource_pct', 'source.typed_data_source_pct', 'source.typed_resources', 'source.typed_data_sources', 'source.untyped_resources', 'source.untyped_data_sources'], hidden: ['source.untyped_resources', 'source.untyped_data_sources'] },
     // the tree by line: non-test and test partition it, vendor sits outside and starts hidden
