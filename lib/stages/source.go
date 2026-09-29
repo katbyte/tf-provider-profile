@@ -208,7 +208,10 @@ func countDocs(src string, sr *results.SourceResult) {
 func walkTree(src string, sr *results.SourceResult) error {
 	typedRes, typedDS := map[string]bool{}, map[string]bool{}
 	// per service package: whether any untyped or legacy-sdk resource file remains
-	type svcState struct{ files, untyped, legacy, kermit, giovanni, track1 int }
+	type svcState struct {
+		files, untyped, legacy, kermit, giovanni, track1        int
+		resources, typed, identity, preflight, lists, framework int
+	}
 	services := map[string]*svcState{}
 	var resourceFiles []string
 	if err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
@@ -286,6 +289,7 @@ func walkTree(src string, sr *results.SourceResult) error {
 			case modern:
 				class = sdkGoAzure
 			}
+			var svc *svcState // the file's service, kept for the per-kind tallies further down
 			if untyped > 0 || typedRes[path] || typedDS[path] {
 				resourceFiles = append(resourceFiles, path)
 				if reDeprecation.Match(b) {
@@ -299,6 +303,7 @@ func walkTree(src string, sr *results.SourceResult) error {
 						st = &svcState{}
 						services[parts[2]] = st
 					}
+					svc = st
 					st.files++
 					if untyped > 0 {
 						st.untyped++
@@ -359,11 +364,35 @@ func walkTree(src string, sr *results.SourceResult) error {
 				}
 				sr.SDKByKind[kind][class]++
 			}
-			if kinds["resource"] && reIdentity.Match(b) {
+			identity, preflight := kinds["resource"] && reIdentity.Match(b), kinds["resource"] && rePreflight.Match(b)
+			if identity {
 				sr.IdentityResourceFiles++
 			}
-			if kinds["resource"] && rePreflight.Match(b) {
+			if preflight {
 				sr.PreflightResourceFiles++
+			}
+			// per-service coverage: a service is only "complete" for identity, preflight or list resources once
+			// every one of its resources has one, which is the milestone worth counting
+			if svc != nil {
+				if kinds["resource"] {
+					svc.resources++
+					if typedRes[path] {
+						svc.typed++
+					}
+					if identity {
+						svc.identity++
+					}
+					if preflight {
+						svc.preflight++
+					}
+				}
+				if kinds["list"] {
+					svc.lists++
+				}
+				// framework only reaches the provider through these newer kinds; regular resources are all plugin-sdk
+				if kinds["list"] || kinds["action"] || kinds["ephemeral"] {
+					svc.framework++
+				}
 			}
 			if reImportLegacySDK.Match(b) {
 				sr.FilesImportingLegacySDK++
@@ -397,6 +426,23 @@ func walkTree(src string, sr *results.SourceResult) error {
 	for _, st := range services {
 		if st.untyped == 0 {
 			sr.ServicesFullyTyped++
+		}
+		if st.resources > 0 {
+			if st.typed == 0 {
+				sr.ServicesFullyUntyped++
+			}
+			if st.identity == st.resources {
+				sr.ServicesFullyIdentity++
+			}
+			if st.preflight == st.resources {
+				sr.ServicesFullyPreflight++
+			}
+			if st.lists >= st.resources {
+				sr.ServicesFullyList++
+			}
+		}
+		if st.framework > 0 {
+			sr.ServicesUsingFramework++
 		}
 		if st.kermit > 0 {
 			sr.ServicesUsingKermit++

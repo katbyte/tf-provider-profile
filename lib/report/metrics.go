@@ -637,6 +637,11 @@ func fixedDefs() []def {
 		{"source.services_fully_typed", "Fully typed services", "packages", "resources", "services with no untyped resource or data source left", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyTyped }, debtKnown)},
 		{"source.services_fully_typed_pct", "Fully typed services share", "pct", "resources", "fully typed services / services with resources", sourcePct(func(x *results.SourceResult) int { return x.ServicesFullyTyped }, func(x *results.SourceResult) int { return x.ServicesWithResources })},
 		{"source.services_fully_go_azure_sdk", "Fully go-azure-sdk services", "packages", "resources", "services with no resource file importing a legacy sdk", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyGoAzureSDK }, debtKnown)},
+		{"source.services_fully_untyped", "Fully untyped services", "packages", "resources", "services where no resource has been moved to the typed sdk yet", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyUntyped }, debtKnown)},
+		{"source.services_fully_identity", "Services fully on identity", "packages", "resources", "services where every resource declares a resource identity", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyIdentity }, debtKnown)},
+		{"source.services_fully_preflight", "Services fully on preflight", "packages", "resources", "services where every resource is wired into preflight validation", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyPreflight }, debtKnown)},
+		{"source.services_fully_list", "Services fully on list resources", "packages", "resources", "services with at least as many list resources as resources", sourceInt(func(x *results.SourceResult) int { return x.ServicesFullyList }, debtKnown)},
+		{"source.services_using_framework", "Services using plugin-framework", "packages", "resources", "services with a list resource, action or ephemeral resource: the only kinds built on terraform-plugin-framework, every regular resource being plugin-sdk", sourceInt(func(x *results.SourceResult) int { return x.ServicesUsingFramework }, debtKnown)},
 		// the countdown at service granularity: how many service packages still have to be touched at all
 		{"source.services_using_legacy", "Services left on a legacy SDK", "packages", "deps", "services with at least one resource file still importing kermit, giovanni or azure-sdk-for-go", sourceInt(func(x *results.SourceResult) int { return x.ServicesWithResources - x.ServicesFullyGoAzureSDK }, debtKnown)},
 		{"source.services_using_kermit", "Services using kermit", "packages", "deps", "services with at least one resource file importing kermit, mixed files included", sourceInt(func(x *results.SourceResult) int { return x.ServicesUsingKermit }, debtKnown)},
@@ -949,7 +954,7 @@ func upIs(d def) string {
 		return "neutral"
 	}
 	switch d.key {
-	case "schema.deprecated_attributes", "lint.issues", "test.failures", "source.untyped_resources", "source.untyped_data_sources",
+	case "schema.deprecated_attributes", "lint.issues", "test.failures", "source.untyped_resources", "source.untyped_data_sources", "source.services_fully_untyped",
 		"build.stage_failed", "test.stage_failed", "lint.stage_failed", "prcheck.gate_failed",
 		"source.deprecated_resource_files", "source.resource_files_without_tests", "source.nolint_directives", "source.todos",
 		"startup.init_ms", "startup.init_heap_bytes", "startup.init_allocs",
@@ -961,7 +966,8 @@ func upIs(d def) string {
 		"schema.identity_coverage_pct", "schema.list_coverage_pct", "schema.identity_resources", "schema.list_resources",
 		"source.identity_resource_files", "source.preflight_resource_files",
 		"schema.attrs_described", "schema.attrs_described_pct", "source.services_fully_typed", "source.services_fully_typed_pct",
-		"source.services_fully_go_azure_sdk", "source.services_fully_go_azure_sdk_pct":
+		"source.services_fully_go_azure_sdk", "source.services_fully_go_azure_sdk_pct",
+		"source.services_fully_identity", "source.services_fully_preflight", "source.services_fully_list", "source.services_using_framework":
 		return "good"
 	}
 	return "neutral"

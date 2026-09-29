@@ -192,6 +192,15 @@ type SourceResult struct {
 	ServicesFullyGoAzureSDK int `json:"services_fully_go_azure_sdk,omitempty"` // every sdk-importing resource file is go-azure-sdk only
 	// services with at least one resource file importing each legacy client, counted per family and not exclusive,
 	// so a service part way through a migration still counts under the client it has not finished leaving
+	// services where every resource has the feature, the milestone that matters for a rollout
+	ServicesFullyUntyped   int `json:"services_fully_untyped,omitempty"`
+	ServicesFullyIdentity  int `json:"services_fully_identity,omitempty"`
+	ServicesFullyPreflight int `json:"services_fully_preflight,omitempty"`
+	ServicesFullyList      int `json:"services_fully_list,omitempty"`
+	// framework reaches the provider only through list resources, actions and ephemeral resources; every regular
+	// resource is still plugin-sdk, so this counts services that have adopted any of those kinds at all
+	ServicesUsingFramework int `json:"services_using_framework,omitempty"`
+
 	ServicesUsingKermit   int `json:"services_using_kermit,omitempty"`
 	ServicesUsingGiovanni int `json:"services_using_giovanni,omitempty"`
 	ServicesUsingTrack1   int `json:"services_using_track1,omitempty"`
