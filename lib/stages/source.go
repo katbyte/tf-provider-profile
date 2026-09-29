@@ -289,39 +289,16 @@ func walkTree(src string, sr *results.SourceResult) error {
 			case modern:
 				class = sdkGoAzure
 			}
-			var svc *svcState // the file's service, kept for the per-kind tallies further down
-			if untyped > 0 || typedRes[path] || typedDS[path] {
+			// the service is the directory right under internal/services (or internal/service)
+			svcName := ""
+			if parts := strings.Split(rel, string(filepath.Separator)); len(parts) > 2 {
+				svcName = parts[2]
+			}
+			isResourceFile := untyped > 0 || typedRes[path] || typedDS[path]
+			if isResourceFile {
 				resourceFiles = append(resourceFiles, path)
 				if reDeprecation.Match(b) {
 					sr.DeprecatedResourceFiles++
-				}
-				// the service is the directory right under internal/services (or internal/service)
-				parts := strings.Split(rel, string(filepath.Separator))
-				if len(parts) > 2 {
-					st := services[parts[2]]
-					if st == nil {
-						st = &svcState{}
-						services[parts[2]] = st
-					}
-					svc = st
-					st.files++
-					if untyped > 0 {
-						st.untyped++
-					}
-					if legacy {
-						st.legacy++
-					}
-					// per family and not exclusive, the same way the resource tallies work: a service counts as
-					// using kermit even where the file has already been half moved onto go-azure-sdk
-					if kermit {
-						st.kermit++
-					}
-					if giovanni {
-						st.giovanni++
-					}
-					if track1 {
-						st.track1++
-					}
 				}
 				switch class {
 				case sdkBoth:
@@ -371,27 +348,54 @@ func walkTree(src string, sr *results.SourceResult) error {
 			if preflight {
 				sr.PreflightResourceFiles++
 			}
-			// per-service coverage: a service is only "complete" for identity, preflight or list resources once
-			// every one of its resources has one, which is the milestone worth counting
-			if svc != nil {
+			// per-service tallies run here rather than in the resource-file branch above, because a list resource,
+			// action or ephemeral declares its own interface and so never passes that branch's test
+			framework := kinds["list"] || kinds["action"] || kinds["ephemeral"]
+			if svcName != "" && (isResourceFile || framework) {
+				st := services[svcName]
+				if st == nil {
+					st = &svcState{}
+					services[svcName] = st
+				}
+				if isResourceFile {
+					st.files++
+					if untyped > 0 {
+						st.untyped++
+					}
+					if legacy {
+						st.legacy++
+					}
+					// per family and not exclusive, the same way the resource tallies work: a service counts as
+					// using kermit even where the file has already been half moved onto go-azure-sdk
+					if kermit {
+						st.kermit++
+					}
+					if giovanni {
+						st.giovanni++
+					}
+					if track1 {
+						st.track1++
+					}
+				}
+				// a service is only "complete" for identity, preflight or list resources once every one of its
+				// resources has one, which is the milestone worth counting
 				if kinds["resource"] {
-					svc.resources++
+					st.resources++
 					if typedRes[path] {
-						svc.typed++
+						st.typed++
 					}
 					if identity {
-						svc.identity++
+						st.identity++
 					}
 					if preflight {
-						svc.preflight++
+						st.preflight++
 					}
 				}
 				if kinds["list"] {
-					svc.lists++
+					st.lists++
 				}
-				// framework only reaches the provider through these newer kinds; regular resources are all plugin-sdk
-				if kinds["list"] || kinds["action"] || kinds["ephemeral"] {
-					svc.framework++
+				if framework {
+					st.framework++
 				}
 			}
 			if reImportLegacySDK.Match(b) {
