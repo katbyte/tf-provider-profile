@@ -3,18 +3,39 @@
   "date": "2026-09-24T14:34:26Z",
   "stages": {
     "binary": {
-      "ran_at": "2026-09-29T03:49:29.124899806Z",
-      "duration_s": 0.068682351,
-      "host": "runnervmtr4k5",
-      "cpu": "AMD EPYC 7763 64-Core Processor",
-      "os": "linux/amd64"
+      "ran_at": "2026-09-29T04:01:02.365285Z",
+      "duration_s": 0.114750458,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "build": {
+      "ran_at": "2026-09-29T03:56:12.495452Z",
+      "duration_s": 35.197776833,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "lint": {
+      "ran_at": "2026-09-29T03:57:38.310433Z",
+      "duration_s": 0.1402685,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "prcheck": {
+      "ran_at": "2026-09-29T03:57:38.451249Z",
+      "duration_s": 188.237691416,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     },
     "schema": {
-      "ran_at": "2026-09-29T03:49:29.271751124Z",
-      "duration_s": 0.788663324,
-      "host": "runnervmtr4k5",
-      "cpu": "AMD EPYC 7763 64-Core Processor",
-      "os": "linux/amd64"
+      "ran_at": "2026-09-29T04:01:03.733828Z",
+      "duration_s": 1.154622792,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     },
     "source": {
       "ran_at": "2026-09-28T18:51:31.368911Z",
@@ -24,14 +45,216 @@
       "os": "darwin/arm64"
     },
     "startup": {
-      "ran_at": "2026-09-29T03:49:29.194393999Z",
-      "duration_s": 0.076516729,
-      "host": "runnervmtr4k5",
-      "cpu": "AMD EPYC 7763 64-Core Processor",
-      "os": "linux/amd64"
+      "ran_at": "2026-09-29T04:01:02.486876Z",
+      "duration_s": 1.24615975,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
+    },
+    "test": {
+      "ran_at": "2026-09-29T03:56:47.700016Z",
+      "duration_s": 50.609474084,
+      "host": "studiokat",
+      "cpu": "Apple M1 Ultra",
+      "os": "darwin/arm64"
     }
   },
   "binary": {
+    "darwin_arm64": {
+      "platform": "darwin_arm64",
+      "zip_bytes": 15917331,
+      "binary_bytes": 61089280,
+      "go_version": "go1.26.6",
+      "module_path": "github.com/hashicorp/terraform-provider-azuread",
+      "dep_count": 54,
+      "deps": {
+        "github.com/ProtonMail/go-crypto": "v1.4.1",
+        "github.com/agext/levenshtein": "v1.2.3",
+        "github.com/apparentlymart/go-textseg/v15": "v15.0.0",
+        "github.com/cloudflare/circl": "v1.6.3",
+        "github.com/fatih/color": "v1.18.0",
+        "github.com/golang/protobuf": "v1.5.4",
+        "github.com/google/go-cmp": "v0.7.0",
+        "github.com/hashicorp/errwrap": "v1.1.0",
+        "github.com/hashicorp/go-azure-helpers": "v0.81.1",
+        "github.com/hashicorp/go-azure-sdk/microsoft-graph": "v0.20260212.1143955",
+        "github.com/hashicorp/go-azure-sdk/sdk": "v0.20260212.1143955",
+        "github.com/hashicorp/go-checkpoint": "v0.5.0",
+        "github.com/hashicorp/go-cleanhttp": "v0.5.2",
+        "github.com/hashicorp/go-cty": "v1.5.0",
+        "github.com/hashicorp/go-hclog": "v1.6.3",
+        "github.com/hashicorp/go-multierror": "v1.1.1",
+        "github.com/hashicorp/go-plugin": "v1.7.0",
+        "github.com/hashicorp/go-retryablehttp": "v0.7.8",
+        "github.com/hashicorp/go-uuid": "v1.0.3",
+        "github.com/hashicorp/go-version": "v1.9.0",
+        "github.com/hashicorp/hc-install": "v0.9.4",
+        "github.com/hashicorp/hcl/v2": "v2.24.0",
+        "github.com/hashicorp/logutils": "v1.0.0",
+        "github.com/hashicorp/terraform-exec": "v0.25.1",
+        "github.com/hashicorp/terraform-json": "v0.27.2",
+        "github.com/hashicorp/terraform-plugin-go": "v0.31.0",
+        "github.com/hashicorp/terraform-plugin-log": "v0.10.0",
+        "github.com/hashicorp/terraform-plugin-sdk/v2": "v2.40.1",
+        "github.com/hashicorp/terraform-plugin-testing": "v1.16.0",
+        "github.com/hashicorp/terraform-registry-address": "v0.4.0",
+        "github.com/hashicorp/terraform-svchost": "v0.2.1",
+        "github.com/hashicorp/yamux": "v0.1.2",
+        "github.com/mattn/go-colorable": "v0.1.14",
+        "github.com/mattn/go-isatty": "v0.0.20",
+        "github.com/mitchellh/copystructure": "v1.2.0",
+        "github.com/mitchellh/go-testing-interface": "v1.14.1",
+        "github.com/mitchellh/go-wordwrap": "v1.0.1",
+        "github.com/mitchellh/mapstructure": "v1.5.0",
+        "github.com/mitchellh/reflectwalk": "v1.0.2",
+        "github.com/oklog/run": "v1.2.0",
+        "github.com/vmihailenco/msgpack": "v4.0.4+incompatible",
+        "github.com/vmihailenco/msgpack/v5": "v5.4.1",
+        "github.com/vmihailenco/tagparser/v2": "v2.0.0",
+        "github.com/zclconf/go-cty": "v1.18.1",
+        "golang.org/x/crypto": "v0.56.0",
+        "golang.org/x/mod": "v0.40.0",
+        "golang.org/x/net": "v0.58.0",
+        "golang.org/x/oauth2": "v0.36.0",
+        "golang.org/x/sys": "v0.47.0",
+        "golang.org/x/text": "v0.41.0",
+        "google.golang.org/genproto/googleapis/rpc": "v0.0.0-20260526163538-3dc84a4a5aaa",
+        "google.golang.org/grpc": "v1.83.2",
+        "google.golang.org/protobuf": "v1.36.11",
+        "software.sslmate.com/src/go-pkcs12": "v0.5.0"
+      },
+      "settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-trimpath": "true",
+        "CGO_ENABLED": "0",
+        "GOARCH": "arm64",
+        "GOARM64": "v8.0",
+        "GOOS": "darwin"
+      },
+      "sections": {
+        "bss": 186488,
+        "buildinfo": 2784,
+        "data": 166866,
+        "itablink": 48360,
+        "noptrbss": 33616384,
+        "noptrdata": 568385,
+        "other": 3272,
+        "pclntab": 19797795,
+        "rodata": 15291737,
+        "text": 21361236,
+        "typelink": 141364
+      },
+      "funcs": 63361,
+      "packages": 566,
+      "text_attributed": 21361217,
+      "text_by_module": {
+        "(unknown)": 345745,
+        "github.com/ProtonMail/go-crypto": 31632,
+        "github.com/agext/levenshtein": 2000,
+        "github.com/apparentlymart/go-textseg/v15": 2848,
+        "github.com/cloudflare/circl": 50976,
+        "github.com/fatih/color": 3088,
+        "github.com/golang/protobuf": 480,
+        "github.com/google/go-cmp": 58160,
+        "github.com/hashicorp/go-azure-helpers": 18848,
+        "github.com/hashicorp/go-azure-sdk/microsoft-graph": 11686752,
+        "github.com/hashicorp/go-azure-sdk/sdk": 150320,
+        "github.com/hashicorp/go-cleanhttp": 288,
+        "github.com/hashicorp/go-cty": 215184,
+        "github.com/hashicorp/go-hclog": 24160,
+        "github.com/hashicorp/go-plugin": 52496,
+        "github.com/hashicorp/go-retryablehttp": 22336,
+        "github.com/hashicorp/go-uuid": 1616,
+        "github.com/hashicorp/go-version": 5952,
+        "github.com/hashicorp/hc-install": 1168,
+        "github.com/hashicorp/hcl/v2": 24864,
+        "github.com/hashicorp/terraform-exec": 1968,
+        "github.com/hashicorp/terraform-plugin-go": 583472,
+        "github.com/hashicorp/terraform-plugin-log": 17968,
+        "github.com/hashicorp/terraform-plugin-sdk/v2": 331456,
+        "github.com/hashicorp/terraform-plugin-testing": 2704,
+        "github.com/hashicorp/terraform-provider-azuread": 1487248,
+        "github.com/hashicorp/terraform-registry-address": 8640,
+        "github.com/hashicorp/terraform-svchost": 2832,
+        "github.com/hashicorp/yamux": 33760,
+        "github.com/mattn/go-isatty": 112,
+        "github.com/mitchellh/copystructure": 10672,
+        "github.com/mitchellh/mapstructure": 41040,
+        "github.com/mitchellh/reflectwalk": 7904,
+        "github.com/oklog/run": 688,
+        "github.com/vmihailenco/msgpack": 65808,
+        "github.com/vmihailenco/msgpack/v5": 86080,
+        "github.com/vmihailenco/tagparser/v2": 3808,
+        "github.com/zclconf/go-cty": 404176,
+        "golang.org/x/crypto": 9696,
+        "golang.org/x/mod": 864,
+        "golang.org/x/net": 114768,
+        "golang.org/x/oauth2": 1440,
+        "golang.org/x/sys": 5200,
+        "golang.org/x/text": 119120,
+        "google.golang.org/genproto/googleapis/rpc": 1520,
+        "google.golang.org/grpc": 589760,
+        "google.golang.org/protobuf": 773360,
+        "software.sslmate.com/src/go-pkcs12": 21040,
+        "std": 3935200
+      },
+      "text_by_service": {
+        "administrativeunits": 45728,
+        "applications": 423760,
+        "approleassignments": 10576,
+        "conditionalaccess": 102576,
+        "directoryobjects": 3120,
+        "directoryroles": 59360,
+        "domains": 9344,
+        "groups": 188240,
+        "identitygovernance": 149376,
+        "invitations": 9872,
+        "policies": 119520,
+        "serviceprincipals": 126848,
+        "synchronization": 34272,
+        "userflows": 10000,
+        "users": 98576
+      },
+      "text_by_package": {
+        "": 345745,
+        "crypto/tls": 304640,
+        "crypto/x509": 122256,
+        "encoding/gob": 107936,
+        "encoding/json": 83968,
+        "encoding/xml": 66208,
+        "github.com/hashicorp/go-azure-sdk/microsoft-graph/common-types/beta": 6986352,
+        "github.com/hashicorp/go-azure-sdk/microsoft-graph/common-types/stable": 3382128,
+        "github.com/hashicorp/go-cty/cty": 105744,
+        "github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/tfplugin5": 123280,
+        "github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/tfplugin6": 148208,
+        "github.com/hashicorp/terraform-plugin-go/tftypes": 113504,
+        "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema": 229984,
+        "github.com/hashicorp/terraform-provider-azuread/internal/services/applications": 364432,
+        "github.com/hashicorp/terraform-provider-azuread/internal/services/conditionalaccess": 90544,
+        "github.com/hashicorp/terraform-provider-azuread/internal/services/groups": 178416,
+        "github.com/hashicorp/terraform-provider-azuread/internal/services/identitygovernance": 143808,
+        "github.com/hashicorp/terraform-provider-azuread/internal/services/policies": 114320,
+        "github.com/hashicorp/terraform-provider-azuread/internal/services/serviceprincipals": 109776,
+        "github.com/hashicorp/terraform-provider-azuread/internal/services/users": 88416,
+        "github.com/vmihailenco/msgpack": 65696,
+        "github.com/vmihailenco/msgpack/v5": 86080,
+        "github.com/zclconf/go-cty/cty": 154256,
+        "github.com/zclconf/go-cty/cty/function/stdlib": 130784,
+        "google.golang.org/grpc": 184432,
+        "google.golang.org/grpc/internal/transport": 149040,
+        "google.golang.org/protobuf/internal/filedesc": 98224,
+        "google.golang.org/protobuf/internal/impl": 356704,
+        "html/template": 75264,
+        "math/big": 131664,
+        "net": 197408,
+        "net/http": 328048,
+        "reflect": 162736,
+        "runtime": 468752,
+        "slices": 95408,
+        "time": 79008
+      }
+    },
     "linux_amd64": {
       "platform": "linux_amd64",
       "zip_bytes": 16358379,
@@ -241,78 +464,78 @@
     }
   },
   "startup": {
-    "platform": "linux_amd64",
+    "platform": "darwin_arm64",
     "runs": 7,
-    "handshake_min_ms": 5.434,
-    "handshake_med_ms": 5.844,
-    "max_rss_bytes": 101535744,
+    "handshake_min_ms": 21.827,
+    "handshake_med_ms": 23.606,
+    "max_rss_bytes": 37814272,
     "protocol_version": "5",
-    "init_packages": 241,
-    "init_ms": 2.8889999999999962,
-    "init_heap_bytes": 1355552,
-    "init_allocs": 6642,
+    "init_packages": 232,
+    "init_ms": 2.168999999999997,
+    "init_heap_bytes": 1363816,
+    "init_allocs": 6643,
     "init_top": [
-      {
-        "package": "github.com/google/go-cmp/cmp",
-        "ms": 0.34,
-        "bytes": 178568
-      },
       {
         "package": "google.golang.org/protobuf/reflect/protodesc",
         "ms": 0.21,
         "bytes": 165168
       },
       {
-        "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
-        "ms": 0.14,
-        "bytes": 20672
-      },
-      {
-        "package": "encoding/gob",
-        "ms": 0.13,
-        "bytes": 28048
-      },
-      {
-        "package": "google.golang.org/grpc",
-        "ms": 0.12,
-        "bytes": 28648
+        "package": "github.com/google/go-cmp/cmp",
+        "ms": 0.19,
+        "bytes": 178568
       },
       {
         "package": "github.com/google/go-cmp/cmp/internal/function",
-        "ms": 0.1,
+        "ms": 0.11,
         "bytes": 35640
       },
       {
-        "package": "github.com/hashicorp/terraform-registry-address",
+        "package": "encoding/gob",
         "ms": 0.1,
+        "bytes": 26608
+      },
+      {
+        "package": "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+        "ms": 0.1,
+        "bytes": 22848
+      },
+      {
+        "package": "github.com/hashicorp/terraform-registry-address",
+        "ms": 0.092,
         "bytes": 91872
       },
       {
-        "package": "google.golang.org/protobuf/internal/detrand",
-        "ms": 0.1,
-        "bytes": 1016
+        "package": "google.golang.org/grpc",
+        "ms": 0.076,
+        "bytes": 30344
+      },
+      {
+        "package": "os",
+        "ms": 0.068,
+        "bytes": 616
       },
       {
         "package": "google.golang.org/protobuf/types/descriptorpb",
-        "ms": 0.079,
-        "bytes": 47264
+        "ms": 0.064,
+        "bytes": 49440
       },
       {
-        "package": "github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/tfplugin5",
-        "ms": 0.072,
-        "bytes": 104600
+        "package": "google.golang.org/protobuf/internal/detrand",
+        "ms": 0.06,
+        "bytes": 440
       }
     ]
   },
   "schema": {
-    "platform": "linux_amd64",
-    "terraform_version": "1.16.4",
+    "platform": "darwin_arm64",
+    "terraform_version": "1.16.1",
     "runs": 7,
-    "wall_min_ms": 89.647,
-    "wall_med_ms": 91.154,
-    "provider_max_rss_bytes": 44240896,
+    "wall_min_ms": 97.075,
+    "wall_med_ms": 99.664,
+    "provider_max_rss_bytes": 45891584,
     "json_bytes": 199680,
-    "gzip_bytes": 22648,
+    "gzip_bytes": 24028,
     "resources": 58,
     "data_sources": 21,
     "ephemeral_resources": 0,
@@ -430,5 +653,24 @@
       "enhancements": 22,
       "total": 24
     }
+  },
+  "build": {
+    "go_toolchain": "go1.26.6 darwin/arm64",
+    "clean_build_s": 27.177897166,
+    "warm_build_s": 4.487483333,
+    "stripped_build_s": 2.4930255,
+    "local_binary_bytes": 86903986,
+    "stripped_binary_bytes": 61473778
+  },
+  "test": {
+    "tool": "make test",
+    "duration_s": 50.076121792,
+    "exit_code": 0,
+    "packages": 20
+  },
+  "prcheck": {
+    "target": "pr-check",
+    "duration_s": 146.788821834,
+    "exit_code": 0
   }
 }
